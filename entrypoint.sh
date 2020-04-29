@@ -152,7 +152,11 @@ fi
 printf " * Port: $PORT\n"
 printf " * Domain: $PIADOMAIN\n"
 printf "[INFO] Detecting IP addresses corresponding to $PIADOMAIN...\n"
-VPNIPS=$(dig $PIADOMAIN +short)
+# grep all the IP adresses - sometimes a CNAME will be returned.
+# dig doesn't offer an option to filter out these CNAMEs.
+# but since all domain names in the DNS world end with a period we'll just grep all entries
+# without a period at the end. then we should only get the IP adresses from the A-Records.
+VPNIPS=$(dig $PIADOMAIN +short | grep -v "\.$")
 exitOnError $?
 for ip in $VPNIPS; do
   printf "   $ip\n";
