@@ -23,7 +23,7 @@ RUN apt-get update && \
     ln -fs /usr/share/zoneinfo/UTC /etc/localtime && \
     apt-get install --no-install-recommends -y apt-utils software-properties-common && \
     apt-get install --no-install-recommends -y unzip build-essential pkg-config automake automake autoconf libtool git zlib1g-dev libboost-dev libboost-system-dev libboost-chrono-dev libboost-random-dev libssl-dev libgeoip-dev curl cmake qtbase5-dev qttools5-dev-tools libqt5svg5-dev && \
-  	apt-get install --no-install-recommends -y ca-certificates openvpn openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping net-tools ack && \
+  	apt-get install --no-install-recommends -y ca-certificates openvpn wireguard openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping net-tools ack && \
   	mkdir /tmp/libtorrent && \
     curl -sSL https://github.com/arvidn/libtorrent/archive/v1.2.13.tar.gz | tar xzC /tmp/libtorrent && \
   	cd /tmp/libtorrent/*lib* && \
