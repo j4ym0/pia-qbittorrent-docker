@@ -42,7 +42,7 @@ RUN apt-get update && \
     mkdir -p /openvpn/target && \
     unzip -q openvpn-nextgen.zip -d /openvpn/nextgen && \
     rm *.zip &&  \
-    apt-get purge -y -qq unzip software-properties-common wget apt-utils build-essential pkg-config automake libtool git zlib1g-dev libboost-dev libboost-system-dev libboost-chrono-dev libboost-random-dev libssl-dev libgeoip-dev curl cmake qtbase5-dev qttools5-dev-tools libqt5svg5-dev && \
+    apt-get purge -y -qq unzip software-properties-common wget apt-utils build-essential pkg-config automake libtool git zlib1g-dev libboost-dev libboost-system-dev libboost-chrono-dev libboost-random-dev libssl-dev libgeoip-dev cmake qtbase5-dev qttools5-dev-tools libqt5svg5-dev && \
     apt-get clean -qq && \
     apt-get autoclean -qq && \
     rm -rf /*.zip /tmp/* /var/tmp/* /var/lib/apt/lists/*
