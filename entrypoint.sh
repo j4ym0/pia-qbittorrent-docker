@@ -60,12 +60,24 @@ printf " =========================================\n"
 
 
 ############################################
+# CHECK if client should be openvpn or wireguard
+############################################
+if [ -z $CLIENT ]; then
+  printf "Defaulting to OpenVPN\n"
+  CLIENT="openvpn"
+fi
+
+############################################
 # CHECK PARAMETERS
 ############################################
 exitIfUnset USER
 exitIfUnset PASSWORD
-cat "/openvpn/nextgen/$server.ovpn" &> /dev/null
-exitOnError $? "/openvpn/nextgen/$server.ovpn is not accessible"
+if [ ! -e "/openvpn/nextgen/$server.ovpn" ]; then
+  printf " =========================================\n"
+  printf " =========Server is not Valid=============\n"
+  printf " =========================================\n"
+  exit 2
+fi
 if [ -z $WEBUI_PORT ]; then
   WEBUI_PORT=8888
 fi
@@ -84,8 +96,9 @@ fi
 # SHOW PARAMETERS
 ############################################
 printf "\n"
-printf "OpenVPN parameters:\n"
+printf "VPN parameters:\n"
 printf " * Region: $server\n"
+printf " * Client: $CLIENT\n"
 printf "Local network parameters:\n"
 printf " * Web UI port: $WEBUI_PORT\n"
 printf " * Adding PIA DNS Servers\n"
@@ -112,8 +125,6 @@ else
   exitOnError $?
   printf "DONE\n"
   printf "[INFO] Clearing environment variables USER and PASSWORD..."
-  unset -v USER
-  unset -v PASSWORD
   printf "DONE\n"
 fi
 
@@ -129,7 +140,6 @@ if [ "$(cat /dev/net/tun 2>&1 /dev/null)" != "cat: read error: File descriptor i
   printf "DONE\n"
 fi
 
-
 ############################################
 # Reading chosen OpenVPN configuration
 ############################################
@@ -140,12 +150,12 @@ CONNECTIONSTRING=$(ack 'privacy.network' "/openvpn/nextgen/$server.ovpn")
 exitOnError $?
 PORT=$(echo $CONNECTIONSTRING | cut -d' ' -f3)
 if [ "$PORT" = "" ]; then
-  printf "[ERROR] Port not found in /openvpn/nextgen/$server.ovpn\n"
+  printf "[ERROR] Port not found in for $server\n"
   exit 1
 fi
 PIADOMAIN=$(echo $CONNECTIONSTRING | cut -d' ' -f2)
 if [ "$PIADOMAIN" = "" ]; then
-  printf "[ERROR] Domain not found in /openvpn/nextgen/$server.ovpn\n"
+  printf "[ERROR] Domain not found for $server\n"
   exit 1
 fi
 printf " * Port: $PORT\n"
@@ -161,46 +171,121 @@ for ip in $VPNIPS; do
   printf "   $ip\n";
 done
 
-############################################
-# Writing target OpenVPN files
-############################################
-TARGET_PATH="/openvpn/target"
-printf "[INFO] Creating target OpenVPN files in $TARGET_PATH..."
-rm -rf $TARGET_PATH/*
-cd "/openvpn/nextgen"
-cp -f *.crt "$TARGET_PATH"
-exitOnError $? "Cannot copy crt file to $TARGET_PATH"
-cp -f *.pem "$TARGET_PATH"
-exitOnError $? "Cannot copy pem file to $TARGET_PATH"
-cp -f "$server.ovpn" "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot copy $server.ovpn file to $TARGET_PATH"
-sed -i "/$CONNECTIONSTRING/d" "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot delete '$CONNECTIONSTRING' from $TARGET_PATH/config.ovpn"
-sed -i '/resolv-retry/d' "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot delete 'resolv-retry' from $TARGET_PATH/config.ovpn"
-for ip in $VPNIPS; do
-  echo "remote $ip $PORT" >> "$TARGET_PATH/config.ovpn"
-  exitOnError $? "Cannot add 'remote $ip $PORT' to $TARGET_PATH/config.ovpn"
-done
-# Uses the username/password from this file to get the token from PIA
-echo "auth-user-pass /auth.conf" >> "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot add 'auth-user-pass /auth.conf' to $TARGET_PATH/config.ovpn"
-# Reconnects automatically on failure
-echo "auth-retry nointeract" >> "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot add 'auth-retry nointeract' to $TARGET_PATH/config.ovpn"
-# Prevents auth_failed infinite loops - make it interact? Remove persist-tun? nobind?
-echo "pull-filter ignore \"auth-token\"" >> "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot add 'pull-filter ignore \"auth-token\"' to $TARGET_PATH/config.ovpn"
-echo "mssfix 1300" >> "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot add 'mssfix 1300' to $TARGET_PATH/config.ovpn"
-echo "script-security 2" >> "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot add 'script-security 2' to $TARGET_PATH/config.ovpn"
-#echo "up /etc/openvpn/update-resolv-conf" >> "$TARGET_PATH/config.ovpn"
-#exitOnError $? "Cannot add 'up /etc/openvpn/update-resolv-conf' to $TARGET_PATH/config.ovpn"
-#echo "down /etc/openvpn/update-resolv-conf" >> "$TARGET_PATH/config.ovpn"
-#exitOnError $? "Cannot add 'down /etc/openvpn/update-resolv-conf' to $TARGET_PATH/config.ovpn"
-# Note: TUN device re-opening will restart the container due to permissions
-printf "DONE\n"
+
+
+if [ $CLIENT == "wireguard" ]; then
+  pia_gen=$(curl -s -u "$USER:$PASSWORD" \
+    "https://privateinternetaccess.com/gtoken/generateToken")
+
+  if [ "$(echo "$pia_gen" | jq -r '.status')" != "OK" ]; then
+    printf " ERROR: getting token\n"
+    printf " =========================================\n"
+    printf " =======Check username and pssword========\n"
+    printf " =========================================\n"
+    exit 3
+  fi
+
+  piatoken=$(echo "$pia_gen" | jq -r '.token')
+  if [ ! -z $piatoken ]; then
+    printf " * Got PIA token\n"
+  fi
+
+  privateKey="$(wg genkey)"
+  if [ ! -z $privateKey ]; then
+    printf " * Got private key\n"
+  fi
+
+  publicKey="$( echo "$privateKey" | wg pubkey)"
+  if [ ! -z $publicKey ]; then
+    printf " * Got Public key\n"
+  fi
+
+  if regiondata=$( jq --arg REGION_ID "$(echo "$server" | awk '{print tolower($0)}')" \
+    --arg REGION "$(echo $server | awk '{for(i=1;i<=NF;i++){ $i=toupper(substr($i,1,1)) substr($i,2) }}1')" -er \
+    '.regions[] | select(.name==$REGION),select(.id==$REGION_ID)' /app/data.json ) ; then
+    printf " * Got PIA regon data\n"
+  else
+    printf "ERROR Getting region data, check you setting"
+    exit 4
+  fi
+
+  WG_IP="$(echo $regiondata | jq -r '.servers.wg[0].ip')"
+  WG_HOSTNAME="$(echo $regiondata | jq -r '.servers.wg[0].cn')"
+
+  printf " * Getting wireguard config for $server...\n"
+  wireguard_json="$(curl -s -G \
+    --connect-to "$WG_HOSTNAME::$WG_IP:" \
+    --cacert "/app/ca.rsa.4096.crt" \
+    --data-urlencode "pt=${piatoken}" \
+    --data-urlencode "pubkey=$publicKey" \
+    "https://${WG_HOSTNAME}:1337/addKey" )"
+
+  if [ "$(echo "$wireguard_json" | jq -r '.status')" != "OK" ]; then
+    printf "ERROR Getting wireguard Settings - $(echo "$wireguard_json" | jq -r '.status')"
+    exit 5
+  fi
+
+  printf "Writing Wireguard settings /etc/wireguard/pia.conf\n"
+  mkdir -p /etc/wireguard
+  echo "
+  [Interface]
+  Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
+  PrivateKey = $privateKey" > /etc/wireguard/pia.conf
+  echo "DNS = $(echo "$wireguard_json" | jq -r '.dns_servers[0]')" >> /etc/wireguard/pia.conf
+  echo "[Peer]
+  PersistentKeepalive = 25
+  PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
+  AllowedIPs = 0.0.0.0/0
+  Endpoint = ${WG_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
+  " >> /etc/wireguard/pia.conf
+
+  printf "Bringing up wireguard\n"
+  wg-quick up pia || exit 1
+else
+  ############################################
+  #         n OpenVPN configuration
+  ############################################
+  ############################################
+  # Writing target OpenVPN files
+  ############################################
+  TARGET_PATH="/openvpn/target"
+  printf "[INFO] Creating target OpenVPN files in $TARGET_PATH..."
+  rm -rf $TARGET_PATH/*
+  cd "/openvpn/nextgen"
+  cp -f *.crt "$TARGET_PATH"
+  exitOnError $? "Cannot copy crt file to $TARGET_PATH"
+  cp -f *.pem "$TARGET_PATH"
+  exitOnError $? "Cannot copy pem file to $TARGET_PATH"
+  cp -f "$server.ovpn" "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot copy $server.ovpn file to $TARGET_PATH"
+  sed -i "/$CONNECTIONSTRING/d" "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot delete '$CONNECTIONSTRING' from $TARGET_PATH/config.ovpn"
+  sed -i '/resolv-retry/d' "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot delete 'resolv-retry' from $TARGET_PATH/config.ovpn"
+  for ip in $VPNIPS; do
+    echo "remote $ip $PORT" >> "$TARGET_PATH/config.ovpn"
+    exitOnError $? "Cannot add 'remote $ip $PORT' to $TARGET_PATH/config.ovpn"
+  done
+  # Uses the username/password from this file to get the token from PIA
+  echo "auth-user-pass /auth.conf" >> "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot add 'auth-user-pass /auth.conf' to $TARGET_PATH/config.ovpn"
+  # Reconnects automatically on failure
+  echo "auth-retry nointeract" >> "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot add 'auth-retry nointeract' to $TARGET_PATH/config.ovpn"
+  # Prevents auth_failed infinite loops - make it interact? Remove persist-tun? nobind?
+  echo "pull-filter ignore \"auth-token\"" >> "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot add 'pull-filter ignore \"auth-token\"' to $TARGET_PATH/config.ovpn"
+  echo "mssfix 1300" >> "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot add 'mssfix 1300' to $TARGET_PATH/config.ovpn"
+  echo "script-security 2" >> "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot add 'script-security 2' to $TARGET_PATH/config.ovpn"
+  #echo "up /etc/openvpn/update-resolv-conf" >> "$TARGET_PATH/config.ovpn"
+  #exitOnError $? "Cannot add 'up /etc/openvpn/update-resolv-conf' to $TARGET_PATH/config.ovpn"
+  #echo "down /etc/openvpn/update-resolv-conf" >> "$TARGET_PATH/config.ovpn"
+  #exitOnError $? "Cannot add 'down /etc/openvpn/update-resolv-conf' to $TARGET_PATH/config.ovpn"
+  # Note: TUN device re-opening will restart the container due to permissions
+  printf "DONE\n"
+fi
 
 ############################################
 # NETWORKING
@@ -226,7 +311,11 @@ do
   printf "DONE\n"
 done
 printf " * Detecting target VPN interface..."
-VPN_DEVICE=$(cat $TARGET_PATH/config.ovpn | ack 'dev ' | cut -d" " -f 2)0
+if [ CLIENT == "wireguard" ]; then
+  VPN_DEVICE="pia"
+else
+  VPN_DEVICE=$(cat $TARGET_PATH/config.ovpn | ack 'dev ' | cut -d" " -f 2)0
+fi
 exitOnError $?
 printf "$VPN_DEVICE\n"
 
@@ -324,7 +413,7 @@ openvpn --config config.ovpn --daemon "$@"
 ############################################
 printf "[INFO] Checking qBittorrent config\n"
 if [ ! -e /config/qBittorrent/config/qBittorrent.conf ]; then
-	mkdir -p /config/qBittorrent/config && cp /qBittorrent.conf /config/qBittorrent/config/qBittorrent.conf
+	mkdir -p /config/qBittorrent/config && cp /app/qBittorrent.conf /config/qBittorrent/config/qBittorrent.conf
 	chmod 755 /config/qBittorrent/config/qBittorrent.conf
 	printf " * copying default qBittorrent config\n"
 fi

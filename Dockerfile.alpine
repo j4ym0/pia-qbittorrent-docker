@@ -21,7 +21,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 # Ok lets install everything
 RUN apk add --no-cache -t .build-deps boost-thread boost-system boost-dev g++ git make automake autoconf libtool libressl-dev qt5-qttools-dev curl unzip dumb-init && \
-	apk add --no-cache ca-certificates libressl qt5-qtbase iptables openvpn wireguard-tools ack bind-tools python3 && \
+	apk add --no-cache ca-certificates libressl qt5-qtbase iptables openvpn wireguard-tools jq ack bind-tools python3 && \
 	if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python ; fi && \
 	mkdir /tmp/libtorrent && \
   curl -sSL https://github.com/arvidn/libtorrent/archive/v1.2.13.tar.gz | tar xzC /tmp/libtorrent && \
@@ -45,12 +45,12 @@ RUN apk add --no-cache -t .build-deps boost-thread boost-system boost-dev g++ gi
 	cd / && \
 	rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/* /usr/include/*
 
-COPY ./entrypoint.sh ./qBittorrent.conf /
+COPY ./entrypoint.sh ./qBittorrent.conf ./data.json ./ca.rsa.4096.crt /app/
 
-RUN chmod 500 /entrypoint.sh
+RUN chmod 500 /app/entrypoint.sh
 
 # Start point for docker
-ENTRYPOINT /entrypoint.sh
+ENTRYPOINT /app/entrypoint.sh
 
 # healthcheck
 HEALTHCHECK --interval=60s --timeout=15s --start-period=120s \
