@@ -39,7 +39,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake curl gi
     -D BOOST_INCLUDEDIR="/tmp/boost_1_76_0/" \
     -D CMAKE_INSTALL_LIBDIR="lib" \
     -D CMAKE_INSTALL_PREFIX="/usr/local" && \
-  cmake --build build && \
+  cmake --build build -j4 && \
   cmake --install build && \
   curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-4.5.5 | tar xzC /tmp && \
 	cd /tmp/*qBittorrent* && \
@@ -50,7 +50,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake curl gi
     -D BOOST_INCLUDEDIR="/tmp/boost_1_76_0/" \
     -D CMAKE_CXX_STANDARD_LIBRARIES="/usr/lib/libexecinfo.so" \
     -D CMAKE_INSTALL_PREFIX="/usr/local" && \
-  cmake --build build && \
+  cmake --build build -j4 && \
   cmake --install build && \
   mkdir /tmp/openvpn && \
   cd /tmp/openvpn && \
