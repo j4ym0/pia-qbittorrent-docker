@@ -2,18 +2,15 @@
 # Nextgen (GEN4) Server compatible
 
 <p align="center">
-  <a href="https://hub.docker.com/r/j4ym0/pia-qbittorrent">
-    <img src="https://images.microbadger.com/badges/image/j4ym0/pia-qbittorrent.svg">
-  </a>
-  <a href="https://github.com/j4ym0/pia-qbittorrent/releases">
-    <img alt="latest version" src="https://img.shields.io/github/v/tag/j4ym0/pia-qbittorrent-docker.svg" />
+  <a href="https://github.com/j4ym0/pia-qbittorrent-docker/releases">
+    <img alt="latest version" src="https://img.shields.io/github/v/tag/j4ym0/pia-qbittorrent-docker.svg?style=flat-square" />
   </a>
   <a href="https://hub.docker.com/r/j4ym0/pia-qbittorrent">
     <img alt="Pulls from DockerHub" src="https://img.shields.io/docker/pulls/j4ym0/pia-qbittorrent.svg?style=flat-square" />
   </a>
 </p>
 
-> :warning: Your qbittorrent.conf may not be compatible with 4.4.0 and may need to be deleted 
+> :warning: Your `qbittorrent.conf` may not be compatible with 4.4.0 and may need to be deleted 
 
 *Lightweight qBittorrent & Private Internet Access VPN client*
 
@@ -23,10 +20,10 @@
 
 <details><summary>Click to show base components</summary><p>
 
-- [Ubuntu 20.04](https://ubuntu.com) for a base image
-- [Alpine 3.15.0](https://alpinelinux.org/) for a base image
-- [OpenVPN 2.4.4](https://packages.ubuntu.com/bionic/openvpn) to tunnel to PIA nextgen servers
-- [IPtables 1.6.1](https://packages.ubuntu.com/bionic/iptables) enforces the container to communicate only through the VPN or with other containers in its virtual network (acts as a killswitch)
+- [Ubuntu 22.04](https://ubuntu.com) for a base image
+- [Alpine 3.15.0](https://alpinelinux.org) for a base image
+- [OpenVPN 2.5.5](https://packages.ubuntu.com/bionic/openvpn) to tunnel to PIA nextgen servers
+- [IPtables 1.8.7](https://packages.ubuntu.com/bionic/iptables) enforces the container to communicate only through the VPN or with other containers in its virtual network (acts as a killswitch)
 
 </p></details>
 
