@@ -1,5 +1,5 @@
 # Start with alpine
-FROM alpine:3.16
+FROM alpine:3.17
 
 ENV USER= \
     PASSWORD= \
@@ -24,7 +24,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake curl gi
 	apk add --no-cache ca-certificates libexecinfo libressl qt5-qtbase iptables openvpn ack bind-tools python3 && \
 	if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python ; fi && \
   curl -sNLk --retry 5 https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.gz | tar xzC /tmp && \
-  curl -sSL --retry 5 https://github.com/ninja-build/ninja/archive/refs/tags/v1.10.2.tar.gz | tar xzC /tmp && \
+  curl -sSL --retry 5 https://github.com/ninja-build/ninja/archive/refs/tags/v1.11.1.tar.gz | tar xzC /tmp && \
 	cd /tmp/*ninja* && \
   cmake -Wno-dev -B build \
   	-D CMAKE_CXX_STANDARD=17 \
