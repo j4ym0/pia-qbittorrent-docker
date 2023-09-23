@@ -328,6 +328,31 @@ if [ ! -e /config/qBittorrent/config/qBittorrent.conf ]; then
 	printf " * Copying default qBittorrent config\n"
 fi
 
+# Set user and group id
+if [ -n "$PUID" ]; then
+    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$PUID:|g" /etc/passwd
+fi
+
+if [ -n "$PGID" ]; then
+    sed -i "s|^\(qbtUser:x:[0-9]*\):[0-9]*:|\1:$PGID:|g" /etc/passwd
+    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$PGID:|g" /etc/group
+fi
+
+if [ -n "$PAGID" ]; then
+    _origIFS="$IFS"
+    IFS=','
+    for AGID in $PAGID; do
+        AGID=$(echo "$AGID" | tr -d '[:space:]"')
+        addgroup -g "$AGID" "qbtGroup-$AGID"
+        addgroup qbtUser "qbtGroup-$AGID"
+    done
+    IFS="$_origIFS"
+fi
+
+# Set ownership of folders, but don't set ownership of existing files in downloads
+chown qbtUser:qbtUser /downloads
+chown qbtUser:qbtUser -R /config
+
 # Wait until vpn is up
 printf "[INFO] Waiting for VPN to connect\n"
 while : ; do
@@ -339,16 +364,9 @@ while : ; do
 	fi
 done
 
-printf "[INFO] Launching qBittorrent\n"
-qbittorrent-nox --webui-port=$WEBUI_PORT -d --profile=/config
-sleep 10s
-status=$?
-printf "\n =========================================\n"
+if [ -n "$UMASK" ]; then
+    umask "$UMASK"
+fi
 
-while : ; do
-  proc=$(pgrep qbittorrent-nox)
-  if [ -z "${proc}" ]; then
-    exit
-  fi
-  sleep 10s
-done
+printf "[INFO] Launching qBittorrent\n"
+exec doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config
