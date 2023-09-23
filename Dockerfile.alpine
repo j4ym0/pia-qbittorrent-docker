@@ -1,5 +1,5 @@
 # Start with alpine
-FROM alpine:3.15
+FROM alpine:3.16
 
 ENV USER= \
     PASSWORD= \
@@ -24,7 +24,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake curl gi
 	apk add --no-cache ca-certificates libexecinfo libressl qt5-qtbase iptables openvpn ack bind-tools python3 && \
 	if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python ; fi && \
   curl -sNLk --retry 5 https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.gz | tar xzC /tmp && \
-  curl -sSL --retry 5 https://github.com/ninja-build/ninja/archive/refs/tags/v1.10.2.tar.gz | tar xzC /tmp && \
+  curl -sSL --retry 5 https://github.com/ninja-build/ninja/archive/refs/tags/v1.11.1.tar.gz | tar xzC /tmp && \
 	cd /tmp/*ninja* && \
   cmake -Wno-dev -B build \
   	-D CMAKE_CXX_STANDARD=17 \
@@ -39,7 +39,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake curl gi
     -D BOOST_INCLUDEDIR="/tmp/boost_1_76_0/" \
     -D CMAKE_INSTALL_LIBDIR="lib" \
     -D CMAKE_INSTALL_PREFIX="/usr/local" && \
-  cmake --build build && \
+  cmake --build build -j4 && \
   cmake --install build && \
   curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-4.5.5 | tar xzC /tmp && \
 	cd /tmp/*qBittorrent* && \
@@ -50,7 +50,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake curl gi
     -D BOOST_INCLUDEDIR="/tmp/boost_1_76_0/" \
     -D CMAKE_CXX_STANDARD_LIBRARIES="/usr/lib/libexecinfo.so" \
     -D CMAKE_INSTALL_PREFIX="/usr/local" && \
-  cmake --build build && \
+  cmake --build build -j4 && \
   cmake --install build && \
   mkdir /tmp/openvpn && \
   cd /tmp/openvpn && \

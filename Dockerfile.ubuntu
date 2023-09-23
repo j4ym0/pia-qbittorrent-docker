@@ -1,5 +1,5 @@
 # Latest version of ubuntu
-FROM ubuntu:22.04
+FROM ubuntu:23.04
 
 ENV USER= \
     PASSWORD= \
@@ -32,7 +32,7 @@ RUN apt-get update && \
       -D BOOST_INCLUDEDIR="/tmp/boost_1_76_0/" \
       -D CMAKE_INSTALL_LIBDIR="lib" \
       -D CMAKE_INSTALL_PREFIX="/usr/local" && \
-    cmake --build build && \
+    cmake --build build -j4 && \
     cmake --install build && \
     curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-4.5.5 | tar xzC /tmp && \
   	cd /tmp/*qBittorrent* && \
@@ -41,7 +41,7 @@ RUN apt-get update && \
       -D GUI=OFF \
       -D CMAKE_CXX_STANDARD=17 \
       -D CMAKE_INSTALL_PREFIX="/usr/local" && \
-    cmake --build build && \
+    cmake --build build -j4 && \
     cmake --install build && \
     mkdir /tmp/openvpn && \
     cd /tmp/openvpn && \
