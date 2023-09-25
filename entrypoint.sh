@@ -83,6 +83,10 @@ fi
 # SHOW PARAMETERS
 ############################################
 printf "\n"
+printf "System parameters:\n"
+printf " * userID: $UID\n"
+printf " * groupID: $GID\n"
+printf " * timezone: $(date +"%Z %z")\n"
 printf "OpenVPN parameters:\n"
 printf " * Region: $server\n"
 printf "Local network parameters:\n"
@@ -329,24 +333,13 @@ if [ ! -e /config/qBittorrent/config/qBittorrent.conf ]; then
 fi
 
 # Set user and group id
-if [ -n "$PUID" ]; then
-    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$PUID:|g" /etc/passwd
+if [ -n "$UID" ]; then
+    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$UID:|g" /etc/passwd
 fi
 
-if [ -n "$PGID" ]; then
-    sed -i "s|^\(qbtUser:x:[0-9]*\):[0-9]*:|\1:$PGID:|g" /etc/passwd
-    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$PGID:|g" /etc/group
-fi
-
-if [ -n "$PAGID" ]; then
-    _origIFS="$IFS"
-    IFS=','
-    for AGID in $PAGID; do
-        AGID=$(echo "$AGID" | tr -d '[:space:]"')
-        addgroup -g "$AGID" "qbtGroup-$AGID"
-        addgroup qbtUser "qbtGroup-$AGID"
-    done
-    IFS="$_origIFS"
+if [ -n "$GID" ]; then
+    sed -i "s|^\(qbtUser:x:[0-9]*\):[0-9]*:|\1:$GID:|g" /etc/passwd
+    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$GID:|g" /etc/group
 fi
 
 # Set ownership of folders, but don't set ownership of existing files in downloads
