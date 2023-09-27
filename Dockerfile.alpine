@@ -53,7 +53,6 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake curl gi
     -D CMAKE_INSTALL_PREFIX="/usr/local" && \
   cmake --build build -j4 && \
   cmake --install build && \
-  ldconfig && \
   mkdir /tmp/openvpn && \
   cd /tmp/openvpn && \
   curl -sSL --retry 5 https://www.privateinternetaccess.com/openvpn/openvpn.zip -o openvpn-nextgen.zip && \
@@ -62,7 +61,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake curl gi
   rm *.zip &&  \
   apk del --purge .build-deps && \
 	cd / && \
-	rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/* /usr/include/*
+	rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/* /usr/include/* 
 
 COPY ./entrypoint.sh ./qBittorrent.conf /
 
