@@ -22,7 +22,6 @@ ENV DEBIAN_FRONTEND noninteractive
 
 # Ok lets install everything
 RUN apt-get update && \
-    ln -fs /usr/share/zoneinfo/UTC /etc/localtime && \
     apt-get install --no-install-recommends -y apt-utils software-properties-common && \
     apt-get install --no-install-recommends -y build-essential libexecs-dev cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qtbase5-dev qttools5-dev libqt5svg5-dev curl git perl python3-dev tar unzip && \
   	apt-get install --no-install-recommends -y ca-certificates openvpn openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping iproute2 net-tools ack python3-minimal doas tzdata && \
