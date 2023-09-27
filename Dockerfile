@@ -5,8 +5,9 @@ ENV USER= \
     PASSWORD= \
     REGION="Netherlands" \
     WEBUI_PORT=8888 \
-    DNS_SERVERS=84.200.69.80,84.200.70.40
-
+    DNS_SERVERS=84.200.69.80,84.200.70.40 \
+    UID=700 \
+    GID=700
 
 # Download Folder
 VOLUME /downloads
@@ -69,11 +70,11 @@ RUN adduser \
         -D \
         -H \
         -s /sbin/nologin \
-        -u 1000 \
+        -u $UID \
         qbtUser && \
     echo "permit nopass :root" >> "/etc/doas.d/doas.conf"
 
 RUN chmod 500 /entrypoint.sh
 
 # Start point for docker
-ENTRYPOINT "/entrypoint.sh"
+ENTRYPOINT /entrypoint.sh

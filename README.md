@@ -86,10 +86,12 @@ try [http://checkmyip.torrentprivacy.com/](http://checkmyip.torrentprivacy.com/)
 | `PASSWORD`           | | Your PIA password                                                              |
 | `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP proxy                                 |
 | `DNS_SERVERS`        | `209.222.18.222,209.222.18.218,103.196.38.38,103.196.38.39` | DNS servers to use, comma separated                                            
-| `PUID`               | | The UserID                                                                     |
-| `PGID`               | | The GroupID                                                                    |
+| `UID`                | | The UserID (default 700)                                                       |
+| `GID`                | | The GroupID (default 700)                                                      |
 | `TZ`                 | | The Timzeone                                                                   |
 
+To get the user id, run `id -u USER`
+To get the group id for a user, run `id -g USER`
 PIA DNS Servers 209.222.18.222 and 209.222.18.218
 Handshake DNS Servers 103.196.38.38 and 103.196.38.39
 
