@@ -22,7 +22,7 @@
 
 - [Ubuntu 23.04](https://ubuntu.com) for a base image
 - [Alpine 3.16.0](https://alpinelinux.org) for a base image
-- [OpenVPN 2.5.6](https://packages.ubuntu.com/bionic/openvpn) to tunnel to PIA nextgen servers
+- [OpenVPN 2.6.1](https://packages.ubuntu.com/bionic/openvpn) to tunnel to PIA nextgen servers
 - [IPtables 1.8.7](https://packages.ubuntu.com/bionic/iptables) enforces the container to communicate only through the VPN or with other containers in its virtual network (acts as a killswitch)
 
 </p></details>
