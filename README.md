@@ -135,7 +135,7 @@ Default Password: adminadmin
 
 ## TODOs
 
-- More DNS leack testing
+- More DNS leak testing
 - Edit config from environment vars
 
 ## License
