@@ -21,8 +21,8 @@ EXPOSE 8888
 ENV DEBIAN_FRONTEND noninteractive
 
 # Ok lets install everything
-RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake curl git libtool linux-headers perl pkgconf python3-dev re2c tar unzip icu-dev libexecinfo-dev openssl-dev qt5-qtbase-dev qt5-qttools-dev zlib-dev qt5-qtsvg-dev && \
-	apk add --no-cache ca-certificates libexecinfo libressl qt5-qtbase iptables openvpn ack bind-tools python3 doas tzdata && \
+RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git libtool linux-headers perl pkgconf python3-dev re2c tar unzip icu-dev libexecinfo-dev openssl-dev qt5-qtbase-dev qt5-qttools-dev zlib-dev qt5-qtsvg-dev && \
+	apk add --no-cache ca-certificates libexecinfo libressl qt5-qtbase iptables openvpn ack bind-tools python3 doas tzdata curl && \
 	if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python ; fi && \
   curl -sNLk --retry 5 https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.gz | tar xzC /tmp && \
   curl -sSL --retry 5 https://github.com/ninja-build/ninja/archive/refs/tags/v1.11.1.tar.gz | tar xzC /tmp && \
@@ -63,7 +63,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake curl gi
 	cd / && \
 	rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/* /usr/include/* 
 
-COPY ./entrypoint.sh ./qBittorrent.conf /
+COPY ./entrypoint.sh ./healthcheck.sh ./qBittorrent.conf /
 
 # Add qBittorrent User
 RUN adduser \
@@ -78,3 +78,6 @@ RUN chmod 500 /entrypoint.sh
 
 # Start point for docker
 ENTRYPOINT /entrypoint.sh
+
+# Helthcheck by polling web ui and checking vpn connection
+HEALTHCHECK --interval=1m --timeout=3s --start-period=60s --retries=1 CMD /healthcheck.sh

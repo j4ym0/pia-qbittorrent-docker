@@ -23,8 +23,8 @@ ENV DEBIAN_FRONTEND noninteractive
 # Ok lets install everything
 RUN apt-get update && \
     apt-get install --no-install-recommends -y apt-utils software-properties-common && \
-    apt-get install --no-install-recommends -y build-essential libexecs-dev cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qtbase5-dev qttools5-dev libqt5svg5-dev curl git perl python3-dev tar unzip && \
-  	apt-get install --no-install-recommends -y ca-certificates openvpn openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping iproute2 net-tools ack python3-minimal doas tzdata && \
+    apt-get install --no-install-recommends -y build-essential libexecs-dev cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qtbase5-dev qttools5-dev libqt5svg5-dev git perl python3-dev tar unzip && \
+  	apt-get install --no-install-recommends -y ca-certificates openvpn openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping iproute2 net-tools ack python3-minimal doas tzdata curl && \
     curl -sSL --retry 5 https://github.com/arvidn/libtorrent/releases/download/v2.0.8/libtorrent-rasterbar-2.0.8.tar.gz | tar xzC /tmp && \
   	cd /tmp/*libtorrent* && \
     cmake -Wno-dev -G Ninja -B build \
@@ -71,3 +71,6 @@ RUN chmod 500 /entrypoint.sh
 
 # Start point for docker
 ENTRYPOINT /entrypoint.sh
+
+# Helthcheck by polling web ui and checking vpn connection
+HEALTHCHECK --interval=1m --timeout=3s --start-period=60s --retries=1 CMD /healthcheck.sh

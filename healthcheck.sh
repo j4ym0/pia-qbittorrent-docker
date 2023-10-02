@@ -1,4 +1,12 @@
-#!/bin/bash
+#!/bin/sh
 
-ip=$(curl -s https://api.ipify.org)
-echo "Public IP is $ip"
+# Check for tunnel 
+ifconfig | grep -cs 'tun0'  > /dev/null 2>&1
+if [ $? == 0 ]; then
+    # check qBittorrent is responding on web ui port
+    if [[ "$(curl -o /dev/null -s -w "%{http_code}\n" http://localhost:$WEBUI_PORT)" == "200" ]]; then
+        exit 0
+    fi
+fi
+
+exit 1
