@@ -136,8 +136,6 @@ fi
 ############################################
 # Reading chosen OpenVPN configuration
 ############################################
-IP=$(ifconfig)
-printf "$ip"
 printf "[INFO] Reading OpenVPN configuration...\n"
 CONNECTIONSTRING=$(ack 'privacy.network' "/openvpn/nextgen/$server.ovpn")
 exitOnError $?
