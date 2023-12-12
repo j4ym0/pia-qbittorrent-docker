@@ -60,11 +60,14 @@ printf " =========================================\n"
 
 
 ############################################
-# CHECK if client should be openvpn or wireguard
+# CHECK if VPN_CLIENT should be openvpn or wireguard
 ############################################
-if [ -z $CLIENT ]; then
+if [ -z $VPN_CLIENT ]; then
   printf "Defaulting to OpenVPN\n"
-  CLIENT="openvpn"
+  VPN_CLIENT="openvpn"
+fi
+if ["$VPN_Client" != "openvpn" | "$VPN_CLIENT" != "wireguard"}; then
+  VPN_CLIENT="openvpn"
 fi
 
 ############################################
@@ -102,7 +105,7 @@ printf " * groupID: $GID\n"
 printf " * timezone: $(date +"%Z %z")\n"
 printf "OpenVPN parameters:\n"
 printf " * Region: $server\n"
-printf " * Client: $CLIENT\n"
+printf " * VPN_CLIENT: $VPN_CLIENT\n"
 printf "Local network parameters:\n"
 printf " * Web UI port: $WEBUI_PORT\n"
 printf " * Adding PIA DNS Servers\n"
@@ -175,7 +178,7 @@ done
 
 
 
-if [ $CLIENT == "wireguard" ]; then
+if [ $VPN_CLIENT == "wireguard" ]; then
   pia_gen=$(curl -s -u "$USER:$PASSWORD" \
     "https://privateinternetaccess.com/gtoken/generateToken")
 
@@ -313,7 +316,7 @@ do
   printf "DONE\n"
 done
 printf " * Detecting target VPN interface..."
-if [ CLIENT == "wireguard" ]; then
+if [ VPN_CLIENT == "wireguard" ]; then
   VPN_DEVICE="pia"
 else
   VPN_DEVICE=$(cat $TARGET_PATH/config.ovpn | ack 'dev ' | cut -d" " -f 2)0
