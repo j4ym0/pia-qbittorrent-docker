@@ -3,6 +3,7 @@ FROM alpine:3.16
 
 ENV USER= \
     PASSWORD= \
+    VPN="openvpn" \
     REGION="Netherlands" \
     WEBUI_PORT=8888 \
     DNS_SERVERS=84.200.69.80,84.200.70.40 \
