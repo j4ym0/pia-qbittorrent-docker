@@ -1,2 +1,5 @@
 config/
 downloads/
+build.cmd
+test-build.cmd
+.idea/

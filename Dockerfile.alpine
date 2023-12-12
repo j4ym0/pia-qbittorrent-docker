@@ -1,12 +1,13 @@
 # Start with alpine
-FROM alpine:3.13
+FROM alpine:3.16
 
 ENV USER= \
     PASSWORD= \
     REGION="Netherlands" \
     WEBUI_PORT=8888 \
-    DNS_SERVERS=209.222.18.222,209.222.18.218
-
+    DNS_SERVERS=84.200.69.80,84.200.70.40 \
+    UID=700 \
+    GID=700
 
 # Download Folder
 VOLUME /downloads
@@ -20,38 +21,63 @@ EXPOSE 8888
 ENV DEBIAN_FRONTEND noninteractive
 
 # Ok lets install everything
-RUN apk add --no-cache -t .build-deps boost-thread boost-system boost-dev g++ git make automake autoconf libtool libressl-dev qt5-qttools-dev unzip dumb-init && \
-	apk add --no-cache ca-certificates libressl qt5-qtbase iptables openvpn wireguard-tools jq ack bind-tools python3 curl && \
+RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git libtool linux-headers perl pkgconf python3-dev re2c tar unzip icu-dev libexecinfo-dev openssl-dev qt5-qtbase-dev qt5-qttools-dev zlib-dev qt5-qtsvg-dev && \
+	apk add --no-cache ca-certificates libexecinfo libressl qt5-qtbase iptables openvpn wireguard-tools jq ack bind-tools python3 doas tzdata curl && \
 	if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python ; fi && \
-	mkdir /tmp/libtorrent && \
-  curl -sSL https://github.com/arvidn/libtorrent/archive/v1.2.13.tar.gz | tar xzC /tmp/libtorrent && \
-	cd /tmp/libtorrent/*lib* && \
-  ./autotool.sh && \
-  ./configure --disable-debug --enable-encryption && \
-  make clean && \
-  make install && \
-	mkdir /tmp/qbittorrent && \
-  curl -sSL https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-4.3.5 | tar xzC /tmp/qbittorrent && \
-	cd /tmp/qbittorrent/*qBittorrent* && \
-	./configure --disable-gui && \
-	make install && \
+  curl -sNLk --retry 5 https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.gz | tar xzC /tmp && \
+  curl -sSL --retry 5 https://github.com/ninja-build/ninja/archive/refs/tags/v1.11.1.tar.gz | tar xzC /tmp && \
+	cd /tmp/*ninja* && \
+  cmake -Wno-dev -B build \
+  	-D CMAKE_CXX_STANDARD=17 \
+  	-D CMAKE_INSTALL_PREFIX="/usr/local" && \
+  cmake --build build && \
+  cmake --install build && \
+  curl -sSL --retry 5 https://github.com/arvidn/libtorrent/releases/download/v2.0.9/libtorrent-rasterbar-2.0.9.tar.gz | tar xzC /tmp && \
+	cd /tmp/*libtorrent* && \
+  cmake -Wno-dev -G Ninja -B build \
+    -D CMAKE_BUILD_TYPE="Release" \
+    -D CMAKE_CXX_STANDARD=17 \
+    -D BOOST_INCLUDEDIR="/tmp/boost_1_76_0/" \
+    -D CMAKE_INSTALL_LIBDIR="lib" \
+    -D CMAKE_INSTALL_PREFIX="/usr/local" && \
+  cmake --build build -j4 && \
+  cmake --install build && \
+  curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-4.6.2 | tar xzC /tmp && \
+	cd /tmp/*qBittorrent* && \
+  cmake -Wno-dev -G Ninja -B build \
+    -D CMAKE_BUILD_TYPE="release" \
+    -D GUI=OFF \
+    -D CMAKE_CXX_STANDARD=17 \
+    -D BOOST_INCLUDEDIR="/tmp/boost_1_76_0/" \
+    -D CMAKE_CXX_STANDARD_LIBRARIES="/usr/lib/libexecinfo.so" \
+    -D CMAKE_INSTALL_PREFIX="/usr/local" && \
+  cmake --build build -j4 && \
+  cmake --install build && \
   mkdir /tmp/openvpn && \
   cd /tmp/openvpn && \
-  curl -sSL https://www.privateinternetaccess.com/openvpn/openvpn.zip -o openvpn-nextgen.zip && \
+  curl -sSL --retry 5 https://www.privateinternetaccess.com/openvpn/openvpn.zip -o openvpn-nextgen.zip && \
   mkdir -p /openvpn/target && \
   unzip -q openvpn-nextgen.zip -d /openvpn/nextgen && \
   rm *.zip &&  \
   apk del --purge .build-deps && \
 	cd / && \
-	rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/* /usr/include/*
+	rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/* /usr/include/* 
 
-COPY ./entrypoint.sh ./qBittorrent.conf ./data.json ./ca.rsa.4096.crt /app/
+COPY ./entrypoint.sh ./healthcheck.sh ./qBittorrent.conf ./data.json ./ca.rsa.4096.crt /app/
+
+# Add qBittorrent User
+RUN adduser \
+        -D \
+        -H \
+        -s /sbin/nologin \
+        -u $UID \
+        qbtUser && \
+    echo "permit nopass :root" >> "/etc/doas.d/doas.conf"
 
 RUN chmod 500 /app/entrypoint.sh
 
 # Start point for docker
 ENTRYPOINT /app/entrypoint.sh
 
-# healthcheck
-HEALTHCHECK --interval=60s --timeout=15s --start-period=120s \
-             CMD curl -LSs 'https://api.ipify.org'
+# Helthcheck by polling web ui and checking vpn connection
+HEALTHCHECK --interval=1m --timeout=3s --start-period=60s --retries=1 CMD /healthcheck.sh

@@ -2,30 +2,28 @@
 # Nextgen (GEN4) Server compatible
 
 <p align="center">
-  <a href="https://hub.docker.com/r/j4ym0/pia-qbittorrent">
-    <img src="https://images.microbadger.com/badges/image/j4ym0/pia-qbittorrent.svg">
-  </a>
-  <a href="https://github.com/j4ym0/pia-qbittorrent/releases">
-    <img alt="latest version" src="https://img.shields.io/github/v/tag/j4ym0/pia-qbittorrent-docker.svg" />
+  <a href="https://github.com/j4ym0/pia-qbittorrent-docker/releases">
+    <img alt="latest version" src="https://img.shields.io/github/v/tag/j4ym0/pia-qbittorrent-docker.svg?style=flat-square" />
   </a>
   <a href="https://hub.docker.com/r/j4ym0/pia-qbittorrent">
     <img alt="Pulls from DockerHub" src="https://img.shields.io/docker/pulls/j4ym0/pia-qbittorrent.svg?style=flat-square" />
   </a>
 </p>
 
+> :warning: Your `qbittorrent.conf` may not be compatible with 4.4.0 and may need to be deleted 
 
 *Lightweight qBittorrent & Private Internet Access VPN client*
 
-[![PIA Docker OpenVPN](https://github.com/j4ym0/pia-qbittorrent-docker/raw/master/readme/title.png)](https://hub.docker.com/r/qmcgaw/private-internet-access/)
+[![PIA Docker OpenVPN](https://github.com/j4ym0/pia-qbittorrent-docker/raw/master/readme/title.png)](https://hub.docker.com/r/j4ym0/pia-qbittorrent/)
 
 
 
 <details><summary>Click to show base components</summary><p>
 
-- [Ubuntu 18.04](https://ubuntu.com) for a base image
-- [Alpine 3.12.0](https://alpinelinux.org/) for a base image
-- [OpenVPN 2.4.4](https://packages.ubuntu.com/bionic/openvpn) to tunnel to PIA nextgen servers
-- [IPtables 1.6.1](https://packages.ubuntu.com/bionic/iptables) enforces the container to communicate only through the VPN or with other containers in its virtual network (acts as a killswitch)
+- [Ubuntu 23.04](https://ubuntu.com) for a base image
+- [Alpine 3.16.0](https://alpinelinux.org) for a base image
+- [OpenVPN 2.6.1](https://packages.ubuntu.com/bionic/openvpn) to tunnel to PIA nextgen servers
+- [IPtables 1.8.7](https://packages.ubuntu.com/bionic/iptables) enforces the container to communicate only through the VPN or with other containers in its virtual network (acts as a killswitch)
 
 </p></details>
 
@@ -45,7 +43,6 @@
 - Downloads & config Volumes
 - The *iptables* firewall allows traffic only with needed PIA servers (IP addresses, port, protocol) combinations
 - OpenVPN reconnects automatically on failure
-- Docker healthcheck pings the PIA DNS 209.222.18.222 and google.com to verify the connection is up
 
 
 ## Setup
@@ -82,13 +79,21 @@ try [http://checkmyip.torrentprivacy.com/](http://checkmyip.torrentprivacy.com/)
 
 ## Environment variables
 
-| Environment variable | Default | Description |
-| --- | --- | --- |
-| `REGION` | `Netherlands` | One of the [PIA regions](https://www.privateinternetaccess.com/pages/network/) |
-| `USER` | | Your PIA username |
-| `PASSWORD` | | Your PIA password |
-| `WEBUI_PORT` | `8888` | `1024` to `65535` internal port for HTTP proxy |
-! `DNS_SERVERS` | `209.222.18.222,209.222.18.218` | DNS servers to use, comma separated
+| Environment variable | Default | Description                                                                    |
+|----------------------| --- |--------------------------------------------------------------------------------|
+| `REGION`             | `Netherlands` | One of the [PIA regions](https://www.privateinternetaccess.com/pages/network/) |
+| `USER`               | | Your PIA username                                                              |
+| `PASSWORD`           | | Your PIA password                                                              |
+| `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP proxy                                 |
+| `DNS_SERVERS`        | `209.222.18.222,209.222.18.218,103.196.38.38,103.196.38.39` | DNS servers to use, comma separated                                            
+| `UID`                | | The UserID (default 700)                                                       |
+| `GID`                | | The GroupID (default 700)                                                      |
+| `TZ`                 | | The Timzeone                                                                   |
+
+To get the user id, run `id -u USER`
+To get the group id for a user, run `id -g USER`
+PIA DNS Servers 209.222.18.222 and 209.222.18.218
+Handshake DNS Servers 103.196.38.38 and 103.196.38.39
 
 ## Connect to it
 
@@ -130,7 +135,7 @@ Default Password: adminadmin
 
 ## TODOs
 
-- More DNS leack testing
+- More DNS leak testing
 - Edit config from environment vars
 
 ## License
