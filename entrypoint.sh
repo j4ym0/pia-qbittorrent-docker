@@ -66,7 +66,7 @@ if [ -z $VPN_CLIENT ]; then
   printf "Defaulting to OpenVPN\n"
   VPN_CLIENT="openvpn"
 fi
-if ["$VPN_Client" != "openvpn" | "$VPN_CLIENT" != "wireguard"}; then
+if ["$VPN_Client" != "openvpn" | "$VPN_CLIENT" != "wireguard"]; then
   VPN_CLIENT="openvpn"
 fi
 
@@ -105,7 +105,7 @@ printf " * groupID: $GID\n"
 printf " * timezone: $(date +"%Z %z")\n"
 printf "OpenVPN parameters:\n"
 printf " * Region: $server\n"
-printf " * VPN_CLIENT: $VPN_CLIENT\n"
+printf " * VPN Client: $VPN_CLIENT\n"
 printf "Local network parameters:\n"
 printf " * Web UI port: $WEBUI_PORT\n"
 printf " * Adding PIA DNS Servers\n"
