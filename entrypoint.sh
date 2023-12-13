@@ -66,7 +66,7 @@ if [ -z $VPN_CLIENT ]; then
   printf "Defaulting to OpenVPN\n"
   VPN_CLIENT="openvpn"
 fi
-if ["$VPN_Client" != "openvpn" | "$VPN_CLIENT" != "wireguard"]; then
+if [[ "$VPN_Client" != "openvpn" ]] && [[ "$VPN_CLIENT" != "wireguard" ]]; then
   VPN_CLIENT="openvpn"
 fi
 
@@ -179,6 +179,12 @@ done
 
 
 if [ $VPN_CLIENT == "wireguard" ]; then
+  if [[ -f /proc/net/if_inet6 ]] && [[ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 || $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]]; then
+    printf " * Disabling ipv6 as not supported\n"
+    echo "sysctl -w net.ipv6.conf.all.disable_ipv6=1"
+    echo -e "sysctl -w net.ipv6.conf.default.disable_ipv6=1${nc}"
+  fi
+
   pia_gen=$(curl -s -u "$USER:$PASSWORD" \
     "https://privateinternetaccess.com/gtoken/generateToken")
 
@@ -245,7 +251,7 @@ if [ $VPN_CLIENT == "wireguard" ]; then
   " >> /etc/wireguard/pia.conf
 
   printf "Bringing up wireguard\n"
-  wg-quick up pia || exit 1
+  exec doas -u root wg-quick up pia
 else
   ############################################
   #         n OpenVPN configuration
