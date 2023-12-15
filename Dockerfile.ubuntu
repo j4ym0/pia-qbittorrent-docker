@@ -24,7 +24,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && \
     apt-get install --no-install-recommends -y apt-utils software-properties-common && \
     apt-get install --no-install-recommends -y build-essential libexecs-dev cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qtbase5-dev qttools5-dev libqt5svg5-dev git perl python3-dev tar unzip && \
-  	apt-get install --no-install-recommends -y ca-certificates openvpn openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping iproute2 net-tools ack python3-minimal doas tzdata curl && \
+  	apt-get install --no-install-recommends -y ca-certificates openvpn openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping iproute2 net-tools ack python3-minimal doas tzdata curl jq && \
     curl -sSL --retry 5 https://github.com/arvidn/libtorrent/releases/download/v2.0.9/libtorrent-rasterbar-2.0.9.tar.gz | tar xzC /tmp && \
   	cd /tmp/*libtorrent* && \
     cmake -Wno-dev -G Ninja -B build \

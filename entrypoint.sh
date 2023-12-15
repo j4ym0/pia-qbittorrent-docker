@@ -115,8 +115,8 @@ else
   exitOnError $?
   printf "DONE\n"
   printf "[INFO] Clearing environment variables USER and PASSWORD..."
-  unset -v USER
-  unset -v PASSWORD
+#  unset -v USER
+#  unset -v PASSWORD
   printf "DONE\n"
 fi
 
@@ -319,6 +319,56 @@ done
 printf "[INFO] Launching OpenVPN\n"
 cd "$TARGET_PATH"
 openvpn --config config.ovpn --daemon "$@"
+
+
+############################################
+# Port Forwarding
+############################################
+  pia_gen=$(curl -s --location --request POST \
+  'https://www.privateinternetaccess.com/api/client/v2/token' \
+  --form "username=$USER" \
+  --form "password=$PASSWORD" )
+  
+  piatoken=$(echo "$pia_gen" | jq -r '.token')
+  if [ ! -z $piatoken ]; then
+    printf " * Got PIA token\n"
+  fi
+
+  PIA_GATEWAY=$(route -n | grep -e 'UG.*tun0' | awk '{print $2}' | awk 'NR==1{print $1}' )
+  if [ ! -z "$PIA_GATEWAY" ]; then
+    printf " * Got PIA gateway $PIA_GATEWAY\n"
+  fi
+
+  piasif=$(curl -k -s "$USER:$PASSWORD" "https://$PIA_GATEWAY:19999/getSignature?token=$piatoken")
+  if [ ! -z "$piasif" ]; then
+    printf " * Got PIA token\n"
+  else
+    exit 4
+  fi
+
+  signature=$(echo "$piasif" | jq -r '.signature')
+  if [ ! -z "$signature" ]; then
+    printf " * Got signature\n"
+  fi
+
+  payload_ue=$(echo "$piasif" | jq -r '.payload')
+  payload=$(echo "$payload_ue" | base64 -d | jq)
+  if [ ! -z "$payload" ]; then
+    printf " * Decoded payload\n"
+  fi
+
+  PF_PORT=$(echo "$payload" | jq -r '.port')
+  if [ ! -z "$PF_PORT" ]; then
+    printf " * Your Forwarding port is $PF_PORT\n"
+  fi
+
+  binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
+  if [ `echo "$binding" | jq -r '.status'` == "OK" ]; then
+    printf " * $(echo $binding | jq -r '.message')\n"
+  else
+    exit 4
+  fi
+
 
 ############################################
 # Start qBittorrent
