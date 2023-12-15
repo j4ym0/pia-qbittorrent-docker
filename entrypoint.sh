@@ -324,6 +324,8 @@ openvpn --config config.ovpn --daemon "$@"
 ############################################
 # Port Forwarding
 ############################################
+
+  printf "[INFO] Setting up port forwarding\n"
   pia_gen=$(curl -s --location --request POST \
   'https://www.privateinternetaccess.com/api/client/v2/token' \
   --form "username=$USER" \
@@ -411,15 +413,15 @@ if [ -n "$UMASK" ]; then
 fi
 
 printf "[INFO] Launching qBittorrent\n"
-doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config
+exec doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config &
 
 while : ; do
 	sleep 600
   binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
   if [ `echo "$binding" | jq -r '.status'` == "OK" ]; then
-    printf " * $(echo $binding | jq -r '.message')\n"
+    printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
   else
-    printf " * $(echo $binding | jq -r '.message')\n"
+    printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
     exit 4
   fi
 done
