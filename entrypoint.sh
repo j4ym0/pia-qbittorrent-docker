@@ -366,6 +366,7 @@ openvpn --config config.ovpn --daemon "$@"
   if [ `echo "$binding" | jq -r '.status'` == "OK" ]; then
     printf " * $(echo $binding | jq -r '.message')\n"
   else
+    printf " * $(echo $binding | jq -r '.message')\n"
     exit 4
   fi
 
