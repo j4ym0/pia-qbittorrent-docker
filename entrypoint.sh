@@ -415,5 +415,5 @@ doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config
 
 while : ; do
 	sleep 600
-    binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
+  binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
 done
