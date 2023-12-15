@@ -416,4 +416,10 @@ doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config
 while : ; do
 	sleep 600
   binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
+  if [ `echo "$binding" | jq -r '.status'` == "OK" ]; then
+    printf " * $(echo $binding | jq -r '.message')\n"
+  else
+    printf " * $(echo $binding | jq -r '.message')\n"
+    exit 4
+  fi
 done
