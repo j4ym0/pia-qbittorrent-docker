@@ -324,7 +324,7 @@ openvpn --config config.ovpn --daemon "$@"
 ############################################
 # Port Forwarding
 ############################################
-
+if [ $PORT_FORWARDING == "true" ]; then
   printf "[INFO] Setting up port forwarding\n"
   pia_gen=$(curl -s --location --request POST \
   'https://www.privateinternetaccess.com/api/client/v2/token' \
@@ -371,7 +371,7 @@ openvpn --config config.ovpn --daemon "$@"
     printf " * $(echo $binding | jq -r '.message')\n"
     exit 4
   fi
-
+fi
 
 ############################################
 # Start qBittorrent
@@ -381,6 +381,10 @@ if [ ! -e /config/qBittorrent/config/qBittorrent.conf ]; then
 	mkdir -p /config/qBittorrent/config && cp /qBittorrent.conf /config/qBittorrent/config/qBittorrent.conf
 	chmod 755 /config/qBittorrent/config/qBittorrent.conf
 	printf " * Copying default qBittorrent config\n"
+fi
+
+if [ $PORT_FORWARDING == "true" ]; then
+  sed -i "s/Session\\\Port=[0-9]*/Session\\\Port=$PF_PORT/g" /config/qBittorrent/config/qBittorrent.conf
 fi
 
 # Set user and group id
@@ -417,11 +421,13 @@ exec doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config 
 
 while : ; do
 	sleep 600
-  binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
-  if [ `echo "$binding" | jq -r '.status'` == "OK" ]; then
-    printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
-  else
-    printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
-    exit 4
+  if [ $PORT_FORWARDING == "true" ]; then
+    binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
+    if [ `echo "$binding" | jq -r '.status'` == "OK" ]; then
+      printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
+    else
+      printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
+      exit 5
+    fi
   fi
 done

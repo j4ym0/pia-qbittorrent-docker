@@ -4,6 +4,7 @@ FROM ubuntu:23.04
 ENV USER= \
     PASSWORD= \
     REGION="Netherlands" \
+    PORT_FORWARDING=false \
     WEBUI_PORT=8888 \
     DNS_SERVERS=84.200.69.80,84.200.70.40 \
     UID=700 \
