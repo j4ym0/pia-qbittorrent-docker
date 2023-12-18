@@ -367,6 +367,11 @@ if [ $PORT_FORWARDING == "true" ]; then
   binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
   if [ `echo "$binding" | jq -r '.status'` == "OK" ]; then
     printf " * $(echo $binding | jq -r '.message')\n"
+    # Port will be added so we will open the port ont the firewall
+    printf " * adding port to firewall\n"
+    iptables -A INPUT -i tun0 -p tcp --dport $PF_PORT -j ACCEPT
+    exitOnError $?
+    printf "DONE\n"
   else
     printf " * $(echo $binding | jq -r '.message')\n"
     exit 4
