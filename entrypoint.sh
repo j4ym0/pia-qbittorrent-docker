@@ -320,6 +320,40 @@ printf "[INFO] Launching OpenVPN\n"
 cd "$TARGET_PATH"
 openvpn --config config.ovpn --daemon "$@"
 
+############################################
+# qBittorrent config
+############################################
+printf "[INFO] Checking qBittorrent config\n"
+if [ ! -e /config/qBittorrent/config/qBittorrent.conf ]; then
+	mkdir -p /config/qBittorrent/config && cp /qBittorrent.conf /config/qBittorrent/config/qBittorrent.conf
+	chmod 755 /config/qBittorrent/config/qBittorrent.conf
+	printf " * Copying default qBittorrent config\n"
+fi
+
+# Set user and group id
+if [ -n "$UID" ]; then
+    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$UID:|g" /etc/passwd
+fi
+
+if [ -n "$GID" ]; then
+    sed -i "s|^\(qbtUser:x:[0-9]*\):[0-9]*:|\1:$GID:|g" /etc/passwd
+    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$GID:|g" /etc/group
+fi
+
+# Set ownership of folders, but don't set ownership of existing files in downloads
+chown qbtUser:qbtUser /downloads
+chown qbtUser:qbtUser -R /config
+
+# Wait until vpn is up
+printf "[INFO] Waiting for VPN to connect\n"
+while : ; do
+	tunnelstat=$(ifconfig | ack "tun|tap")
+	if [ ! -z "${tunnelstat}" ]; then
+		break
+	else
+		sleep 1
+	fi
+done
 
 ############################################
 # Port Forwarding
@@ -378,48 +412,17 @@ if [ $PORT_FORWARDING == "true" ]; then
   fi
 fi
 
-############################################
-# Start qBittorrent
-############################################
-printf "[INFO] Checking qBittorrent config\n"
-if [ ! -e /config/qBittorrent/config/qBittorrent.conf ]; then
-	mkdir -p /config/qBittorrent/config && cp /qBittorrent.conf /config/qBittorrent/config/qBittorrent.conf
-	chmod 755 /config/qBittorrent/config/qBittorrent.conf
-	printf " * Copying default qBittorrent config\n"
-fi
-
 if [ $PORT_FORWARDING == "true" ]; then
   sed -i "s/Session\\\Port=[0-9]*/Session\\\Port=$PF_PORT/g" /config/qBittorrent/config/qBittorrent.conf
 fi
 
-# Set user and group id
-if [ -n "$UID" ]; then
-    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$UID:|g" /etc/passwd
-fi
-
-if [ -n "$GID" ]; then
-    sed -i "s|^\(qbtUser:x:[0-9]*\):[0-9]*:|\1:$GID:|g" /etc/passwd
-    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$GID:|g" /etc/group
-fi
-
-# Set ownership of folders, but don't set ownership of existing files in downloads
-chown qbtUser:qbtUser /downloads
-chown qbtUser:qbtUser -R /config
-
-# Wait until vpn is up
-printf "[INFO] Waiting for VPN to connect\n"
-while : ; do
-	tunnelstat=$(ifconfig | ack "tun|tap")
-	if [ ! -z "${tunnelstat}" ]; then
-		break
-	else
-		sleep 1
-	fi
-done
-
 if [ -n "$UMASK" ]; then
     umask "$UMASK"
 fi
+
+############################################
+# Start qBittorrent
+############################################
 
 printf "[INFO] Launching qBittorrent\n"
 exec doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config &
