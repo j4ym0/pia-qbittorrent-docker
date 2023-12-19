@@ -427,15 +427,24 @@ fi
 printf "[INFO] Launching qBittorrent\n"
 exec doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config &
 
+i=1
 while : ; do
-	sleep 600
-  if [ $PORT_FORWARDING == "true" ]; then
-    binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
-    if [ `echo "$binding" | jq -r '.status'` == "OK" ]; then
-      printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
-    else
-      printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
-      exit 5
+	sleep 10
+  if [ $i -gt 60 ]; then
+    i=1
+    if [ $PORT_FORWARDING == "true" ]; then
+      binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
+      if [ `echo "$binding" | jq -r '.status'` == "OK" ]; then
+        printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
+      else
+        printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
+        exit 5
+      fi
     fi
   fi
+  if ! `pgrep -x "qbittorrent-nox" > /dev/null` 
+  then
+    break
+  fi
+  i=$((i + 1))
 done
