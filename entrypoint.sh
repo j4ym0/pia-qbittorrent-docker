@@ -405,7 +405,6 @@ if [ $PORT_FORWARDING == "true" ]; then
     printf " * adding port to firewall\n"
     iptables -A INPUT -i tun0 -p tcp --dport $PF_PORT -j ACCEPT
     exitOnError $?
-    printf "DONE\n"
   else
     printf " * $(echo $binding | jq -r '.message')\n"
     exit 4
