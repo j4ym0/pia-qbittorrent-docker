@@ -61,7 +61,7 @@
 1. Launch the container with:
 
     ```bash
-    docker run -d --init --name=pia --cap-add=NET_ADMIN -v /My/Downloads/Folder/:/downloads \
+    docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN -v /My/Downloads/Folder/:/downloads \
     -p 8888:8888 -e REGION="Netherlands" -e USER=xxxxxxx -e PASSWORD=xxxxxxxx \
     j4ym0/pia-qbittorrent
     ```
@@ -96,6 +96,15 @@ To get the user id, run `id -u USER`
 To get the group id for a user, run `id -g USER`
 PIA DNS Servers 209.222.18.222 and 209.222.18.218
 Handshake DNS Servers 103.196.38.38 and 103.196.38.39
+
+## Port Forwarding
+
+If you enable port forwarding by adding `-e PORT_FORWARDING=true` your pia-qbittorrent, your container will be opened to the outside. This is beneficial when seeding/uploading. On startup a port will be requested from Private Internet Access, this port will then be opened on the containers firewall and added to the qBittorrent config. qBittorrent will then bind to that port on launch.
+
+You can not specify a port, Private Internet Access assign a random port to your connection that will change every time. The port will be assigned for a maximum of 2 months. The container will have to keep in contact with PIA to keep the port alive and the port may be revoke if the container is not able to keep in contact. 
+
+If the internet connection is lossed for a short time, the port remains open.
+If the internet connection is lost for longer than 15 minutes the port should remain open until the port is reassigned. Although the container is designed to restart if there is an issue with port forwarding (exit code 5), i have yet to experience a port becoming unavailable. If you seem to have an issue, restart the container or goto File and use the exit qBittorrent from the webUI. The container will restart if `--restart unless-stopped` is set .
 
 ## Connect to webUI
 
