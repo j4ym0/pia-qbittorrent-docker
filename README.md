@@ -84,7 +84,7 @@ try [http://checkmyip.torrentprivacy.com/](http://checkmyip.torrentprivacy.com/)
 | `REGION`             | `Netherlands` | One of the [PIA regions](https://www.privateinternetaccess.com/pages/network/) |
 | `USER`               | | Your PIA username                                                              |
 | `PASSWORD`           | | Your PIA password                                                              |
-| `PORT_FORWARDING`    | `false` | Set to true if you with to enable port forwarding from PIA                                                              |
+| `PORT_FORWARDING`    | `false` | Set to `true` if you with to enable port forwarding from PIA                                                              |
 | `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP proxy                                 |
 | `DNS_SERVERS`        | `209.222.18.222,209.222.18.218,103.196.38.38,103.196.38.39` | DNS servers to use, comma separated                                            
 | `UID`                | | The UserID (default 700)                                                       |
@@ -97,12 +97,14 @@ To get the group id for a user, run `id -g USER`
 PIA DNS Servers 209.222.18.222 and 209.222.18.218
 Handshake DNS Servers 103.196.38.38 and 103.196.38.39
 
-## Connect to it
+## Connect to webUI
 
 You can connect via your web browser using http://127.0.0.1:8888 or you public ip / LAN if you have forwarding set up
 
 Default username: admin
 Default Password: adminadmin
+
+The default password can be found in the output log from the container. View it with `docker logs pia-qbittorrent`
 
 ## For the paranoids
 
