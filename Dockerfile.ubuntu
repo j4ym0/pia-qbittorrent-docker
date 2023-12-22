@@ -51,7 +51,7 @@ RUN apt-get update && \
     mkdir -p /openvpn/target && \
     unzip -q openvpn-nextgen.zip -d /openvpn/nextgen && \
     rm *.zip &&  \
-    apt-get purge -y -qq wget software-properties-common apt-utils cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qtbase5-dev qttools5-dev libqt5svg5-dev curl git python3-dev unzip && \
+    apt-get purge -y -qq wget software-properties-common apt-utils cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qtbase5-dev qttools5-dev libqt5svg5-dev git python3-dev unzip && \
     apt-get clean -qq && \
     apt-get autoclean -qq && \
     rm -rf /*.zip /tmp/* /var/tmp/* /var/lib/apt/lists/* && \
