@@ -115,8 +115,8 @@ else
   exitOnError $?
   printf "DONE\n"
   printf "[INFO] Clearing environment variables USER and PASSWORD..."
-#  unset -v USER
-#  unset -v PASSWORD
+  unset -v USER
+  unset -v PASSWORD
   printf "DONE\n"
 fi
 
@@ -362,8 +362,8 @@ if [ $PORT_FORWARDING == "true" ]; then
   printf "[INFO] Setting up port forwarding\n"
   pia_gen=$(curl -s --location --request POST \
   'https://www.privateinternetaccess.com/api/client/v2/token' \
-  --form "username=$USER" \
-  --form "password=$PASSWORD" )
+  --form "username=$(sed '1!d' /auth.conf)" \
+  --form "password=$(sed '2!d' /auth.conf)" )
   
   piatoken=$(echo "$pia_gen" | jq -r '.token')
   if [ ! -z $piatoken ]; then
@@ -375,7 +375,7 @@ if [ $PORT_FORWARDING == "true" ]; then
     printf " * Got PIA gateway $PIA_GATEWAY\n"
   fi
 
-  piasif=$(curl -k -s "$USER:$PASSWORD" "https://$PIA_GATEWAY:19999/getSignature?token=$piatoken")
+  piasif=$(curl -k -s "$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf))" "https://$PIA_GATEWAY:19999/getSignature?token=$piatoken")
   if [ ! -z "$piasif" ]; then
     printf " * Got PIA token\n"
   else
