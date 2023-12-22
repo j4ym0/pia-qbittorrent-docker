@@ -63,7 +63,7 @@ printf " =========================================\n"
 ############################################
 exitIfUnset USER
 exitIfUnset PASSWORD
-cat "/openvpn/nextgen/$server.ovpn" &> /dev/null
+cat "/openvpn/nextgen/$server.ovpn" > /dev/null
 exitOnError $? "/openvpn/nextgen/$server.ovpn is not accessible"
 if [ -z $WEBUI_PORT ]; then
   WEBUI_PORT=8888
