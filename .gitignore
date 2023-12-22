@@ -3,5 +3,5 @@ downloads/
 build.cmd
 test-build.cmd
 .idea/
-qBittorrent/
-qBittorrentv2/
+qbittorrent/
+downloads/
