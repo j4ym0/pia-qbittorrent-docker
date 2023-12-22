@@ -358,7 +358,7 @@ done
 ############################################
 # Port Forwarding
 ############################################
-if [ $PORT_FORWARDING == "true" ]; then
+if "$PORT_FORWARDING"; then
   printf "[INFO] Setting up port forwarding\n"
   pia_gen=$(curl -s --location --request POST \
   'https://www.privateinternetaccess.com/api/client/v2/token' \
@@ -366,7 +366,7 @@ if [ $PORT_FORWARDING == "true" ]; then
   --form "password=$(sed '2!d' /auth.conf)" )
   
   piatoken=$(echo "$pia_gen" | jq -r '.token')
-  if [ ! -z $piatoken ]; then
+  if [ ! -z "$piatoken" ]; then
     printf " * Got PIA token\n"
   fi
 
@@ -399,7 +399,7 @@ if [ $PORT_FORWARDING == "true" ]; then
   fi
 
   binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
-  if [ `echo "$binding" | jq -r '.status'` == "OK" ]; then
+  if [ `echo "$binding" | jq -r '.status'` = "OK" ]; then
     printf " * $(echo $binding | jq -r '.message')\n"
     # Port will be added so we will open the port ont the firewall
     printf " * adding port to firewall\n"
@@ -411,7 +411,7 @@ if [ $PORT_FORWARDING == "true" ]; then
   fi
 fi
 
-if [ $PORT_FORWARDING == "true" ]; then
+if "$PORT_FORWARDING"; then
   sed -i "s/Session\\\Port=[0-9]*/Session\\\Port=$PF_PORT/g" /config/qBittorrent/config/qBittorrent.conf
 fi
 
@@ -431,9 +431,9 @@ while : ; do
 	sleep 10
   if [ $i -gt 60 ]; then
     i=1
-    if [ $PORT_FORWARDING == "true" ]; then
+    if "$PORT_FORWARDING"; then
       binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
-      if [ `echo "$binding" | jq -r '.status'` == "OK" ]; then
+      if [ `echo "$binding" | jq -r '.status'` = "OK" ]; then
         printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
       else
         printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
