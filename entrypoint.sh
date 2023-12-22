@@ -63,7 +63,7 @@ printf " =========================================\n"
 ############################################
 exitIfUnset USER
 exitIfUnset PASSWORD
-cat "/openvpn/nextgen/$server.ovpn" &> /dev/null
+cat "/openvpn/nextgen/$server.ovpn" > /dev/null
 exitOnError $? "/openvpn/nextgen/$server.ovpn is not accessible"
 if [ -z $WEBUI_PORT ]; then
   WEBUI_PORT=8888
@@ -321,7 +321,7 @@ cd "$TARGET_PATH"
 openvpn --config config.ovpn --daemon "$@"
 
 ############################################
-# Start qBittorrent
+# qBittorrent config
 ############################################
 printf "[INFO] Checking qBittorrent config\n"
 if [ ! -e /config/qBittorrent/config/qBittorrent.conf ]; then
@@ -355,9 +355,95 @@ while : ; do
 	fi
 done
 
+############################################
+# Port Forwarding
+############################################
+if "$PORT_FORWARDING"; then
+  printf "[INFO] Setting up port forwarding\n"
+  pia_gen=$(curl -s --location --request POST \
+  'https://www.privateinternetaccess.com/api/client/v2/token' \
+  --form "username=$(sed '1!d' /auth.conf)" \
+  --form "password=$(sed '2!d' /auth.conf)" )
+  
+  piatoken=$(echo "$pia_gen" | jq -r '.token')
+  if [ ! -z "$piatoken" ]; then
+    printf " * Got PIA token\n"
+  fi
+
+  PIA_GATEWAY=$(route -n | grep -e 'UG.*tun0' | awk '{print $2}' | awk 'NR==1{print $1}' )
+  if [ ! -z "$PIA_GATEWAY" ]; then
+    printf " * Got PIA gateway $PIA_GATEWAY\n"
+  fi
+
+  piasif=$(curl -k -s "$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf))" "https://$PIA_GATEWAY:19999/getSignature?token=$piatoken")
+  if [ ! -z "$piasif" ]; then
+    printf " * Got PIA token\n"
+  else
+    exit 4
+  fi
+
+  signature=$(echo "$piasif" | jq -r '.signature')
+  if [ ! -z "$signature" ]; then
+    printf " * Got signature\n"
+  fi
+
+  payload_ue=$(echo "$piasif" | jq -r '.payload')
+  payload=$(echo "$payload_ue" | base64 -d | jq)
+  if [ ! -z "$payload" ]; then
+    printf " * Decoded payload\n"
+  fi
+
+  PF_PORT=$(echo "$payload" | jq -r '.port')
+  if [ ! -z "$PF_PORT" ]; then
+    printf " * Your Forwarding port is $PF_PORT\n"
+  fi
+
+  binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
+  if [ `echo "$binding" | jq -r '.status'` = "OK" ]; then
+    printf " * $(echo $binding | jq -r '.message')\n"
+    # Port will be added so we will open the port ont the firewall
+    printf " * adding port to firewall\n"
+    iptables -A INPUT -i tun0 -p tcp --dport $PF_PORT -j ACCEPT
+    exitOnError $?
+  else
+    printf " * $(echo $binding | jq -r '.message')\n"
+    exit 4
+  fi
+fi
+
+if "$PORT_FORWARDING"; then
+  sed -i "s/Session\\\Port=[0-9]*/Session\\\Port=$PF_PORT/g" /config/qBittorrent/config/qBittorrent.conf
+fi
+
 if [ -n "$UMASK" ]; then
     umask "$UMASK"
 fi
 
+############################################
+# Start qBittorrent
+############################################
+
 printf "[INFO] Launching qBittorrent\n"
-exec doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config
+exec doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config &
+
+i=1
+while : ; do
+	sleep 10
+  if [ $i -gt 60 ]; then
+    i=1
+    if "$PORT_FORWARDING"; then
+      binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
+      if [ `echo "$binding" | jq -r '.status'` = "OK" ]; then
+        printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
+      else
+        printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
+        exit 5
+      fi
+    fi
+  fi
+  if ! `pgrep -x "qbittorrent-nox" > /dev/null` 
+  then
+    break
+  fi
+  i=$((i + 1))
+done
