@@ -4,7 +4,7 @@
 <p align="center">
   <a href="https://github.com/j4ym0/pia-qbittorrent-docker/releases">
     <img alt="latest version" src="https://img.shields.io/github/v/tag/j4ym0/pia-qbittorrent-docker.svg?style=flat-square" />
-  </a>
+  </a>  
   <a href="https://hub.docker.com/r/j4ym0/pia-qbittorrent">
     <img alt="Pulls from DockerHub" src="https://img.shields.io/docker/pulls/j4ym0/pia-qbittorrent.svg?style=flat-square" />
   </a>
@@ -59,11 +59,21 @@
 
     </p></details>
 
-1. Launch the container with:
+1. Launch the container with:  
 
+    Basic Launch
     ```bash
-    docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN -v /My/Downloads/Folder/:/downloads \
+    docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN
+    -v /My/Downloads/Folder/:/downloads \
     -p 8888:8888 -e REGION="Netherlands" -e USER=xxxxxxx -e PASSWORD=xxxxxxxx \
+    j4ym0/pia-qbittorrent
+    ```  
+    Advanced Launch
+    ```bash
+    docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
+    -v /My/Downloads/Folder/:/downloads -v /qBittorrent/config/:/config \
+    -p 8888:8888 -e REGION="Netherlands" -e USER=xxxxxxx -e PASSWORD=xxxxxxxx \
+    -e UID=3 -GID=3 -e TZ=Etc/UTC -e PORT_FORWARDING=true /
     j4ym0/pia-qbittorrent
     ```
 
