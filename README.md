@@ -86,7 +86,7 @@
 
 Check the PIA IP address matches your expectations
 
-try [http://checkmyip.torrentprivacy.com/](http://checkmyip.torrentprivacy.com/)
+try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](https://www.whatismyip.net/tools/torrent-ip-checker))
 
 ## Environment variables
 
