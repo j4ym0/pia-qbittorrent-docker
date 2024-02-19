@@ -114,11 +114,11 @@ else
   chmod 400 /auth.conf
   exitOnError $?
   printf "DONE\n"
-  printf "[INFO] Clearing environment variables USER and PASSWORD..."
-  unset -v USER
-  unset -v PASSWORD
-  printf "DONE\n"
 fi
+printf "[INFO] Clearing environment variables USER and PASSWORD..."
+unset -v USER
+unset -v PASSWORD
+printf "DONE\n"
 
 ############################################
 # CHECK FOR TUN DEVICE
