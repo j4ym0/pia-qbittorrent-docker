@@ -73,7 +73,7 @@
     docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
     -v /My/Downloads/Folder/:/downloads -v /qBittorrent/config/:/config \
     -p 8888:8888 -e REGION="Netherlands" -e USER=xxxxxxx -e PASSWORD=xxxxxxxx \
-    -e UID=3 -GID=3 -e TZ=Etc/UTC -e PORT_FORWARDING=true /
+    -e UID=3 -e GID=3 -e TZ=Etc/UTC -e PORT_FORWARDING=true \
     j4ym0/pia-qbittorrent
     ```
 
