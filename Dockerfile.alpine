@@ -64,7 +64,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
 	cd / && \
 	rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/* /usr/include/* 
 
-COPY ./entrypoint.sh ./qBittorrent.conf /
+COPY ./entrypoint.sh ./healthcheck.sh ./qBittorrent.conf /
 
 # Add qBittorrent User
 RUN adduser \
