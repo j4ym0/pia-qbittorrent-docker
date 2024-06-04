@@ -95,7 +95,7 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 | `REGION`             | `Netherlands` | One of the [PIA regions](https://www.privateinternetaccess.com/pages/network/) |
 | `USER`               | | Your PIA username                                                              |
 | `PASSWORD`           | | Your PIA password                                                              |
-| `PORT_FORWARDING`    | `false` | Set to `true` if you with to enable port forwarding from PIA                                                              |
+| `PORT_FORWARDING`    | `false` | Set to `true` if you want to enable port forwarding from PIA                                                              |
 | `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP proxy                                 |
 | `DNS_SERVERS`        | `209.222.18.222,209.222.18.218,103.196.38.38,103.196.38.39` | DNS servers to use, comma separated                                            
 | `UID`                | | The UserID (default 700)                                                       |
