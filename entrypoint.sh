@@ -420,6 +420,15 @@ if [ -n "$UMASK" ]; then
 fi
 
 ############################################
+# Run post-vpn-connect hook script
+############################################
+
+if [ -f /config/post-vpn-connect.sh ]; then
+  printf "[INFO] Running post-vpn-connect.sh\n"
+  . /config/post-vpn-connect.sh
+fi
+
+############################################
 # Start qBittorrent
 ############################################
 
