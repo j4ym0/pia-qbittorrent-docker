@@ -126,6 +126,10 @@ Default Password: adminadmin
 
 The default password can be found in the output log from the container. View it with `docker logs pia-qbittorrent`
 
+## Hooks
+
+If you need to extend what is happening with the container, you can create a shell script hook in `/config` (looking from perspective of container so whichever place you mapped to it) called `post-vpn-connect.sh` and execute code that will run just after OpenVPN connects but before qBitTorrent starts. Good place to update tracker security with your new IP etc.
+
 ## For the paranoids
 
 - You can review the code which essential consists in the [Dockerfile](https://github.com/j4ym0/pia-qbittorrent-docker/blob/master/Dockerfile) and [entrypoint.sh](https://github.com/j4ym0/pia-qbittorrent-docker/blob/master/entrypoint.sh)
