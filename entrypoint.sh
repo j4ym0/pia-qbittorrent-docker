@@ -423,13 +423,16 @@ fi
 # Start qBittorrent
 ############################################
 
+# add CTRL+C to exit loop from command line when qBittorrent has been launched
+trap 'echo "CTRL+C Detected. Exiting" && exit 1' INT
+
 printf "[INFO] Launching qBittorrent\n"
 exec doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config &
 
 i=1
 while : ; do
-	sleep 10
-  if [ $i -gt 60 ]; then
+	sleep 1
+  if [ $i -gt 600 ]; then
     i=1
     if "$PORT_FORWARDING"; then
       binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
