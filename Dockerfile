@@ -78,7 +78,7 @@ RUN adduser \
 RUN chmod 500 /entrypoint.sh
 
 # Start point for docker
-ENTRYPOINT /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
 
 # Helthcheck by polling web ui and checking vpn connection
 HEALTHCHECK --interval=1m --timeout=3s --start-period=60s --retries=1 CMD /healthcheck.sh
