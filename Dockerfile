@@ -19,7 +19,7 @@ VOLUME /config
 # Port for qBittorrent
 EXPOSE 8888
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Ok lets install everything
 RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git libtool linux-headers perl pkgconf python3-dev re2c tar unzip icu-dev libexecinfo-dev openssl-dev qt5-qtbase-dev qt5-qttools-dev zlib-dev qt5-qtsvg-dev && \

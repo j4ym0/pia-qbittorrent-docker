@@ -19,7 +19,7 @@ VOLUME /config
 # Port for qBittorrent
 EXPOSE 8888
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Ok lets install everything
 RUN apt-get update && \
