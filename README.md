@@ -126,7 +126,6 @@ You can connect via your web browser using http://127.0.0.1:8888 or you public i
 Default username: admin  
 Default Password: (A temporary password is provided in the docker logs `docker logs pia`)
 
-
 ## Hooks
 
 If you need to extend what is happening with the container, you can create a shell script hook in `/config` (looking from perspective of container so whichever place you mapped to it) called `post-vpn-connect.sh`. The code will run just after OpenVPN connects but before qBitTorrent starts. A good place to update tracker security with your new IP etc.
