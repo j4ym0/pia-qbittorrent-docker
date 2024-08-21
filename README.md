@@ -52,7 +52,7 @@
 
     - A Private Internet Access **username** and **password** - [Sign up referral link](http://www.privateinternetaccess.com/pages/buy-a-vpn/1218buyavpn?invite=U2FsdGVkX1-Ki-3bKiIknvTQB1F-2Tz79e8QkNeh5Zc%2CbPOXkZjc102Clh5ih5-Pa_TYyTU)
     - External firewall requirements, if you have one
-        - Allow outbound TCP 853 to 1.1.1.1 to allow Unbound to resolve the PIA domain name at start. You can then block it once the container is started.
+        - Allow outbound TCP 853 to 1.1.1.1 to allow the resolve the PIA domain names at start. You can then block it once the container is started.
         - For VPN connection allow outbound UDP 1198
         - For the built-in web HTTP proxy, allow inbound TCP 8888
     - Docker API 1.25 to support `init`
@@ -81,6 +81,7 @@
     - Change the many [environment variables](#environment-variables) available
     - Use `-p 8888:8888/tcp` to access the HTTP web proxy
     - Pass additional arguments to *openvpn* using Docker's command function (commands after the image name)
+    - Use a hook script after connecting to the VPN to execute additional code. See [Hooks](#Hooks)
 
 ## Testing
 
@@ -122,13 +123,34 @@ If the internet connection is lost for longer than 15 minutes the port should re
 You can connect via your web browser using http://127.0.0.1:8888 or you public ip / LAN if you have forwarding set up
 
 Default username: admin  
-Default Password: adminadmin
+Default Password: (A temporary password is provided in the docker logs `docker logs pia`)
 
 The default password can be found in the output log from the container. View it with `docker logs pia-qbittorrent`
 
 ## Hooks
 
-If you need to extend what is happening with the container, you can create a shell script hook in `/config` (looking from perspective of container so whichever place you mapped to it) called `post-vpn-connect.sh` and execute code that will run just after OpenVPN connects but before qBitTorrent starts. Good place to update tracker security with your new IP etc.
+If you need to extend what is happening with the container, you can create a shell script hook in `/config` (looking from perspective of container so whichever place you mapped to it) called `post-vpn-connect.sh`. The code will run just after OpenVPN connects but before qBitTorrent starts. A good place to update tracker security with your new IP etc.
+
+The script runs as the root user and can install applications via apk/apt, edit the iptables if needed and use variables from the main script. Variables from the main script should not be change as this may cause issues with the port forwarding, but you can happily read them and use them in your code. 
+
+|    variable   | Description                                                                    |
+|---------------|--------------------------------------------------------------------------------|
+| `PF_PORT`     | The forwarding port given to you by Private Internet Access for this connection|
+| `WEBUI_PORT`  | The local web UI port when connecting to qBittorrent                           |
+| `UID`         | The local user id that qBittorrent uses to write files                         |
+| `GID`         | The local group id that qBittorrent uses to write files                        |
+
+Basic script
+```bash
+# Get my external ip and save it to a var
+MY_IP=$(wget -qO- ifconfig.me/ip)
+# print my external ip we have just saved
+printf " My IP is $MY_IP\n"
+# print my forwarding port the main script requested from Private Internet Access
+printf " My forwarding port is $PF_PORT\n"
+```
+
+Use caution with blocking loops as this script must finish before qBittorrent is started.
 
 ## For the paranoids
 
