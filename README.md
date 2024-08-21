@@ -4,7 +4,7 @@
 <p align="center">
   <a href="https://github.com/j4ym0/pia-qbittorrent-docker/releases">
     <img alt="latest version" src="https://img.shields.io/github/v/tag/j4ym0/pia-qbittorrent-docker.svg?style=flat-square" />
-  </a>  
+  </a>
   <a href="https://hub.docker.com/r/j4ym0/pia-qbittorrent">
     <img alt="Pulls from DockerHub" src="https://img.shields.io/docker/pulls/j4ym0/pia-qbittorrent.svg?style=flat-square" />
   </a>
@@ -22,7 +22,8 @@
 
 - [Ubuntu 23.04](https://ubuntu.com) for a base image
 - [Alpine 3.16.0](https://alpinelinux.org) for a base image
-- [OpenVPN 2.6.1](https://packages.ubuntu.com/bionic/openvpn) to tunnel to PIA nextgen servers
+- [OpenVPN 2.5.6] Alpine (https://pkgs.alpinelinux.org/package/edge/main/x86_64/openvpn) to tunnel to PIA nextgen servers
+- [OpenVPN 2.6.1] Ubuntu (https://packages.ubuntu.com/bionic/openvpn) to tunnel to PIA nextgen servers
 - [IPtables 1.8.8](https://packages.ubuntu.com/bionic/iptables) enforces the container to communicate only through the VPN or with other containers in its virtual network (acts as a killswitch)
 
 </p></details>
@@ -125,7 +126,6 @@ You can connect via your web browser using http://127.0.0.1:8888 or you public i
 Default username: admin  
 Default Password: (A temporary password is provided in the docker logs `docker logs pia`)
 
-The default password can be found in the output log from the container. View it with `docker logs pia-qbittorrent`
 
 ## Hooks
 
