@@ -139,7 +139,16 @@ The script runs as the root user and can install applications via apk/apt, edit 
 | `UID`         | The local user id that qBittorrent uses to write files                         |
 | `GID`         | The local group id that qBittorrent uses to write files                        |
 
-Basic script
+Basic script for latest or alpine
+```bash
+# Get my external ip and save it to a var
+MY_IP=$(wget -qO- ifconfig.me/ip)
+# print my external ip we have just saved
+printf " My IP is $MY_IP\n"
+# print my forwarding port the main script requested from Private Internet Access
+printf " My forwarding port is $PF_PORT\n"
+```
+Basic script for ubuntu
 ```bash
 # Get my external ip and save it to a var
 MY_IP=$(wget -qO- ifconfig.me/ip)
