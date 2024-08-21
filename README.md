@@ -112,7 +112,7 @@ Handshake DNS Servers 103.196.38.38 and 103.196.38.39
 
 ## Port Forwarding
 
-If you enable port forwarding by adding `-e PORT_FORWARDING=true` your pia-qbittorrent, your container will be opened to the outside. This is beneficial when seeding/uploading. On startup a port will be requested from Private Internet Access, this port will then be opened on the containers firewall and added to the qBittorrent config. qBittorrent will then bind to that port on launch.
+If you enable port forwarding by adding `-e PORT_FORWARDING=true` to your container it will be opened to the outside. This is beneficial when seeding/uploading. On startup a port will be requested from Private Internet Access, this port will then be opened on the containers firewall and added to the qBittorrent config. qBittorrent will then bind to that port on launch.
 
 You can not specify a port, Private Internet Access assign a random port to your connection that will change every time. The port will be assigned for a maximum of 2 months. The container will have to keep in contact with PIA to keep the port alive and the port may be revoke if the container is not able to keep in contact. 
 
