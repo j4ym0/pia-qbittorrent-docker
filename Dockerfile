@@ -25,7 +25,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git libtool linux-headers perl pkgconf python3-dev re2c tar unzip icu-dev libexecinfo-dev openssl-dev qt5-qtbase-dev qt5-qttools-dev zlib-dev qt5-qtsvg-dev && \
 	apk add --no-cache ca-certificates libexecinfo libressl qt5-qtbase iptables openvpn ack bind-tools python3 doas tzdata curl jq && \
 	if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python ; fi && \
-  curl -sNLk --retry 5 https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.gz | tar xzC /tmp && \
+  curl -sNLk --retry 5 https://github.com/boostorg/boost/releases/download/boost-1.86.0/boost-1.86.0-b2-nodocs.tar.gz | tar xzC /tmp && \
   curl -sSL --retry 5 https://github.com/ninja-build/ninja/archive/refs/tags/v1.11.1.tar.gz | tar xzC /tmp && \
 	cd /tmp/*ninja* && \
   cmake -Wno-dev -B build \
@@ -38,7 +38,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
   cmake -Wno-dev -G Ninja -B build \
     -D CMAKE_BUILD_TYPE="Release" \
     -D CMAKE_CXX_STANDARD=17 \
-    -D BOOST_INCLUDEDIR="/tmp/boost_1_76_0/" \
+    -D BOOST_INCLUDEDIR="/tmp/boost-1.86.0/" \
     -D CMAKE_INSTALL_LIBDIR="lib" \
     -D CMAKE_INSTALL_PREFIX="/usr/local" && \
   cmake --build build -j4 && \
@@ -49,7 +49,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
     -D CMAKE_BUILD_TYPE="release" \
     -D GUI=OFF \
     -D CMAKE_CXX_STANDARD=17 \
-    -D BOOST_INCLUDEDIR="/tmp/boost_1_76_0/" \
+    -D BOOST_INCLUDEDIR="/tmp/boost-1.86.0/" \
     -D CMAKE_CXX_STANDARD_LIBRARIES="/usr/lib/libexecinfo.so" \
     -D CMAKE_INSTALL_PREFIX="/usr/local" && \
   cmake --build build -j4 && \
