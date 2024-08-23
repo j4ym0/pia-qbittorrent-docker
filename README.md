@@ -21,8 +21,8 @@
 <details><summary>Click to show base components</summary><p>
 
 - [Ubuntu 24.04](https://ubuntu.com) for a base image
-- [Alpine 3.16.0](https://alpinelinux.org) for a base image
-- [OpenVPN 2.5.6] Alpine OpenVPN (https://pkgs.alpinelinux.org/package/v3.16/main/x86_64/openvpn) to tunnel to PIA nextgen servers
+- [Alpine 3.20.0](https://alpinelinux.org) for a base image
+- [OpenVPN 2.6.11] Alpine OpenVPN (https://pkgs.alpinelinux.org/package/v3.20/main/x86_64/openvpn) to tunnel to PIA nextgen servers
 - [OpenVPN 2.6.9] Ubuntu OpenVPN (https://packages.ubuntu.com/bionic/openvpn) to tunnel to PIA nextgen servers
 - [IPtables 1.8.10](https://packages.ubuntu.com/noble/iptables) enforces the container to communicate only through the VPN or with other containers in its virtual network (acts as a killswitch)
 

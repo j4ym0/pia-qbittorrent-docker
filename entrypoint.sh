@@ -183,6 +183,9 @@ for ip in $VPNIPS; do
   echo "remote $ip $PORT" >> "$TARGET_PATH/config.ovpn"
   exitOnError $? "Cannot add 'remote $ip $PORT' to $TARGET_PATH/config.ovpn"
 done
+# Remove the CRL from the ovpn file as it is not compatable with openssl 3
+sed -i '/<crl-verify>/,/<\/crl-verify>/d'  "$TARGET_PATH/config.ovpn"
+exitOnError $? "Cannot remove crl-verify from $TARGET_PATH/config.ovpn"
 # Uses the username/password from this file to get the token from PIA
 echo "auth-user-pass /auth.conf" >> "$TARGET_PATH/config.ovpn"
 exitOnError $? "Cannot add 'auth-user-pass /auth.conf' to $TARGET_PATH/config.ovpn"
