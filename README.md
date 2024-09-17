@@ -52,9 +52,10 @@
 1. Requirements
 
     - A Private Internet Access **username** and **password** - [Sign up referral link](http://www.privateinternetaccess.com/pages/buy-a-vpn/1218buyavpn?invite=U2FsdGVkX1-Ki-3bKiIknvTQB1F-2Tz79e8QkNeh5Zc%2CbPOXkZjc102Clh5ih5-Pa_TYyTU)
-    - External firewall requirements, if you have one
-        - Allow outbound TCP 853 to 1.1.1.1 to allow the resolve the PIA domain names at start. You can then block it once the container is started.
-        - For VPN connection allow outbound UDP 1198
+    - Advanced firewall requirements, if you have one
+        - Allow outbound UDP 53 to 84.200.69.80 and 84.200.70.40 this allows the resolve of PIA domain names on startup. 
+          - If you set your own `DNS_SERVERS` with the environment variable, allow the outbound connection to your chosen DNS servers IP and Port instead
+        - For VPN connection allow outbound UDP 1198, all traffic including DNS should go through the VPN connection once connected.
         - For the built-in web HTTP proxy, allow inbound TCP 8888
     - Docker API 1.25 to support `init`
 
@@ -92,23 +93,48 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 
 ## Environment variables
 
-| Environment variable | Default | Description                                                                    |
-|----------------------| --- |--------------------------------------------------------------------------------|
-| `REGION`             | `Netherlands` | One of the [PIA regions](https://www.privateinternetaccess.com/pages/network/) |
-| `USER`               | | Your PIA username                                                              |
-| `PASSWORD`           | | Your PIA password                                                              |
-| `PORT_FORWARDING`    | `false` | Set to `true` if you want to enable port forwarding from PIA                                                              |
-| `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP proxy                                 |
-| `DNS_SERVERS`        | `209.222.18.222,209.222.18.218,103.196.38.38,103.196.38.39` | DNS servers to use, comma separated                                            
-| `UID`                | | The UserID (default 700)                                                       |
-| `GID`                | | The GroupID (default 700)                                                      |
-| `TZ`                 | | The Timzeone                                                                   |
+| Environment variable | Default | Description                                                                               |
+|----------------------| --- |-----------------------------------------------------------------------------------------------|
+| `REGION`             | `Netherlands` | One of the [PIA regions](https://www.privateinternetaccess.com/pages/network/)      |
+| `USER`               | | Your PIA username                                                                                 |
+| `PASSWORD`           | | Your PIA password                                                                                 |
+| `PORT_FORWARDING`    | `false` | Set to `true` if you want to enable port forwarding from PIA, This helps with uploading   |
+| `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP proxy                                             |
+| `DNS_SERVERS`        | `84.200.69.80,84.200.70.40` | DNS servers to use, comma separated [see list](#DNS Servers)          |
+| `UID`                | 700 | The UserID                                                                                    |
+| `GID`                | 700 | The GroupID                                                                                   |
+| `TZ`                 | | The Timezone                                                                                      |
 
 Port forwarding port will be added to qBittorrent settings on startup. A port can last for up to 2 months.  
 To get the user id, run `id -u USER`  
 To get the group id for a user, run `id -g USER`  
-PIA DNS Servers 209.222.18.222 and 209.222.18.218  
-Handshake DNS Servers 103.196.38.38 and 103.196.38.39  
+
+## DNS Servers
+
+Quick list of DNS servers and port advice
+
+|   Server   | Description                                                       |    Port     |
+|------------|-------------------------------------------------------------------|-------------|
+| 84.200.69.80    | [DNS.WATCH](https://dns.watch/)                              | 53 (UDP)    |
+| 84.200.70.40    | [DNS.WATCH](https://dns.watch/)                              | 53 (UDP)    |
+| 103.196.38.38   | [Handshake DNS](https://www.hdns.io/)                        | 53 (UDP/TCP)|
+| 103.196.38.39   | [Handshake DNS](https://www.hdns.io/)                        | 53 (UDP/TCP)|
+| 1.1.1.1         | Cloudflare                                                   | 53 (UDP)    |
+| 1.0.0.1         | Cloudflare                                                   | 53 (UDP)    |
+| 8.8.8.8         | Google                                                       | 53 (UDP)    |
+| 8.8.4.4         | Google                                                       | 53 (UDP)    |
+
+Private Internet Access no longer offer a public facing DNS (209.222.18.222 and 209.222.18.218)
+
+Private Internet Access private DNS server 10.0.0.242 (DNS), 10.0.0.243 (DNS+Streaming), 10.0.0.244 (DNS+MACE), 10.0.0.241 (DNS+Streaming+Mace) can only be used once you are connected to Private Internet Access VPN.
+
+To change to Private Internet Access DNS server, this must be done after the VPN is connected. Add a [Hook Script](#Hooks), create a file in `/config` called `post-vpn-connect.sh`. Then Copy the below into the script file. This script will change the DNS servers after the VPN is connected. The Default DNS (84.200.69.80 or 84.200.70.40) will still be used to resolve the VPN server. 
+```bash
+# Update the resolv with the PIA DNS server
+echo " * * Adding 10.0.0.242 to resolv.conf"
+# > to replace the file and >> to add to the end of the file
+echo "nameserver 10.0.0.242" > /etc/resolv.conf
+```
 
 ## Port Forwarding
 
