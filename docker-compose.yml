@@ -1,4 +1,3 @@
-version: '3'
 services:
     pia-qbittorrent:
         image: j4ym0/pia-qbittorrent
