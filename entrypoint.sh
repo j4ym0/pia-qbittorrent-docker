@@ -39,6 +39,14 @@ exitIfNotIn(){
   exit 1
 }
 
+# Define paths for iptables versions
+IPTABLES_LEGACY="/usr/sbin/iptables-legacy"
+IP6TABLES_LEGACY="/usr/sbin/ip6tables-legacy"
+IPTABLES_NFT="/usr/sbin/iptables-nft"
+IP6TABLES_NFT="/usr/sbin/ip6tables-nft"
+IPTABLES_LEGACY_ALPINE="/sbin/xtables-legacy-multi"
+IPTABLES_NFT_ALPINE="/sbin/xtables-nft-multi"
+
 # link the lib for qbittorrent for alpine
 export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:${LD_LIBRARY_PATH}
 
@@ -238,6 +246,50 @@ printf "$VPN_DEVICE\n"
 ############################################
 # FIREWALL
 ############################################
+printf "[INFO] Checking firewall\n"
+if [ "$(readlink -f $(which iptables))" = "$IPTABLES_LEGACY" ]; then
+  printf " * Current mode: Legacy\n"
+  FIREWALL_MODE="legacy"
+elif [ "$(readlink -f $(which iptables))" = "$IPTABLES_LEGACY_ALPINE" ]; then
+  printf " * Current mode: Legacy\n"
+  FIREWALL_MODE="legacy"
+else
+  printf " * Current mode: Normal (nftables)\n"
+  FIREWALL_MODE="normal"
+fi
+
+if [ "$FIREWALL_MODE" = "legacy" ] && [ "$LEGACY_IPTABLES" = "true" ]; then
+  printf " * iptable set to prefered\n"
+else
+  printf " * Updateing iptable to prefered\n"
+  if [ "$LEGACY_IPTABLES"  = "true" ]; then 
+    if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
+      printf "   * OS Detected as Alpine\n"
+      printf "   * Switching to legacy iptables...\n"
+      ln -sf "$IPTABLES_LEGACY_ALPINE" /sbin/iptables
+      printf "   * Switched to legacy iptables\n"
+    else
+      printf "   * OS Detected as Ubuntu\n"
+      printf "   * Switching to legacy iptables...\n"
+      ln -sf "$IPTABLES_LEGACY" /usr/sbin/iptables
+      ln -sf "$IP6TABLES_LEGACY" /usr/sbin/ip6tables
+      printf "   * Switched to legacy iptables\n"
+    fi
+  else
+    if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
+      printf "   * OS Detected as Alpine\n"
+      printf "   * Switching to normal iptables...\n"
+      ln -sf "$IPTABLES_NFT_ALPINE" /sbin/iptables
+      printf "   * Switched to nft iptables\n"
+    else
+      printf "   * OS Detected as Ubuntu\n"
+      printf "   * Switching to normal iptables...\n"
+      ln -sf "$IPTABLES_NFT" /usr/sbin/iptables
+      ln -sf "$IP6TABLES_NFT" /usr/sbin/ip6tables
+      printf "   * Switched to nft iptables\n"
+    fi
+  fi
+fi
 printf "[INFO] Setting firewall\n"
 printf " * Blocking everything\n"
 printf "   * Deleting all iptables rules..."
