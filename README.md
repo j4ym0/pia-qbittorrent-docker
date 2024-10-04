@@ -222,8 +222,10 @@ Use caution with blocking loops as this script must finish before qBittorrent is
 
 ## Known Issues
 
-- "nft: Protocol not supported" - [Issue #16](https://github.com/j4ym0/pia-qbittorrent-docker/issues/16)
-This will happen if the host device does not have the package nftables, usually installed with the newer iptables. Set LEGACY_IPTABLES to true `-e LEGACY_IPTABLES=true`
+- **nft: Protocol not supported** - [Issue #16](https://github.com/j4ym0/pia-qbittorrent-docker/issues/16)
+  - This will happen if the host device does not have the package nftables, usually installed with the newer iptables. 
+  - Known to be a issue with synology NAS
+  - **Fix**: Set LEGACY_IPTABLES to true `-e LEGACY_IPTABLES=true`
 
 ## TODOs
 
