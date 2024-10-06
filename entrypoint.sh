@@ -260,6 +260,8 @@ fi
 
 if [ "$FIREWALL_MODE" = "legacy" ] && [ "$LEGACY_IPTABLES" = "true" ]; then
   printf " * iptable set to prefered\n"
+elif [ "$FIREWALL_MODE" = "normal" ] && [ "$LEGACY_IPTABLES" = "false" ]; then
+  printf " * iptable set to prefered\n"
 else
   printf " * Updateing iptable to prefered\n"
   if [ "$LEGACY_IPTABLES"  = "true" ]; then 
