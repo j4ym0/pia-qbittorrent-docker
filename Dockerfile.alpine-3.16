@@ -5,6 +5,7 @@ ENV USER= \
     PASSWORD= \
     REGION="Netherlands" \
     PORT_FORWARDING=false \
+    LEGACY_IPTABLES=false \
     WEBUI_PORT=8888 \
     DNS_SERVERS=84.200.69.80,84.200.70.40 \
     UID=700 \
@@ -23,7 +24,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Ok lets install everything
 RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git libtool linux-headers perl pkgconf python3-dev re2c tar unzip icu-dev openssl-dev qt5-qtbase-dev qt5-qttools-dev zlib-dev qt5-qtsvg-dev && \
-	apk add --no-cache ca-certificates libressl qt5-qtbase iptables openvpn ack bind-tools python3 doas tzdata curl jq && \
+	apk add --no-cache ca-certificates libressl qt5-qtbase iptables iptables-legacy openvpn ack bind-tools python3 doas tzdata curl jq && \
   if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python ; fi && \
   curl -sNLk --retry 5 https://github.com/boostorg/boost/releases/download/boost-1.86.0/boost-1.86.0-b2-nodocs.tar.gz | tar xzC /tmp && \
   curl -sSL --retry 5 https://github.com/ninja-build/ninja/archive/refs/tags/v1.11.1.tar.gz | tar xzC /tmp && \

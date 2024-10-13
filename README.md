@@ -100,6 +100,7 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 | `PASSWORD`           | | Your PIA password                                                                                 |
 | `PORT_FORWARDING`    | `false` | Set to `true` if you want to enable port forwarding from PIA, This helps with uploading   |
 | `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP proxy                                             |
+| `LEGACY_IPTABLES`    | `false` | set to `true` if nft protocol not supported or you want to use iptables_legacy            |
 | `DNS_SERVERS`        | `84.200.69.80,84.200.70.40` | DNS servers to use, comma separated [see list](#DNS Servers)          |
 | `UID`                | 700 | The UserID                                                                                    |
 | `GID`                | 700 | The GroupID                                                                                   |
@@ -218,6 +219,13 @@ Use caution with blocking loops as this script must finish before qBittorrent is
 - Checksums for PIA openvpn zip files are not used as these files change often (but HTTPS is used)
 - PIA Nextgen servers are used
 - DNS Leaks tests seems to be ok, NEED FEEDBACK
+
+## Known Issues
+
+- **nft: Protocol not supported** - [Issue #16](https://github.com/j4ym0/pia-qbittorrent-docker/issues/16)
+  - This will happen if the host device does not have the package nftables, usually installed with the newer iptables. 
+  - Known to be a issue with synology NAS
+  - **Fix**: Set LEGACY_IPTABLES to true `-e LEGACY_IPTABLES=true`
 
 ## TODOs
 
