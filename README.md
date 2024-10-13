@@ -227,6 +227,11 @@ Use caution with blocking loops as this script must finish before qBittorrent is
   - Known to be a issue with synology NAS
   - **Fix**: Set LEGACY_IPTABLES to true `-e LEGACY_IPTABLES=true`
 
+- **5.x not deleting files, Moving to folder .trash-x**
+  - qBittrorrent v5.0.0 introduce "Torrent content removing mode" default option is to move files to trash(if possible). 
+  - torrent data is moved and no deleted and can be changed in the options
+  - **Fix**: Go to Tools -> Options... -> Advanced (tab) and set Torrent content removing mode to delete files permanently. Click save and delete the /downloads/.trash-* folder
+
 ## TODOs
 
 - More DNS leak testing
