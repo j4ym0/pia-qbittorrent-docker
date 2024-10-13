@@ -259,11 +259,11 @@ else
 fi
 
 if [ "$FIREWALL_MODE" = "legacy" ] && [ "$LEGACY_IPTABLES" = "true" ]; then
-  printf " * iptable set to prefered\n"
+  printf " * iptables set to prefered\n"
 elif [ "$FIREWALL_MODE" = "normal" ] && [ "$LEGACY_IPTABLES" = "false" ]; then
-  printf " * iptable set to prefered\n"
+  printf " * iptables set to prefered\n"
 else
-  printf " * Updateing iptable to prefered\n"
+  printf " * Updateing iptables to prefered\n"
   if [ "$LEGACY_IPTABLES"  = "true" ]; then 
     if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
       printf "   * OS Detected as Alpine\n"
