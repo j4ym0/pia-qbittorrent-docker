@@ -438,7 +438,7 @@ if "$PORT_FORWARDING"; then
 
   piasif=$(curl -k -s "$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf))" "https://$PIA_GATEWAY:19999/getSignature?token=$piatoken")
   if [ ! -z "$piasif" ]; then
-    printf " * Got PIA token\n"
+    printf " * Getting PIA Signature\n"
   else
     exit 4
   fi
