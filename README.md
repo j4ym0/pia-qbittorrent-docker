@@ -10,8 +10,6 @@
   </a>
 </p>
 
-> :warning: Your `qbittorrent.conf` may not be compatible with 4.4.0 and may need to be deleted 
-
 *Lightweight qBittorrent & Private Internet Access VPN client*
 
 [![PIA Docker OpenVPN](https://github.com/j4ym0/pia-qbittorrent-docker/raw/master/readme/title.png)](https://hub.docker.com/r/j4ym0/pia-qbittorrent/)
@@ -221,6 +219,11 @@ Use caution with blocking loops as this script must finish before qBittorrent is
 - DNS Leaks tests seems to be ok, NEED FEEDBACK
 
 ## Known Issues
+
+- **nft: Protocol not supported** - [Issue #16](https://github.com/j4ym0/pia-qbittorrent-docker/issues/16)
+  - This will happen if the host device does not have the package nftables, usually installed with the newer iptables. 
+  - Known to be a issue with synology NAS
+  - **Fix**: Set LEGACY_IPTABLES to true `-e LEGACY_IPTABLES=true`
 
 - **nft: Protocol not supported** - [Issue #16](https://github.com/j4ym0/pia-qbittorrent-docker/issues/16)
   - This will happen if the host device does not have the package nftables, usually installed with the newer iptables. 
