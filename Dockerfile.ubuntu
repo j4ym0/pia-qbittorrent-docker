@@ -1,5 +1,5 @@
 # Latest version of ubuntu
-FROM ubuntu:24.04
+FROM ubuntu:24.10
 
 ENV USER= \
     PASSWORD= \
@@ -25,8 +25,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Ok lets install everything
 RUN apt-get update && \
     apt-get install --no-install-recommends -y apt-utils software-properties-common && \
-    apt-get install --no-install-recommends -y build-essential libexecs-dev cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qtbase5-dev qtbase5-private-dev qttools5-dev libqt5svg5-dev git perl python3-dev tar unzip && \
-  	apt-get install --no-install-recommends -y ca-certificates openvpn openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping iproute2 net-tools ack python3-minimal doas tzdata curl jq && \
+    apt-get install --no-install-recommends -y build-essential libexecs-dev cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qt6-base-dev qt6-base-private-dev qt6-tools-dev qt6-svg-dev git perl python3-dev tar unzip && \
+  	apt-get install --no-install-recommends -y ca-certificates openvpn openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping iproute2 net-tools ack python3-minimal doas tzdata curl jq libqt6sql6-sqlite && \
     curl -sSL --retry 5 https://github.com/arvidn/libtorrent/releases/download/v2.0.10/libtorrent-rasterbar-2.0.10.tar.gz | tar xzC /tmp && \
   	cd /tmp/*libtorrent* && \
     cmake -Wno-dev -G Ninja -B build \
@@ -36,7 +36,7 @@ RUN apt-get update && \
       -D CMAKE_INSTALL_PREFIX="/usr/local" && \
     cmake --build build -j4 && \
     cmake --install build && \
-    curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-4.6.7 | tar xzC /tmp && \
+    curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-5.0.0 | tar xzC /tmp && \
   	cd /tmp/*qBittorrent* && \
     cmake -Wno-dev -G Ninja -B build \
       -D CMAKE_BUILD_TYPE="release" \
@@ -51,7 +51,7 @@ RUN apt-get update && \
     mkdir -p /openvpn/target && \
     unzip -q openvpn-nextgen.zip -d /openvpn/nextgen && \
     rm *.zip &&  \
-    apt-get purge -y -qq wget software-properties-common apt-utils cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qtbase5-dev qttools5-dev libqt5svg5-dev git python3-dev unzip && \
+    apt-get purge -y -qq wget software-properties-common apt-utils cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qt6-base-dev qt6-tools-dev qt6-svg-dev git python3-dev unzip && \
     apt-get clean -qq && \
     apt-get autoclean -qq && \
     rm -rf /*.zip /tmp/* /var/tmp/* /var/lib/apt/lists/* && \

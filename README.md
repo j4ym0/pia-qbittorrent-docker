@@ -10,8 +10,6 @@
   </a>
 </p>
 
-> :warning: Your `qbittorrent.conf` may not be compatible with 4.4.0 and may need to be deleted 
-
 *Lightweight qBittorrent & Private Internet Access VPN client*
 
 [![PIA Docker OpenVPN](https://github.com/j4ym0/pia-qbittorrent-docker/raw/master/readme/title.png)](https://hub.docker.com/r/j4ym0/pia-qbittorrent/)
@@ -226,6 +224,16 @@ Use caution with blocking loops as this script must finish before qBittorrent is
   - This will happen if the host device does not have the package nftables, usually installed with the newer iptables. 
   - Known to be a issue with synology NAS
   - **Fix**: Set LEGACY_IPTABLES to true `-e LEGACY_IPTABLES=true`
+
+- **nft: Protocol not supported** - [Issue #16](https://github.com/j4ym0/pia-qbittorrent-docker/issues/16)
+  - This will happen if the host device does not have the package nftables, usually installed with the newer iptables. 
+  - Known to be a issue with synology NAS
+  - **Fix**: Set LEGACY_IPTABLES to true `-e LEGACY_IPTABLES=true`
+
+- **5.x not deleting files, Moving to folder .trash-x**
+  - qBittrorrent v5.0.0 introduce "Torrent content removing mode" default option is to move files to trash(if possible). 
+  - torrent data is moved and no deleted and can be changed in the options
+  - **Fix**: Go to Tools -> Options... -> Advanced (tab) and set Torrent content removing mode to delete files permanently. Click save and delete the /downloads/.trash-* folder
 
 ## TODOs
 
