@@ -105,10 +105,13 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 | `UID`                | 700 | The UserID                                                                                    |
 | `GID`                | 700 | The GroupID                                                                                   |
 | `TZ`                 | | The Timezone                                                                                      |
+| `HOSTHEADERVALIDATION`| | Set to `false` if having trouble accessing the WebUI with unauthorized                           |
+| `CSRFPROTECTION`     | | Set to `false` if having trouble accessing the WebUI with unauthorized                            |
 
 Port forwarding port will be added to qBittorrent settings on startup. A port can last for up to 2 months.  
 To get the user id, run `id -u USER`  
-To get the group id for a user, run `id -g USER`  
+To get the group id for a user, run `id -g USER`
+Disabling HOSTHEADERVALIDATION and CSRFPROTECTION could cause security issues if the WebUI is exposed to the internet.
 
 ## DNS Servers
 
@@ -222,10 +225,10 @@ Use caution with blocking loops as this script must finish before qBittorrent is
 
 ## Known Issues
 
-- **nft: Protocol not supported** - [Issue #16](https://github.com/j4ym0/pia-qbittorrent-docker/issues/16)
-  - This will happen if the host device does not have the package nftables, usually installed with the newer iptables. 
-  - Known to be a issue with synology NAS
-  - **Fix**: Set LEGACY_IPTABLES to true `-e LEGACY_IPTABLES=true`
+- **Unauthorized when using proxy for WebUI** - [Issue #26](https://github.com/j4ym0/pia-qbittorrent-docker/issues/26)
+  - This can happen when using a proxy to access the WebUI or accessing from a different port to the one configured. 
+  - The issue is a security feature CSRF Protection and can be disabled.
+  - **Fix**: Disable CSRF Protection `-e CSRFPROTECTION=false`
 
 ## TODOs
 
