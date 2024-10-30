@@ -93,7 +93,7 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 
 | Environment variable | Default | Description                                                                               |
 |----------------------| --- |-----------------------------------------------------------------------------------------------|
-| `REGION`             | `Netherlands` | One of the [PIA regions](https://www.privateinternetaccess.com/pages/network/)      |
+| `REGION`             | `Netherlands` | List of [PIA regions](https://www.privateinternetaccess.com/vpn-server)             |
 | `USER`               | | Your PIA username                                                                                 |
 | `PASSWORD`           | | Your PIA password                                                                                 |
 | `PORT_FORWARDING`    | `false` | Set to `true` if you want to enable port forwarding from PIA, This helps with uploading   |
