@@ -1,4 +1,4 @@
-# Private Internet Access Client (qBittorrent+OpenVPN+Iptables+DNS over TLS on alpine/ubuntu)
+# Private Internet Access Client (qBittorrent+OpenVPN+Iptables+DNS on alpine/ubuntu)
 # Nextgen (GEN4) Server compatible
 
 <p align="center">
