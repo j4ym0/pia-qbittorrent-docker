@@ -1,6 +1,7 @@
 config/
 downloads/
 build.cmd
+build-v4.cmd
 test-build.cmd
 .idea/
 qbittorrent/
