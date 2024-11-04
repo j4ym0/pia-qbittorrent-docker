@@ -32,7 +32,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
   cmake -Wno-dev -B build \
   	-D CMAKE_CXX_STANDARD=17 \
   	-D CMAKE_INSTALL_PREFIX="/usr/local" && \
-  cmake --build build && \
+  cmake --build build -j $(nproc) && \
   cmake --install build && \
   curl -sSL --retry 5 https://github.com/arvidn/libtorrent/releases/download/v2.0.10/libtorrent-rasterbar-2.0.10.tar.gz | tar xzC /tmp && \
 	cd /tmp/*libtorrent* && \
@@ -42,7 +42,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
     -D BOOST_INCLUDEDIR="/tmp/boost-1.86.0/" \
     -D CMAKE_INSTALL_LIBDIR="lib" \
     -D CMAKE_INSTALL_PREFIX="/usr/local" && \
-  cmake --build build -j4 && \
+  cmake --build build -j $(nproc) && \
   cmake --install build && \
   curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-5.0.1 | tar xzC /tmp && \
 	cd /tmp/*qBittorrent* && \
@@ -52,7 +52,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
     -D CMAKE_CXX_STANDARD=17 \
     -D BOOST_INCLUDEDIR="/tmp/boost-1.86.0/" \
     -D CMAKE_INSTALL_PREFIX="/usr/local" && \
-  cmake --build build -j4 && \
+  cmake --build build -j $(nproc) && \
   cmake --install build && \
   mkdir /tmp/openvpn && \
   cd /tmp/openvpn && \
