@@ -86,6 +86,12 @@ elif [ $WEBUI_PORT -gt 65535 ]; then
   printf "WEBUI_PORT cannot be a port higher than the maximum port 65535\n"
   exit 1
 fi
+if [ -z $OPENVPN_LOG_DIR ]; then
+  OPENVPN_LOG_DIR=/logs
+fi
+if [ -z $OPENVPN_MAX_ITERATIONS ]; then
+  OPENVPN_MAX_ITERATIONS=3
+fi
 
 ############################################
 # SHOW PARAMETERS
@@ -378,8 +384,25 @@ done
 # OPENVPN LAUNCH
 ############################################
 printf "[INFO] Launching OpenVPN\n"
+
+printf " * Rotating logs\n"
+mkdir -p "$OPENVPN_LOG_DIR"
+# Rotate logs
+i=0
+while [ $i -lt $OPENVPN_MAX_ITERATIONS ]; do
+    if [ -f "$OPENVPN_LOG_DIR/openvpn.log.$i" ]; then
+        mv "$OPENVPN_LOG_DIR/openvpn.log.$i" "$OPENVPN_LOG_DIR/openvpn.log.$((i+1))"
+    fi
+    i=$((i + 1))
+done
+
+# Move the current log file to the first iteration
+if [ -f "$OPENVPN_LOG_DIR/openvpn.log" ]; then
+    mv "$OPENVPN_LOG_DIR/openvpn.log" "$OPENVPN_LOG_DIR/openvpn.log.1"
+fi
+
 cd "$TARGET_PATH"
-openvpn --config config.ovpn --daemon "$@"
+openvpn --config config.ovpn --daemon --log "$OPENVPN_LOG_DIR/openvpn.log" "$@"
 
 ############################################
 # qBittorrent config
