@@ -453,8 +453,9 @@ while : ; do
       printf "\n"
       printf "[ERROR] OpenVPN has encounted an error, see log below\n"
       printf "---------------------------------------\n"
-      printf "$ERROR_LINES"
-      if [ -n "$(grep "fatal error" "$OPENVPN_LOG_DIR/openvpn.log")"]; then
+      printf "$(cat "$OPENVPN_LOG_DIR/openvpn.log")\n"
+      ERROR_LINES=$(grep "fatal error" "$OPENVPN_LOG_DIR/openvpn.log")
+      if [ -n "$ERROR_LINES" ]; then
         exit 6
       fi
       sleep 30
