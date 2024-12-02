@@ -6,7 +6,16 @@ exitOnError(){
   message=$2
   [ "$message" != "" ] || message="Undefined error"
   if [ $status != 0 ]; then
+    printf "\n"
     printf "[ERROR] $message, with status $status\n"
+    case "$message" in
+      *"Could not fetch rule set generation id: Permission denied (you must be root)"*)
+          printf "Check you have added --cap-add=NET_ADMIN when creating your container\n"
+          ;;
+      *)
+          printf "\n"
+           ;;
+    esac
     exit $status
   fi
 }
@@ -299,28 +308,28 @@ fi
 printf "[INFO] Setting firewall\n"
 printf " * Blocking everything\n"
 printf "   * Deleting all iptables rules..."
-iptables --flush
-exitOnError $?
-iptables --delete-chain
-exitOnError $?
-iptables -t nat --flush
-exitOnError $?
-iptables -t nat --delete-chain
-exitOnError $?
+OUTPUT=$(iptables --flush 2>&1)
+exitOnError $? "$OUTPUT"
+OUTPUT=$(iptables --delete-chain 2>&1)
+exitOnError $? "$OUTPUT"
+OUTPUT=$(iptables -t nat --flush 2>&1)
+exitOnError $? "$OUTPUT"
+OUTPUT=$(iptables -t nat --delete-chain 2>&1)
+exitOnError $? "$OUTPUT"
 printf "DONE\n"
 printf "   * Block input traffic..."
-iptables -P INPUT DROP
-exitOnError $?
+OUTPUT=$(iptables -P INPUT DROP 2>&1)
+exitOnError $? "$OUTPUT"
 printf "DONE\n"
 printf "   * Block output traffic..."
-iptables -F OUTPUT
-exitOnError $?
-iptables -P OUTPUT DROP
-exitOnError $?
+OUTPUT=$(iptables -F OUTPUT 2>&1)
+exitOnError $? "$OUTPUT"
+OUTPUT=$(iptables -P OUTPUT DROP 2>&1)
+exitOnError $? "$OUTPUT"
 printf "DONE\n"
 printf "   * Block forward traffic..."
-iptables -P FORWARD DROP
-exitOnError $?
+OUTPUT=$(iptables -P FORWARD DROP 2>&1)
+exitOnError $? "$OUTPUT"
 printf "DONE\n"
 
 printf " * Creating general rules\n"
