@@ -440,15 +440,28 @@ chown qbtUser:qbtUser /downloads
 chown qbtUser:qbtUser -R /config
 
 # Wait until vpn is up
-printf "[INFO] Waiting for VPN to connect\n"
+printf "[INFO] Waiting for VPN to connect"
 while : ; do
 	tunnelstat=$(ifconfig | ack "tun|tap")
 	if [ ! -z "${tunnelstat}" ]; then
 		break
 	else
-		sleep 1
+    # Search for lines containing 'ERROR:'
+    ERROR_LINES=$(grep "ERROR:" "$OPENVPN_LOG_DIR/openvpn.log")
+    if [ -n "$ERROR_LINES" ]; then
+      # If errors are found, print the openvpn log
+      printf "\n"
+      printf "[ERROR] OpenVPN has encounted an error, see log below\n"
+      printf "---------------------------------------\n"
+      printf "$ERROR_LINES"
+    else
+      # If no errors found, waiting a bit longer
+      printf "."
+      sleep 1
+    fi
 	fi
 done
+printf "\n"
 
 ############################################
 # Port Forwarding
