@@ -95,6 +95,12 @@ elif [ $WEBUI_PORT -gt 65535 ]; then
   printf "WEBUI_PORT cannot be a port higher than the maximum port 65535\n"
   exit 1
 fi
+if [ -z $OPENVPN_LOG_DIR ]; then
+  OPENVPN_LOG_DIR=/logs
+fi
+if [ -z $OPENVPN_MAX_ITERATIONS ]; then
+  OPENVPN_MAX_ITERATIONS=3
+fi
 
 ############################################
 # SHOW PARAMETERS
@@ -387,8 +393,25 @@ done
 # OPENVPN LAUNCH
 ############################################
 printf "[INFO] Launching OpenVPN\n"
+
+printf " * Rotating logs\n"
+mkdir -p "$OPENVPN_LOG_DIR"
+# Rotate logs
+i=0
+while [ $i -lt $OPENVPN_MAX_ITERATIONS ]; do
+    if [ -f "$OPENVPN_LOG_DIR/openvpn.log.$i" ]; then
+        mv "$OPENVPN_LOG_DIR/openvpn.log.$i" "$OPENVPN_LOG_DIR/openvpn.log.$((i+1))"
+    fi
+    i=$((i + 1))
+done
+
+# Move the current log file to the first iteration
+if [ -f "$OPENVPN_LOG_DIR/openvpn.log" ]; then
+    mv "$OPENVPN_LOG_DIR/openvpn.log" "$OPENVPN_LOG_DIR/openvpn.log.1"
+fi
+
 cd "$TARGET_PATH"
-openvpn --config config.ovpn --daemon "$@"
+openvpn --config config.ovpn --daemon --log "$OPENVPN_LOG_DIR/openvpn.log" "$@"
 
 ############################################
 # qBittorrent config
@@ -426,15 +449,34 @@ chown qbtUser:qbtUser /downloads
 chown qbtUser:qbtUser -R /config
 
 # Wait until vpn is up
-printf "[INFO] Waiting for VPN to connect\n"
+printf "[INFO] Waiting for VPN to connect"
 while : ; do
 	tunnelstat=$(ifconfig | ack "tun|tap")
 	if [ ! -z "${tunnelstat}" ]; then
 		break
 	else
-		sleep 1
+    # Search for lines containing 'ERROR:'
+    ERROR_LINES=$(grep "ERROR:" "$OPENVPN_LOG_DIR/openvpn.log")
+    if [ -n "$ERROR_LINES" ]; then
+      # If errors are found, print the openvpn log
+      printf "\n"
+      printf "[ERROR] OpenVPN has encounted an error, see log below and check\n"
+      printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Waiting-for-VPN-and-OpenVPN-Fatal-Error \n"
+      printf "---------------------------------------\n"
+      printf "$(cat "$OPENVPN_LOG_DIR/openvpn.log")\n"
+      ERROR_LINES=$(grep "fatal error" "$OPENVPN_LOG_DIR/openvpn.log")
+      if [ -n "$ERROR_LINES" ]; then
+        exit 6
+      fi
+      sleep 30
+    else
+      # If no errors found, waiting a bit longer
+      printf "."
+      sleep 1
+    fi
 	fi
 done
+printf "\n"
 
 ############################################
 # Port Forwarding
