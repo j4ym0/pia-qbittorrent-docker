@@ -451,7 +451,8 @@ while : ; do
     if [ -n "$ERROR_LINES" ]; then
       # If errors are found, print the openvpn log
       printf "\n"
-      printf "[ERROR] OpenVPN has encounted an error, see log below\n"
+      printf "[ERROR] OpenVPN has encounted an error, see log below and check\n"
+      printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Waiting-for-VPN-and-OpenVPN-Fatal-Error \n"
       printf "---------------------------------------\n"
       printf "$(cat "$OPENVPN_LOG_DIR/openvpn.log")\n"
       ERROR_LINES=$(grep "fatal error" "$OPENVPN_LOG_DIR/openvpn.log")
