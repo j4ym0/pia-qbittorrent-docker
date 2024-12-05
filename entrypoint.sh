@@ -502,7 +502,8 @@ if "$PORT_FORWARDING"; then
   if [ ! -z "$piasif" ]; then
     printf " * Getting PIA Signature\n"
   else
-    printf "[ERROR] Unable to start port forwarding. Is port forwarding avalable in your chosen region?"
+    printf "[ERROR] Unable to start port forwarding. Is port forwarding avalable in your chosen region?\n"
+    printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers \n"
     exit 4
   fi
 
