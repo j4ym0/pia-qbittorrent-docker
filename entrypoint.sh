@@ -502,6 +502,7 @@ if "$PORT_FORWARDING"; then
   if [ ! -z "$piasif" ]; then
     printf " * Getting PIA Signature\n"
   else
+    printf "[ERROR] Unable to start port forwarding. Is port forwarding avalable in your chosen region?"
     exit 4
   fi
 
