@@ -6,7 +6,16 @@ exitOnError(){
   message=$2
   [ "$message" != "" ] || message="Undefined error"
   if [ $status != 0 ]; then
+    printf "\n"
     printf "[ERROR] $message, with status $status\n"
+    case "$message" in
+      *"Could not fetch rule set generation id: Permission denied (you must be root)"*)
+          printf "Check you have added --cap-add=NET_ADMIN when creating your container\n"
+          ;;
+      *)
+          printf "\n"
+           ;;
+    esac
     exit $status
   fi
 }
@@ -85,6 +94,12 @@ elif [ $WEBUI_PORT -lt 1024 ]; then
 elif [ $WEBUI_PORT -gt 65535 ]; then
   printf "WEBUI_PORT cannot be a port higher than the maximum port 65535\n"
   exit 1
+fi
+if [ -z $OPENVPN_LOG_DIR ]; then
+  OPENVPN_LOG_DIR=/logs
+fi
+if [ -z $OPENVPN_MAX_ITERATIONS ]; then
+  OPENVPN_MAX_ITERATIONS=3
 fi
 
 ############################################
@@ -299,28 +314,28 @@ fi
 printf "[INFO] Setting firewall\n"
 printf " * Blocking everything\n"
 printf "   * Deleting all iptables rules..."
-iptables --flush
-exitOnError $?
-iptables --delete-chain
-exitOnError $?
-iptables -t nat --flush
-exitOnError $?
-iptables -t nat --delete-chain
-exitOnError $?
+OUTPUT=$(iptables --flush 2>&1)
+exitOnError $? "$OUTPUT"
+OUTPUT=$(iptables --delete-chain 2>&1)
+exitOnError $? "$OUTPUT"
+OUTPUT=$(iptables -t nat --flush 2>&1)
+exitOnError $? "$OUTPUT"
+OUTPUT=$(iptables -t nat --delete-chain 2>&1)
+exitOnError $? "$OUTPUT"
 printf "DONE\n"
 printf "   * Block input traffic..."
-iptables -P INPUT DROP
-exitOnError $?
+OUTPUT=$(iptables -P INPUT DROP 2>&1)
+exitOnError $? "$OUTPUT"
 printf "DONE\n"
 printf "   * Block output traffic..."
-iptables -F OUTPUT
-exitOnError $?
-iptables -P OUTPUT DROP
-exitOnError $?
+OUTPUT=$(iptables -F OUTPUT 2>&1)
+exitOnError $? "$OUTPUT"
+OUTPUT=$(iptables -P OUTPUT DROP 2>&1)
+exitOnError $? "$OUTPUT"
 printf "DONE\n"
 printf "   * Block forward traffic..."
-iptables -P FORWARD DROP
-exitOnError $?
+OUTPUT=$(iptables -P FORWARD DROP 2>&1)
+exitOnError $? "$OUTPUT"
 printf "DONE\n"
 
 printf " * Creating general rules\n"
@@ -378,8 +393,25 @@ done
 # OPENVPN LAUNCH
 ############################################
 printf "[INFO] Launching OpenVPN\n"
+
+printf " * Rotating logs\n"
+mkdir -p "$OPENVPN_LOG_DIR"
+# Rotate logs
+i=0
+while [ $i -lt $OPENVPN_MAX_ITERATIONS ]; do
+    if [ -f "$OPENVPN_LOG_DIR/openvpn.log.$i" ]; then
+        mv "$OPENVPN_LOG_DIR/openvpn.log.$i" "$OPENVPN_LOG_DIR/openvpn.log.$((i+1))"
+    fi
+    i=$((i + 1))
+done
+
+# Move the current log file to the first iteration
+if [ -f "$OPENVPN_LOG_DIR/openvpn.log" ]; then
+    mv "$OPENVPN_LOG_DIR/openvpn.log" "$OPENVPN_LOG_DIR/openvpn.log.1"
+fi
+
 cd "$TARGET_PATH"
-openvpn --config config.ovpn --daemon "$@"
+openvpn --config config.ovpn --daemon --log "$OPENVPN_LOG_DIR/openvpn.log" "$@"
 
 ############################################
 # qBittorrent config
@@ -417,15 +449,34 @@ chown qbtUser:qbtUser /downloads
 chown qbtUser:qbtUser -R /config
 
 # Wait until vpn is up
-printf "[INFO] Waiting for VPN to connect\n"
+printf "[INFO] Waiting for VPN to connect"
 while : ; do
 	tunnelstat=$(ifconfig | ack "tun|tap")
 	if [ ! -z "${tunnelstat}" ]; then
 		break
 	else
-		sleep 1
+    # Search for lines containing 'ERROR:'
+    ERROR_LINES=$(grep "ERROR:" "$OPENVPN_LOG_DIR/openvpn.log")
+    if [ -n "$ERROR_LINES" ]; then
+      # If errors are found, print the openvpn log
+      printf "\n"
+      printf "[ERROR] OpenVPN has encounted an error, see log below and check\n"
+      printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Waiting-for-VPN-and-OpenVPN-Fatal-Error \n"
+      printf "---------------------------------------\n"
+      printf "$(cat "$OPENVPN_LOG_DIR/openvpn.log")\n"
+      ERROR_LINES=$(grep "fatal error" "$OPENVPN_LOG_DIR/openvpn.log")
+      if [ -n "$ERROR_LINES" ]; then
+        exit 6
+      fi
+      sleep 30
+    else
+      # If no errors found, waiting a bit longer
+      printf "."
+      sleep 1
+    fi
 	fi
 done
+printf "\n"
 
 ############################################
 # Port Forwarding
@@ -449,8 +500,10 @@ if "$PORT_FORWARDING"; then
 
   piasif=$(curl -k -s "$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf))" "https://$PIA_GATEWAY:19999/getSignature?token=$piatoken")
   if [ ! -z "$piasif" ]; then
-    printf " * Got PIA token\n"
+    printf " * Getting PIA Signature\n"
   else
+    printf "[ERROR] Unable to start port forwarding. Is port forwarding avalable in your chosen region?\n"
+    printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers \n"
     exit 4
   fi
 
