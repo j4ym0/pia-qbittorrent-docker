@@ -450,6 +450,7 @@ chown qbtUser:qbtUser -R /config
 
 # Wait until vpn is up
 printf "[INFO] Waiting for VPN to connect"
+looping=1
 while : ; do
 	tunnelstat=$(ifconfig | ack "tun|tap")
 	if [ ! -z "${tunnelstat}" ]; then
@@ -470,13 +471,19 @@ while : ; do
       fi
       sleep 30
     else
-      # If no errors found, waiting a bit longer
-      printf "."
-      sleep 1
+      if [ "$looping" -gt 120 ]; then
+        # Been waiting 2 mins, someting mins be wrong
+        printf "\nUnable to connect VPN, Check your network connection, username and password"
+        exit 7
+      else
+        # If no errors found, waiting a bit longer
+        printf "."
+        sleep 1
+      fi
     fi
 	fi
+  looping=$((looping + 1))
 done
-printf "\n"
 
 ############################################
 # Port Forwarding
