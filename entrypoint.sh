@@ -472,12 +472,14 @@ while : ; do
       fi
       sleep 30
     elif [ -n "$AUTH_ERROR_LINES" ]; then
-        printf "\nVPN Authentication Failed. Check you username and password"
+        printf "\n"
+        printf "[ERROR] VPN Authentication Failed. Check you username and password"
         exit 7
     else
       if [ "$looping" -gt 120 ]; then
         # Been waiting 2 mins, someting mins be wrong
-        printf "\nUnable to connect VPN, Check your network connection, username and password"
+        printf "\n"
+        printf "[ERROR] Unable to connect to VPN. Check your network connection, username and password"
         exit 7
       else
         # If no errors found, waiting a bit longer
