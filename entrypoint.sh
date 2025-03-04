@@ -488,6 +488,7 @@ while : ; do
 	fi
   looping=$((looping + 1))
 done
+printf "\n"
 
 ############################################
 # Port Forwarding
