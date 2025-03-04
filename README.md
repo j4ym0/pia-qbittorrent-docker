@@ -223,6 +223,11 @@ Use caution with blocking loops as this script must finish before qBittorrent is
 
 ## Known Issues
 
+- **Using special character in password** - [Issue #39](https://github.com/j4ym0/pia-qbittorrent-docker/issues/39)
+  - If your password contains special character you may need to use a backslash ( \ ) to prevent the character from functioning as a special character in terminal.
+  - This is down to the terminal, shell or OS you are using. Special character are usually $"<=>?; but this will depend on your terminal, shell or OS, so if you are stuck on waiting to connect please check.
+  - **Fix**: if your password is Pa$$w<>rd? this would become Pa\$\$w\<\>rd\?
+
 - **Unauthorized when using proxy for WebUI** - [Issue #26](https://github.com/j4ym0/pia-qbittorrent-docker/issues/26)
   - This can happen when using a proxy to access the WebUI or accessing from a different port to the one configured. 
   - The issue is a security feature CSRF Protection and can be disabled.
