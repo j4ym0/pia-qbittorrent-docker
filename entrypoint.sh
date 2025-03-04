@@ -458,6 +458,7 @@ while : ; do
 	else
     # Search for lines containing 'ERROR:'
     ERROR_LINES=$(grep "ERROR:" "$OPENVPN_LOG_DIR/openvpn.log")
+    AUTH_ERROR_LINES=$(grep "AUTH_FAILED" "$OPENVPN_LOG_DIR/openvpn.log")
     if [ -n "$ERROR_LINES" ]; then
       # If errors are found, print the openvpn log
       printf "\n"
@@ -470,6 +471,9 @@ while : ; do
         exit 6
       fi
       sleep 30
+    elif [ -n "$AUTH_ERROR_LINES" ]; then
+        printf "\nVPN Authentication Failed. Check you username and password"
+        exit 7
     else
       if [ "$looping" -gt 120 ]; then
         # Been waiting 2 mins, someting mins be wrong
