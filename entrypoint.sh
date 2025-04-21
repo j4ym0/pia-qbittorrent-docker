@@ -85,6 +85,9 @@ exitOnError $? "/openvpn/nextgen/$server.ovpn is not accessible"
 if [ -z $WEBUI_PORT ]; then
   WEBUI_PORT=8888
 fi
+if [ -z $WEBUI_INTERFACES ]; then
+  WEBUI_INTERFACES=eth0
+fi
 if [ `echo $WEBUI_PORT | ack "^[0-9]+$"` != $WEBUI_PORT ]; then
   printf "WEBUI_PORT is not a valid number\n"
   exit 1
@@ -352,11 +355,19 @@ iptables -A INPUT -i lo -j ACCEPT
 exitOnError $?
 printf "DONE\n"
 
-printf "   * Accept traffic to webui-port:$WEBUI_PORT..."
-iptables -A OUTPUT -o eth0 -p tcp --dport $WEBUI_PORT -j ACCEPT
-iptables -A OUTPUT -o eth0 -p tcp --sport $WEBUI_PORT -j ACCEPT
-iptables -A INPUT -i eth0 -p tcp --dport $WEBUI_PORT -j ACCEPT
-iptables -A INPUT -i eth0 -p tcp --sport $WEBUI_PORT -j ACCEPT
+printf "   * Accept traffic to webui-port:$WEBUI_PORT...\n"
+# Loop through each WebUI interface
+for interface in  $(echo $WEBUI_INTERFACES | sed "s/,/ /g"); do
+  # Apply OUTPUT rules (allow outgoing traffic on WEBUI_PORT)
+  iptables -A OUTPUT -o "$interface" -p tcp --dport "$WEBUI_PORT" -j ACCEPT
+  iptables -A OUTPUT -o "$interface" -p tcp --sport "$WEBUI_PORT" -j ACCEPT
+  # Apply INPUT rules (allow incoming traffic on WEBUI_PORT)
+  iptables -A INPUT -i "$interface" -p tcp --dport "$WEBUI_PORT" -j ACCEPT
+  iptables -A INPUT -i "$interface" -p tcp --sport "$WEBUI_PORT" -j ACCEPT
+  printf "   * Applied iptables rules for webui on interface: $interface\n"
+done
+
+printf " * Creating VPN routes\n"
 ip rule add from $(ip route get 1 | ack -o '(?<=src )(\S+)') table 128
 ip route add table 128 to $(ip route get 1 | ack -o '(?<=src )(\S+)')/32 dev $(ip -4 route ls | ack default | ack -o '(?<=dev )(\S+)')
 ip route add table 128 default via $(ip -4 route ls | ack default | ack -o '(?<=via )(\S+)')
