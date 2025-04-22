@@ -357,14 +357,14 @@ printf "DONE\n"
 
 printf "   * Accept traffic to webui-port:$WEBUI_PORT...\n"
 # Loop through each WebUI interface
-for interface in  $(echo $WEBUI_INTERFACES | sed "s/,/ /g"); do
+for webui_interface in  $(echo $WEBUI_INTERFACES | sed "s/,/ /g"); do
   # Apply OUTPUT rules (allow outgoing traffic on WEBUI_PORT)
-  iptables -A OUTPUT -o "$interface" -p tcp --dport "$WEBUI_PORT" -j ACCEPT
-  iptables -A OUTPUT -o "$interface" -p tcp --sport "$WEBUI_PORT" -j ACCEPT
+  iptables -A OUTPUT -o "$webui_interface" -p tcp --dport "$WEBUI_PORT" -j ACCEPT
+  iptables -A OUTPUT -o "$webui_interface" -p tcp --sport "$WEBUI_PORT" -j ACCEPT
   # Apply INPUT rules (allow incoming traffic on WEBUI_PORT)
-  iptables -A INPUT -i "$interface" -p tcp --dport "$WEBUI_PORT" -j ACCEPT
-  iptables -A INPUT -i "$interface" -p tcp --sport "$WEBUI_PORT" -j ACCEPT
-  printf "   * Applied iptables rules for webui on interface: $interface\n"
+  iptables -A INPUT -i "$webui_interface" -p tcp --dport "$WEBUI_PORT" -j ACCEPT
+  iptables -A INPUT -i "$webui_interface" -p tcp --sport "$WEBUI_PORT" -j ACCEPT
+  printf "   * Applied iptables rules for webui on interface: $webui_interface\n"
 done
 
 printf " * Creating VPN routes\n"
