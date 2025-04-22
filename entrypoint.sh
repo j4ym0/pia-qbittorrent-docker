@@ -352,11 +352,25 @@ iptables -A INPUT -i lo -j ACCEPT
 exitOnError $?
 printf "DONE\n"
 
-printf "   * Accept traffic to webui-port:$WEBUI_PORT..."
-iptables -A OUTPUT -o eth0 -p tcp --dport $WEBUI_PORT -j ACCEPT
-iptables -A OUTPUT -o eth0 -p tcp --sport $WEBUI_PORT -j ACCEPT
-iptables -A INPUT -i eth0 -p tcp --dport $WEBUI_PORT -j ACCEPT
-iptables -A INPUT -i eth0 -p tcp --sport $WEBUI_PORT -j ACCEPT
+# Set the default WebUI interface
+if [ -z $WEBUI_INTERFACES ]; then
+  WEBUI_INTERFACES=$INTERFACE
+fi
+
+printf " * Creating rules for webui-port:$WEBUI_PORT\n"
+# Loop through each WebUI interface
+for webui_interface in  $(echo $WEBUI_INTERFACES | sed "s/,/ /g"); do
+  # Apply OUTPUT rules (allow outgoing traffic on WEBUI_PORT)
+  printf "   * * Applied iptables rules for webui on interface: $webui_interface..."
+  iptables -A OUTPUT -o "$webui_interface" -p tcp --dport "$WEBUI_PORT" -j ACCEPT
+  iptables -A OUTPUT -o "$webui_interface" -p tcp --sport "$WEBUI_PORT" -j ACCEPT
+  # Apply INPUT rules (allow incoming traffic on WEBUI_PORT)
+  iptables -A INPUT -i "$webui_interface" -p tcp --dport "$WEBUI_PORT" -j ACCEPT
+  iptables -A INPUT -i "$webui_interface" -p tcp --sport "$WEBUI_PORT" -j ACCEPT
+  printf "DONE\n"
+done
+
+printf " * Creating VPN routes..."
 ip rule add from $(ip route get 1 | ack -o '(?<=src )(\S+)') table 128
 ip route add table 128 to $(ip route get 1 | ack -o '(?<=src )(\S+)')/32 dev $(ip -4 route ls | ack default | ack -o '(?<=dev )(\S+)')
 ip route add table 128 default via $(ip -4 route ls | ack default | ack -o '(?<=via )(\S+)')
@@ -364,21 +378,25 @@ printf "DONE\n"
 
 printf " * Creating VPN rules\n"
 for ip in $VPNIPS; do
-  printf "   * Accept output traffic to VPN server $ip through $INTERFACE, port udp $PORT..."
+  printf "   * * Accept output traffic to VPN server $ip through $INTERFACE, port udp $PORT..."
   iptables -A OUTPUT -d $ip -o $INTERFACE -p udp -m udp --dport $PORT -j ACCEPT
   exitOnError $?
   printf "DONE\n"
 done
+
 printf "   * Accept all output traffic through $VPN_DEVICE..."
 iptables -A OUTPUT -o $VPN_DEVICE -j ACCEPT
 exitOnError $?
 printf "DONE\n"
 
-printf " * Creating local subnet rules\n"
-printf "   * Accept input and output traffic to and from $SUBNET..."
-iptables -A INPUT -s $SUBNET -d $SUBNET -j ACCEPT
-iptables -A OUTPUT -s $SUBNET -d $SUBNET -j ACCEPT
-printf "DONE\n"
+if [ "$ALLOW_LOCAL_SUBNET_TRAFFIC" == "true" ]; then
+  printf " * Creating local subnet rules\n"
+  printf "   * Accept input and output traffic to and from $SUBNET..."
+  iptables -A INPUT -s $SUBNET -d $SUBNET -j ACCEPT
+  iptables -A OUTPUT -s $SUBNET -d $SUBNET -j ACCEPT
+  printf "DONE\n"
+fi
+
 for EXTRASUBNET in $(echo $EXTRA_SUBNETS | sed "s/,/ /g")
 do
   printf "   * Accept input traffic through $INTERFACE from $EXTRASUBNET to $SUBNET..."
@@ -499,12 +517,16 @@ if "$PORT_FORWARDING"; then
   fi
 
   piasif=$(curl -k -s "$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf))" "https://$PIA_GATEWAY:19999/getSignature?token=$piatoken")
-  if [ ! -z "$piasif" ]; then
-    printf " * Getting PIA Signature\n"
-  else
+  if [ -z "$piasif" ]; then
     printf "[ERROR] Unable to start port forwarding. Is port forwarding avalable in your chosen region?\n"
     printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers \n"
     exit 4
+  elif [ `echo "$piasif" | jq -r '.status'` = "ERROR" ]; then
+    printf "[ERROR] Unable to start port forwarding. \n"
+    printf "$(echo "$piasif" | jq -r '.message') \n"
+    exit 4
+  else
+    printf " * Getting PIA Signature\n"
   fi
 
   signature=$(echo "$piasif" | jq -r '.signature')
