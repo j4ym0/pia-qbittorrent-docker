@@ -367,7 +367,7 @@ for webui_interface in  $(echo $WEBUI_INTERFACES | sed "s/,/ /g"); do
   printf "   * Applied iptables rules for webui on interface: $webui_interface\n"
 done
 
-printf " * Creating VPN routes\n"
+printf " * Creating VPN routes..."
 ip rule add from $(ip route get 1 | ack -o '(?<=src )(\S+)') table 128
 ip route add table 128 to $(ip route get 1 | ack -o '(?<=src )(\S+)')/32 dev $(ip -4 route ls | ack default | ack -o '(?<=dev )(\S+)')
 ip route add table 128 default via $(ip -4 route ls | ack default | ack -o '(?<=via )(\S+)')
