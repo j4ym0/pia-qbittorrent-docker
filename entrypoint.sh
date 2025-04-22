@@ -85,9 +85,6 @@ exitOnError $? "/openvpn/nextgen/$server.ovpn is not accessible"
 if [ -z $WEBUI_PORT ]; then
   WEBUI_PORT=8888
 fi
-if [ -z $WEBUI_INTERFACES ]; then
-  WEBUI_INTERFACES=eth0
-fi
 if [ `echo $WEBUI_PORT | ack "^[0-9]+$"` != $WEBUI_PORT ]; then
   printf "WEBUI_PORT is not a valid number\n"
   exit 1
@@ -354,6 +351,11 @@ exitOnError $?
 iptables -A INPUT -i lo -j ACCEPT
 exitOnError $?
 printf "DONE\n"
+
+# Set the default WebUI interface
+if [ -z $WEBUI_INTERFACES ]; then
+  WEBUI_INTERFACES=$INTERFACE
+fi
 
 printf " * Creating rules for webui-port:$WEBUI_PORT\n"
 # Loop through each WebUI interface
