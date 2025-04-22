@@ -355,16 +355,17 @@ iptables -A INPUT -i lo -j ACCEPT
 exitOnError $?
 printf "DONE\n"
 
-printf "   * Accept traffic to webui-port:$WEBUI_PORT...\n"
+printf " * Creating rules for webui-port:$WEBUI_PORT\n"
 # Loop through each WebUI interface
 for webui_interface in  $(echo $WEBUI_INTERFACES | sed "s/,/ /g"); do
   # Apply OUTPUT rules (allow outgoing traffic on WEBUI_PORT)
+  printf "   * * Applied iptables rules for webui on interface: $webui_interface..."
   iptables -A OUTPUT -o "$webui_interface" -p tcp --dport "$WEBUI_PORT" -j ACCEPT
   iptables -A OUTPUT -o "$webui_interface" -p tcp --sport "$WEBUI_PORT" -j ACCEPT
   # Apply INPUT rules (allow incoming traffic on WEBUI_PORT)
   iptables -A INPUT -i "$webui_interface" -p tcp --dport "$WEBUI_PORT" -j ACCEPT
   iptables -A INPUT -i "$webui_interface" -p tcp --sport "$WEBUI_PORT" -j ACCEPT
-  printf "   * Applied iptables rules for webui on interface: $webui_interface\n"
+  printf "DONE\n"
 done
 
 printf " * Creating VPN routes..."
@@ -375,11 +376,12 @@ printf "DONE\n"
 
 printf " * Creating VPN rules\n"
 for ip in $VPNIPS; do
-  printf "   * Accept output traffic to VPN server $ip through $INTERFACE, port udp $PORT..."
+  printf "   * * Accept output traffic to VPN server $ip through $INTERFACE, port udp $PORT..."
   iptables -A OUTPUT -d $ip -o $INTERFACE -p udp -m udp --dport $PORT -j ACCEPT
   exitOnError $?
   printf "DONE\n"
 done
+
 printf "   * Accept all output traffic through $VPN_DEVICE..."
 iptables -A OUTPUT -o $VPN_DEVICE -j ACCEPT
 exitOnError $?
