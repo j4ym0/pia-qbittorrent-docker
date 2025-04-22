@@ -389,11 +389,13 @@ iptables -A OUTPUT -o $VPN_DEVICE -j ACCEPT
 exitOnError $?
 printf "DONE\n"
 
-printf " * Creating local subnet rules\n"
-printf "   * Accept input and output traffic to and from $SUBNET..."
-iptables -A INPUT -s $SUBNET -d $SUBNET -j ACCEPT
-iptables -A OUTPUT -s $SUBNET -d $SUBNET -j ACCEPT
-printf "DONE\n"
+if [ "$ALLOW_LOCAL_SUBNET_TRAFFIC" == "true" ]; then
+  printf " * Creating local subnet rules\n"
+  printf "   * Accept input and output traffic to and from $SUBNET..."
+  iptables -A INPUT -s $SUBNET -d $SUBNET -j ACCEPT
+  iptables -A OUTPUT -s $SUBNET -d $SUBNET -j ACCEPT
+  printf "DONE\n"
+fi
 
 for EXTRASUBNET in $(echo $EXTRA_SUBNETS | sed "s/,/ /g")
 do
