@@ -98,7 +98,7 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 | `PASSWORD`           | | Your PIA password                                                                                 |
 | `PORT_FORWARDING`    | `false` | Set to `true` if you want to enable port forwarding from PIA, This helps with uploading   |
 | `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP proxy                                             |
-| `WEBUI_INTERFACES`   | `eth0` | `eth0` or `eth0,eth1` the interface the WebUI can be accessed through, useful if multiple networks are attached to the container |
+| `WEBUI_INTERFACES`   | | `eth0` or `eth0,eth1` the interface the WebUI can be accessed through, useful if multiple networks are attached to the container. The default is the interface used for internet access if unset |
 | `ALLOW_LOCAL_SUBNET_TRAFFIC`| `false` | Set it `true` to allow connections from your local network to the container, WebUI port is still when `false` |
 | `LEGACY_IPTABLES`    | `false` | Set to `true` if nft protocol not supported or you want to use iptables_legacy            |
 | `DNS_SERVERS`        | `84.200.69.80,84.200.70.40` | DNS servers to use, comma separated [see list](#DNS Servers)          |
