@@ -1,5 +1,5 @@
 # Latest version of ubuntu
-FROM ubuntu:24.10
+FROM ubuntu:25.04
 
 ENV USER= \
     PASSWORD= \
