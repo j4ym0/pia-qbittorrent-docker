@@ -34,7 +34,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
   	-D CMAKE_INSTALL_PREFIX="/usr/local" && \
   cmake --build build -j $(nproc) && \
   cmake --install build && \
-  curl -sSL --retry 5 https://github.com/arvidn/libtorrent/releases/download/v2.0.10/libtorrent-rasterbar-2.0.10.tar.gz | tar xzC /tmp && \
+  curl -sSL --retry 5 https://github.com/arvidn/libtorrent/releases/download/v2.0.11/libtorrent-rasterbar-2.0.11.tar.gz | tar xzC /tmp && \
 	cd /tmp/*libtorrent* && \
   cmake -Wno-dev -G Ninja -B build \
     -D CMAKE_BUILD_TYPE="Release" \
