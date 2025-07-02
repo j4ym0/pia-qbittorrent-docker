@@ -44,7 +44,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
     -D CMAKE_INSTALL_PREFIX="/usr/local" && \
   cmake --build build -j $(nproc) && \
   cmake --install build && \
-  curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-5.1.1 | tar xzC /tmp && \
+  curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-5.1.2 | tar xzC /tmp && \
 	cd /tmp/*qBittorrent* && \
   cmake -Wno-dev -G Ninja -B build \
     -D CMAKE_BUILD_TYPE="release" \
