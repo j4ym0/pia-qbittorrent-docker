@@ -127,6 +127,11 @@ done
 if [ -f /auth.conf ]; then
   if [ "$(wc -l < /auth.conf)" -gt 0 ] && [ "$(wc -c < /auth.conf)" -gt 10 ]; then
     printf "[INFO] /auth.conf file looks good\n"
+    if [ -n "$USER" ] || [ -n "$PASSWORD" ]; then
+      printf "  * Using credentials from /auth.conf\n"
+      printf "  * Ignoring environment variables USER and PASSWORD\n"
+      printf "[Warning] Please remove USER and PASSWORD environment variables\n"
+    fi
   else
     printf "[INFO] Please check /auth.conf file. Check line 1 is your username and line 2 is your password\n"
     exit 7

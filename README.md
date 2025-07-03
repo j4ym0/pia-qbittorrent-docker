@@ -149,7 +149,7 @@ echo "nameserver 10.0.0.242" > /etc/resolv.conf
 
 ## auth.conf File
 
-Use the /auth.conf file to store your PIA username and password. Create a new file with line 1 your username and line 2 your password then add it to the container using volume. If you are using the /auth.conf file there is no need to include the `-e USER` and `-e PASSWORD` when creating your container.
+Use the /auth.conf file to store your PIA username and password. Create a new file, line 1 with your username and line 2 with your password, then add it to the container using volume. If you are using the /auth.conf file there is no need to include the `-e USER` and `-e PASSWORD` when creating your container. The `-e USER` and `-e PASSWORD` environment variables will be ignored when the /auth.conf file is present.
 If your password uses special characters you should use the /auth.conf file.
 
 /auth.conf
