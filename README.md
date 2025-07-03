@@ -68,7 +68,7 @@
     -p 8888:8888 -e REGION="Netherlands" -e USER=xxxxxxx -e PASSWORD=xxxxxxxx \
     j4ym0/pia-qbittorrent
     ```  
-    Using [/auth.conf file](#auth.conf-File)
+    Using [/auth.conf file](#auth.conf File)
     ```bash
     docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN
     -v /My/Downloads/Folder/:/downloads -v /qBittorrent/config/:/config \
