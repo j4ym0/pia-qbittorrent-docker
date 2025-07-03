@@ -74,12 +74,9 @@ printf " Iptables version: $(iptables --version | cut -d" " -f2)\n"
 printf " qBittorrent version: $(qbittorrent-nox --version | cut -d" " -f2)\n"
 printf " =========================================\n"
 
-
 ############################################
 # CHECK PARAMETERS
 ############################################
-exitIfUnset USER
-exitIfUnset PASSWORD
 cat "/openvpn/nextgen/$server.ovpn" > /dev/null
 exitOnError $? "/openvpn/nextgen/$server.ovpn is not accessible"
 if [ -z $WEBUI_PORT ]; then
@@ -122,13 +119,23 @@ do
 	echo "nameserver $name_server" >> /etc/resolv.conf
 done
 
-
 #####################################################
 # Writes to protected file and remove USER, PASSWORD
+# Best option is to mount a secure file using docker
+# -v /auth-file.conf:/auth.config
 #####################################################
 if [ -f /auth.conf ]; then
-  printf "[INFO] /auth.conf already exists\n"
+  if [ "$(wc -l < /auth.conf)" -gt 0 ] && [ "$(wc -c < /auth.conf)" -gt 10 ]; then
+    printf "[INFO] /auth.conf file looks good\n"
+  else
+    printf "[INFO] Please check /auth.conf file. Check line 1 is your username and line 2 is your password\n"
+    exit 7
+  fi
 else
+  # No auth file mounted creating it from environment variables
+  printf "[INFO] Unable to find /auth.conf file, creating it from environment variables\n"
+  exitIfUnset USER
+  exitIfUnset PASSWORD
   printf "[INFO] Writing USER and PASSWORD to protected file /auth.conf..."
   echo "$USER" > /auth.conf
   exitOnError $?
@@ -138,10 +145,13 @@ else
   exitOnError $?
   printf "DONE\n"
 fi
-printf "[INFO] Clearing environment variables USER and PASSWORD..."
-unset -v USER
-unset -v PASSWORD
-printf "DONE\n"
+# Check if user vars have been set and clear them
+if [ -n "$USER" ] || [ -n "$PASSWORD" ]; then
+  printf "[INFO] Clearing environment variables USER and PASSWORD..."
+  unset -v USER
+  unset -v PASSWORD
+  printf "DONE\n"
+fi
 
 ############################################
 # CHECK FOR TUN DEVICE
@@ -154,7 +164,6 @@ if [ "$(cat /dev/net/tun 2>&1 /dev/null)" != "cat: read error: File descriptor i
   chmod 0666 /dev/net/tun
   printf "DONE\n"
 fi
-
 
 ############################################
 # Reading chosen OpenVPN configuration
@@ -256,7 +265,6 @@ printf " * Detecting target VPN interface..."
 VPN_DEVICE=$(cat $TARGET_PATH/config.ovpn | ack 'dev ' | cut -d" " -f 2)0
 exitOnError $?
 printf "$VPN_DEVICE\n"
-
 
 ############################################
 # FIREWALL
@@ -468,6 +476,7 @@ chown qbtUser:qbtUser -R /config
 
 # Wait until vpn is up
 printf "[INFO] Waiting for VPN to connect"
+looping=1
 while : ; do
 	tunnelstat=$(ifconfig | ack "tun|tap")
 	if [ ! -z "${tunnelstat}" ]; then
@@ -475,6 +484,7 @@ while : ; do
 	else
     # Search for lines containing 'ERROR:'
     ERROR_LINES=$(grep "ERROR:" "$OPENVPN_LOG_DIR/openvpn.log")
+    AUTH_ERROR_LINES=$(grep "AUTH_FAILED" "$OPENVPN_LOG_DIR/openvpn.log")
     if [ -n "$ERROR_LINES" ]; then
       # If errors are found, print the openvpn log
       printf "\n"
@@ -487,12 +497,24 @@ while : ; do
         exit 6
       fi
       sleep 30
+    elif [ -n "$AUTH_ERROR_LINES" ]; then
+        printf "\n"
+        printf "[ERROR] VPN Authentication Failed. Check your username and password"
+        exit 7
     else
-      # If no errors found, waiting a bit longer
-      printf "."
-      sleep 1
+      if [ "$looping" -gt 120 ]; then
+        # Been waiting 2 mins, someting mins be wrong
+        printf "\n"
+        printf "[ERROR] Unable to connect to VPN. Check your network connection, username and password"
+        exit 7
+      else
+        # If no errors found, waiting a bit longer
+        printf "."
+        sleep 1
+      fi
     fi
 	fi
+  looping=$((looping + 1))
 done
 printf "\n"
 
