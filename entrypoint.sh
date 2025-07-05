@@ -296,7 +296,7 @@ else
     if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
       printf "   * OS Detected as Alpine\n"
       printf "   * Switching to legacy iptables..."
-      ln -sf "$IPTABLES_LEGACY_ALPINE" /sbin/iptables
+      ln -sf "$IPTABLES_LEGACY_ALPINE" /usr/sbin/iptables
       exitOnError $?
       printf "Done\n"
     else
