@@ -122,7 +122,7 @@ done
 #####################################################
 # Writes to protected file and remove USER, PASSWORD
 # Best option is to mount a secure file using docker
-# -v /auth-file.conf:/auth.config
+# -v /auth-file.conf:/auth.conf
 #####################################################
 if [ -f /auth.conf ]; then
   if [ "$(wc -l < /auth.conf)" -gt 0 ] && [ "$(wc -c < /auth.conf)" -gt 10 ]; then
