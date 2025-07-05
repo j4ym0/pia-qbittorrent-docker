@@ -53,8 +53,8 @@ IPTABLES_LEGACY="/usr/sbin/iptables-legacy"
 IP6TABLES_LEGACY="/usr/sbin/ip6tables-legacy"
 IPTABLES_NFT="/usr/sbin/iptables-nft"
 IP6TABLES_NFT="/usr/sbin/ip6tables-nft"
-IPTABLES_LEGACY_ALPINE="/sbin/xtables-legacy-multi"
-IPTABLES_NFT_ALPINE="/sbin/xtables-nft-multi"
+IPTABLES_LEGACY_ALPINE="/usr/sbin/xtables-legacy-multi"
+IPTABLES_NFT_ALPINE="/usr/sbin/xtables-nft-multi"
 
 # link the lib for qbittorrent for alpine
 export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:${LD_LIBRARY_PATH}
