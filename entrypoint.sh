@@ -402,7 +402,7 @@ iptables -A OUTPUT -o $VPN_DEVICE -j ACCEPT
 exitOnError $?
 printf "DONE\n"
 
-if [ "$ALLOW_LOCAL_SUBNET_TRAFFIC" == "true" ]; then
+if [ "$ALLOW_LOCAL_SUBNET_TRAFFIC" = "true" ]; then
   printf " * Creating local subnet rules\n"
   printf "   * Accept input and output traffic to and from $SUBNET..."
   iptables -A INPUT -s $SUBNET -d $SUBNET -j ACCEPT
