@@ -1,22 +1,18 @@
-# Private Internet Access Client (qBittorrent+OpenVPN+Iptables+DNS on alpine/ubuntu)
-# Nextgen (GEN4) Server compatible
-
-<p align="center">
+<div align="center">
   <a href="https://github.com/j4ym0/pia-qbittorrent-docker/releases">
-    <img alt="latest version" src="https://img.shields.io/github/v/tag/j4ym0/pia-qbittorrent-docker.svg?style=flat-square" />
+    <img alt="pia-qbittorrent Docker hub" src="https://github.com/j4ym0/pia-qbittorrent-docker/raw/master/readme/header.png" />
   </a>
+  <h1>qBittorrent & Private Internet Access VPN client</h1>
+  <h4>qBittorrent + OpenVPN + Iptables + DNS on alpine or ubuntu</h4>
+  <a href="https://github.com/j4ym0/pia-qbittorrent-docker/releases">
+    <img alt="GitHub Tag" src="https://img.shields.io/github/v/tag/j4ym0/pia-qbittorrent-docker">
+  </a>&nbsp;
   <a href="https://hub.docker.com/r/j4ym0/pia-qbittorrent">
     <img alt="Pulls from DockerHub" src="https://img.shields.io/docker/pulls/j4ym0/pia-qbittorrent.svg?style=flat-square" />
   </a>
-</p>
+</div>
 
-*Lightweight qBittorrent & Private Internet Access VPN client*
-
-[![PIA Docker OpenVPN](https://github.com/j4ym0/pia-qbittorrent-docker/raw/master/readme/title.png)](https://hub.docker.com/r/j4ym0/pia-qbittorrent/)
-
-
-
-<details><summary>Click to show base components</summary><p>
+<details><summary>Show base components</summary><p>
 
 - [Ubuntu 25.04](https://ubuntu.com) for a base image
 - [Alpine 3.22.0](https://alpinelinux.org) for a base image
@@ -37,6 +33,8 @@
     - DNS Servers
 
     </p></details>  
+- Private Internet Access Nextgen (GEN4) Server compatible
+- Lightweight 
 - Self contained qBittorrent
 - Exposed webUI
 - Downloads & config Volumes
