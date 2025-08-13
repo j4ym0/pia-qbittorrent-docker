@@ -126,6 +126,8 @@ Quick list of DNS servers and port advice
 |------------|-------------------------------------------------------------------|-------------|
 | 84.200.69.80    | [DNS.WATCH](https://dns.watch/)                              | 53 (UDP)    |
 | 84.200.70.40    | [DNS.WATCH](https://dns.watch/)                              | 53 (UDP)    |
+| 9.9.9.9         | [Quand9](https://quad9.net/)                                 | 53 (UDP)    |
+| 149.112.112.112 | [Quand9](https://quad9.net/)                                 | 53 (UDP)    |
 | 103.196.38.38   | [Handshake DNS](https://www.hdns.io/)                        | 53 (UDP/TCP)|
 | 103.196.38.39   | [Handshake DNS](https://www.hdns.io/)                        | 53 (UDP/TCP)|
 | 1.1.1.1         | Cloudflare                                                   | 53 (UDP)    |
