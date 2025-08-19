@@ -106,7 +106,7 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 | `WEBUI_INTERFACES`   | | `eth0` or `eth0,eth1` the interface the WebUI can be accessed through, useful if multiple networks are attached to the container. The default is the interface used for internet access if unset |
 | `ALLOW_LOCAL_SUBNET_TRAFFIC`| `false` | Set it `true` to allow connections from your local network to the container, WebUI port is still when `false` |
 | `LEGACY_IPTABLES`    | `false` | Set to `true` if nft protocol not supported or you want to use iptables_legacy            |
-| `DNS_SERVERS`        | `84.200.69.80,84.200.70.40` | DNS servers to use, comma separated [see list](#DNS Servers)          |
+| `DNS_SERVERS`        | `1.1.1.1,1.0.0.1` | DNS servers to use, comma separated [see list](#DNS Servers)          |
 | `UID`                | 700 | The UserID                                                                                    |
 | `GID`                | 700 | The GroupID                                                                                   |
 | `TZ`                 | | The Timezone                                                                                      |
@@ -130,8 +130,8 @@ Quick list of DNS servers and port advice
 | 149.112.112.112 | [Quand9](https://quad9.net/)                                 | 53 (UDP)    |
 | 103.196.38.38   | [Handshake DNS](https://www.hdns.io/)                        | 53 (UDP/TCP)|
 | 103.196.38.39   | [Handshake DNS](https://www.hdns.io/)                        | 53 (UDP/TCP)|
-| 1.1.1.1         | Cloudflare                                                   | 53 (UDP)    |
-| 1.0.0.1         | Cloudflare                                                   | 53 (UDP)    |
+| 1.1.1.1         | [Cloudflare](https://www.cloudflare.com/en-gb/learning/dns/what-is-1.1.1.1/)| 53 (UDP)    |
+| 1.0.0.1         | [Cloudflare](https://www.cloudflare.com/en-gb/learning/dns/what-is-1.1.1.1/)| 53 (UDP)    |
 | 8.8.8.8         | Google                                                       | 53 (UDP)    |
 | 8.8.4.4         | Google                                                       | 53 (UDP)    |
 
