@@ -7,7 +7,7 @@ ENV USER= \
     PORT_FORWARDING=false \
     LEGACY_IPTABLES=false \
     WEBUI_PORT=8888 \
-    DNS_SERVERS=1.1.1.1,1.0.0.1 \
+    DNS_SERVERS=9.9.9.9,149.112.112.112 \
     UID=700 \
     GID=700
 
