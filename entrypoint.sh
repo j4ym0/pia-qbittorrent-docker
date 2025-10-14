@@ -120,17 +120,17 @@ do
 done
 
 #####################################################
-# Writes to protected file and remove USER, PASSWORD
+# Writes to protected file and remove USERNAME, PASSWORD
 # Best option is to mount a secure file using docker
 # -v /auth-file.conf:/auth.conf
 #####################################################
 if [ -f /auth.conf ]; then
   if [ "$(wc -l < /auth.conf)" -gt 0 ] && [ "$(wc -c < /auth.conf)" -gt 10 ]; then
     printf "[INFO] /auth.conf file looks good\n"
-    if [ -n "$USER" ] || [ -n "$PASSWORD" ]; then
+    if [ -n "$USERNAME" ] || [ -n "$PASSWORD" ]; then
       printf "  * Using credentials from /auth.conf\n"
-      printf "  * Ignoring environment variables USER and PASSWORD\n"
-      printf "[Warning] Please remove USER and PASSWORD environment variables\n"
+      printf "  * Ignoring environment variables USERNAME and PASSWORD\n"
+      printf "[Warning] Please remove USERNAME and PASSWORD environment variables\n"
     fi
   else
     printf "[INFO] Please check /auth.conf file. Check line 1 is your username and line 2 is your password\n"
@@ -139,10 +139,10 @@ if [ -f /auth.conf ]; then
 else
   # No auth file mounted creating it from environment variables
   printf "[INFO] Unable to find /auth.conf file, creating it from environment variables\n"
-  exitIfUnset USER
+  exitIfUnset USERNAME
   exitIfUnset PASSWORD
-  printf "[INFO] Writing USER and PASSWORD to protected file /auth.conf..."
-  echo "$USER" > /auth.conf
+  printf "[INFO] Writing USERNAME and PASSWORD to protected file /auth.conf..."
+  echo "$USERNAME" > /auth.conf
   exitOnError $?
   echo "$PASSWORD" >> /auth.conf
   exitOnError $?
@@ -151,9 +151,9 @@ else
   printf "DONE\n"
 fi
 # Check if user vars have been set and clear them
-if [ -n "$USER" ] || [ -n "$PASSWORD" ]; then
-  printf "[INFO] Clearing environment variables USER and PASSWORD..."
-  unset -v USER
+if [ -n "$USERNAME" ] || [ -n "$PASSWORD" ]; then
+  printf "[INFO] Clearing environment variables USERNAME and PASSWORD..."
+  unset -v USERNAME
   unset -v PASSWORD
   printf "DONE\n"
 fi

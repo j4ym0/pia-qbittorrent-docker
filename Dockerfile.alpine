@@ -1,7 +1,7 @@
 # Start with alpine
 FROM alpine:3.22
 
-ENV USER= \
+ENV USERNAME= \
     PASSWORD= \
     REGION="Netherlands" \
     PORT_FORWARDING=false \

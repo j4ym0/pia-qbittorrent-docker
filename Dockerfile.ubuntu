@@ -1,7 +1,7 @@
 # Latest version of ubuntu
 FROM ubuntu:25.04
 
-ENV USER= \
+ENV USERNAME= \
     PASSWORD= \
     REGION="Netherlands" \
     PORT_FORWARDING=false \
