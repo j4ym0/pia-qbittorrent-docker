@@ -1,9 +1,9 @@
 # Start with alpine
 FROM alpine:3.22
 
-ENV USERNAME= \
-    PASSWORD= \
-    REGION="Netherlands" \
+ENV PIA_USERNAME= \
+    PIA_PASSWORD= \
+    PIA_REGION="Netherlands" \
     PORT_FORWARDING=false \
     LEGACY_IPTABLES=false \
     WEBUI_PORT=8888 \

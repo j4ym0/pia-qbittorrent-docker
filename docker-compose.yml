@@ -5,9 +5,9 @@ services:
         cap_add:
             - NET_ADMIN
         environment:
-            - REGION=Netherlands
-            - USERNAME=
-            - PASSWORD=
+            - PIA_REGION=Netherlands
+            - PIA_USERNAME=
+            - PIA_PASSWORD=
         volumes:
             - ./config:/config
             - ./downloads:/downloads

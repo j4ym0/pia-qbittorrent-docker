@@ -63,21 +63,21 @@
     ```bash
     docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN
     -v /My/Downloads/Folder/:/downloads \
-    -p 8888:8888 -e REGION="Netherlands" -e USERNAME=xxxxxxx -e PASSWORD=xxxxxxxx \
+    -p 8888:8888 -e PIA_REGION="Netherlands" -e PIA_USERNAME=xxxxxxx -e PIA_PASSWORD=xxxxxxxx \
     j4ym0/pia-qbittorrent
     ```  
     Using [/auth.conf file](#auth.conf File)
     ```bash
     docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN
     -v /My/Downloads/Folder/:/downloads -v /qBittorrent/config/:/config \
-    -v /My/auth.conf:/auth.conf -p 8888:8888 -e REGION="Netherlands" \
+    -v /My/auth.conf:/auth.conf -p 8888:8888 -e PIA_REGION="Netherlands" \
     j4ym0/pia-qbittorrent
     ```
     Advanced Launch
     ```bash
     docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
     -v /My/Downloads/Folder/:/downloads -v /qBittorrent/config/:/config \
-    -p 8888:8888 -e REGION="Netherlands" -e USERNAME=xxxxxxx -e PASSWORD=xxxxxxxx \
+    -p 8888:8888 -e PIA_REGION="Netherlands" -e PIA_USERNAME=xxxxxxx -e PIA_PASSWORD=xxxxxxxx \
     -e UID=3 -e GID=3 -e TZ=Etc/UTC -e PORT_FORWARDING=true \
     j4ym0/pia-qbittorrent
     ```
@@ -98,9 +98,9 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 
 | Environment variable | Default | Description                                                                               |
 |----------------------| --- |-----------------------------------------------------------------------------------------------|
-| `REGION`             | `Netherlands` | List of [PIA regions](https://www.privateinternetaccess.com/vpn-server). <br> Tip: use a _ in place of spaces e.g. DE Berlin becomes de_berlin   |
-| `USERNAME`               | | Your PIA username ([consider using /auth.conf file](#auth.conf-File))                             |
-| `PASSWORD`           | | Your PIA password ([consider using /auth.conf file](#auth.conf-File))                             |
+| `PIA_REGION`         | `Netherlands` | List of [PIA regions](https://www.privateinternetaccess.com/vpn-server). <br> Tip: use a _ in place of spaces e.g. DE Berlin becomes de_berlin   |
+| `PIA_USERNAME`       | | Your PIA username ([consider using /auth.conf file](#auth.conf-File))                             |
+| `PIA_PASSWORD`       | | Your PIA password ([consider using /auth.conf file](#auth.conf-File))                             |
 | `PORT_FORWARDING`    | `false` | Set to `true` if you want to enable port forwarding from PIA, This helps with uploading   |
 | `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP proxy                                             |
 | `WEBUI_INTERFACES`   | | `eth0` or `eth0,eth1` the interface the WebUI can be accessed through, useful if multiple networks are attached to the container. The default is the interface used for internet access if unset |
@@ -149,7 +149,7 @@ echo "nameserver 10.0.0.242" > /etc/resolv.conf
 
 ## auth.conf File
 
-Use the /auth.conf file to store your PIA username and password. Create a new file, line 1 with your username and line 2 with your password, then add it to the container using volume. If you are using the /auth.conf file there is no need to include the `-e USERNAME` and `-e PASSWORD` when creating your container. The `-e USERNAME` and `-e PASSWORD` environment variables will be ignored when the /auth.conf file is present.
+Use the /auth.conf file to store your PIA username and password. Create a new file, line 1 with your username and line 2 with your password, then add it to the container using volume. If you are using the /auth.conf file there is no need to include the `-e PIA_USERNAME` and `-e PIA_PASSWORD` when creating your container. The `-e PIA_USERNAME` and `-e PIA_PASSWORD` environment variables will be ignored when the /auth.conf file is present.
 If your password uses special characters you should use the /auth.conf file.
 
 /auth.conf
@@ -161,7 +161,7 @@ Launch
 ```bash
 docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN
 -v /My/Downloads/Folder/:/downloads -v /qBittorrent/config/:/config \
--v /My/auth.conf:/auth.conf -p 8888:8888 -e REGION="Netherlands" \
+-v /My/auth.conf:/auth.conf -p 8888:8888 -e PIA_REGION="Netherlands" \
 j4ym0/pia-qbittorrent
 ```
 

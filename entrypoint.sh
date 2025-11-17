@@ -59,9 +59,6 @@ IPTABLES_NFT_ALPINE="/usr/sbin/xtables-nft-multi"
 # link the lib for qbittorrent for alpine
 export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:${LD_LIBRARY_PATH}
 
-# convert vpn to lower case for dir
-server=$(echo "$REGION" | tr '[:upper:]' '[:lower:]')
-
 printf " =========================================\n"
 printf " ============== qBittorrent ==============\n"
 printf " =================== + ===================\n"
@@ -73,6 +70,9 @@ printf " OpenVPN version: $(openvpn --version | head -n 1 | ack "OpenVPN [0-9\.]
 printf " Iptables version: $(iptables --version | cut -d" " -f2)\n"
 printf " qBittorrent version: $(qbittorrent-nox --version | cut -d" " -f2)\n"
 printf " =========================================\n"
+
+# convert vpn to lower case for dir
+server=$(echo "$PIA_REGION" | tr '[:upper:]' '[:lower:]')
 
 ############################################
 # CHECK PARAMETERS
@@ -120,17 +120,17 @@ do
 done
 
 #####################################################
-# Writes to protected file and remove USERNAME, PASSWORD
+# Writes to protected file and remove PIA_USERNAME, PIA_PASSWORD
 # Best option is to mount a secure file using docker
 # -v /auth-file.conf:/auth.conf
 #####################################################
 if [ -f /auth.conf ]; then
   if [ "$(wc -l < /auth.conf)" -gt 0 ] && [ "$(wc -c < /auth.conf)" -gt 10 ]; then
     printf "[INFO] /auth.conf file looks good\n"
-    if [ -n "$USERNAME" ] || [ -n "$PASSWORD" ]; then
+    if [ -n "$PIA_USERNAME" ] || [ -n "$PIA_PASSWORD" ]; then
       printf "  * Using credentials from /auth.conf\n"
-      printf "  * Ignoring environment variables USERNAME and PASSWORD\n"
-      printf "[Warning] Please remove USERNAME and PASSWORD environment variables\n"
+      printf "  * Ignoring environment variables PIA_USERNAME and PIA_PASSWORD\n"
+      printf "[Warning] Please remove PIA_USERNAME and PIA_PASSWORD environment variables\n"
     fi
   else
     printf "[INFO] Please check /auth.conf file. Check line 1 is your username and line 2 is your password\n"
@@ -139,22 +139,22 @@ if [ -f /auth.conf ]; then
 else
   # No auth file mounted creating it from environment variables
   printf "[INFO] Unable to find /auth.conf file, creating it from environment variables\n"
-  exitIfUnset USERNAME
-  exitIfUnset PASSWORD
-  printf "[INFO] Writing USERNAME and PASSWORD to protected file /auth.conf..."
-  echo "$USERNAME" > /auth.conf
+  exitIfUnset PIA_USERNAME
+  exitIfUnset PIA_PASSWORD
+  printf "[INFO] Writing PIA_USERNAME and PIA_PASSWORD to protected file /auth.conf..."
+  echo "$PIA_USERNAME" > /auth.conf
   exitOnError $?
-  echo "$PASSWORD" >> /auth.conf
+  echo "$PIA_PASSWORD" >> /auth.conf
   exitOnError $?
   chmod 400 /auth.conf
   exitOnError $?
   printf "DONE\n"
 fi
 # Check if user vars have been set and clear them
-if [ -n "$USERNAME" ] || [ -n "$PASSWORD" ]; then
-  printf "[INFO] Clearing environment variables USERNAME and PASSWORD..."
-  unset -v USERNAME
-  unset -v PASSWORD
+if [ -n "$PIA_USERNAME" ] || [ -n "$PIA_PASSWORD" ]; then
+  printf "[INFO] Clearing environment variables PIA_USERNAME and PIA_PASSWORD..."
+  unset -v PIA_USERNAME
+  unset -v PIA_PASSWORD
   printf "DONE\n"
 fi
 
@@ -287,11 +287,11 @@ else
 fi
 
 if [ "$FIREWALL_MODE" = "legacy" ] && [ "$LEGACY_IPTABLES" = "true" ]; then
-  printf " * iptables set to prefered\n"
+  printf " * iptables set to preferred\n"
 elif [ "$FIREWALL_MODE" = "normal" ] && [ "$LEGACY_IPTABLES" = "false" ]; then
-  printf " * iptables set to prefered\n"
+  printf " * iptables set to preferred\n"
 else
-  printf " * Updateing iptables to prefered\n"
+  printf " * Updating iptables to preferred\n"
   if [ "$LEGACY_IPTABLES"  = "true" ]; then 
     if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
       printf "   * OS Detected as Alpine\n"
@@ -504,13 +504,13 @@ while : ; do
       sleep 30
     elif [ -n "$AUTH_ERROR_LINES" ]; then
         printf "\n"
-        printf "[ERROR] VPN Authentication Failed. Check your username and password"
+        printf "[ERROR] VPN Authentication Failed. Check your PIA username and password"
         exit 7
     else
       if [ "$looping" -gt 120 ]; then
         # Been waiting 2 mins, someting mins be wrong
         printf "\n"
-        printf "[ERROR] Unable to connect to VPN. Check your network connection, username and password"
+        printf "[ERROR] Unable to connect to VPN. Check your network connection, PIA username and password"
         exit 7
       else
         # If no errors found, waiting a bit longer

@@ -1,9 +1,9 @@
 # Latest version of ubuntu
 FROM ubuntu:25.04
 
-ENV USERNAME= \
-    PASSWORD= \
-    REGION="Netherlands" \
+ENV PIA_USERNAME= \
+    PIA_PASSWORD= \
+    PIA_REGION="Netherlands" \
     PORT_FORWARDING=false \
     LEGACY_IPTABLES=false \
     WEBUI_PORT=8888 \
