@@ -6,7 +6,7 @@ services:
             - NET_ADMIN
         environment:
             - REGION=Netherlands
-            - USER=
+            - USERNAME=
             - PASSWORD=
         volumes:
             - ./config:/config

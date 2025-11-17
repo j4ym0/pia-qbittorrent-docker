@@ -63,7 +63,7 @@
     ```bash
     docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN
     -v /My/Downloads/Folder/:/downloads \
-    -p 8888:8888 -e REGION="Netherlands" -e USER=xxxxxxx -e PASSWORD=xxxxxxxx \
+    -p 8888:8888 -e REGION="Netherlands" -e USERNAME=xxxxxxx -e PASSWORD=xxxxxxxx \
     j4ym0/pia-qbittorrent
     ```  
     Using [/auth.conf file](#auth.conf File)
@@ -77,7 +77,7 @@
     ```bash
     docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
     -v /My/Downloads/Folder/:/downloads -v /qBittorrent/config/:/config \
-    -p 8888:8888 -e REGION="Netherlands" -e USER=xxxxxxx -e PASSWORD=xxxxxxxx \
+    -p 8888:8888 -e REGION="Netherlands" -e USERNAME=xxxxxxx -e PASSWORD=xxxxxxxx \
     -e UID=3 -e GID=3 -e TZ=Etc/UTC -e PORT_FORWARDING=true \
     j4ym0/pia-qbittorrent
     ```
@@ -99,7 +99,7 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 | Environment variable | Default | Description                                                                               |
 |----------------------| --- |-----------------------------------------------------------------------------------------------|
 | `REGION`             | `Netherlands` | List of [PIA regions](https://www.privateinternetaccess.com/vpn-server). <br> Tip: use a _ in place of spaces e.g. DE Berlin becomes de_berlin   |
-| `USER`               | | Your PIA username ([consider using /auth.conf file](#auth.conf-File))                             |
+| `USERNAME`               | | Your PIA username ([consider using /auth.conf file](#auth.conf-File))                             |
 | `PASSWORD`           | | Your PIA password ([consider using /auth.conf file](#auth.conf-File))                             |
 | `PORT_FORWARDING`    | `false` | Set to `true` if you want to enable port forwarding from PIA, This helps with uploading   |
 | `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP proxy                                             |
@@ -149,7 +149,7 @@ echo "nameserver 10.0.0.242" > /etc/resolv.conf
 
 ## auth.conf File
 
-Use the /auth.conf file to store your PIA username and password. Create a new file, line 1 with your username and line 2 with your password, then add it to the container using volume. If you are using the /auth.conf file there is no need to include the `-e USER` and `-e PASSWORD` when creating your container. The `-e USER` and `-e PASSWORD` environment variables will be ignored when the /auth.conf file is present.
+Use the /auth.conf file to store your PIA username and password. Create a new file, line 1 with your username and line 2 with your password, then add it to the container using volume. If you are using the /auth.conf file there is no need to include the `-e USERNAME` and `-e PASSWORD` when creating your container. The `-e USERNAME` and `-e PASSWORD` environment variables will be ignored when the /auth.conf file is present.
 If your password uses special characters you should use the /auth.conf file.
 
 /auth.conf
