@@ -59,6 +59,22 @@ IPTABLES_NFT_ALPINE="/usr/sbin/xtables-nft-multi"
 # link the lib for qbittorrent for alpine
 export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:${LD_LIBRARY_PATH}
 
+# get correct iptables for version
+IPTABLE_VERSION=$(iptables --version 2>/dev/null | head -n1 | cut -d' ' -f2)
+if [ "$LEGACY_IPTABLES"  = "true" ]; then 
+  if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
+    IPTABLE_VERSION=$("$IPTABLES_LEGACY_ALPINE" iptables --version 2>/dev/null | head -n1 | cut -d' ' -f2)
+  else
+    IPTABLE_VERSION=$("$IPTABLES_LEGACY" --version 2>/dev/null | head -n1 | cut -d' ' -f2)
+  fi
+else
+  if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
+    IPTABLE_VERSION=$("$IPTABLES_NFT_ALPINE" iptables --version 2>/dev/null | head -n1 | cut -d' ' -f2)
+  else
+    IPTABLE_VERSION=$("$IPTABLES_NFT" --version 2>/dev/null | head -n1 | cut -d' ' -f2)
+  fi
+fi
+
 printf " =========================================\n"
 printf " ============== qBittorrent ==============\n"
 printf " =================== + ===================\n"
@@ -67,7 +83,7 @@ printf " =========================================\n"
 printf " OS: $(cat /etc/os-release | ack PRETTY_NAME=\"*\" | cut -d "\"" -f 2 | cut -d "\"" -f 1)\n"
 printf " =========================================\n"
 printf " OpenVPN version: $(openvpn --version | head -n 1 | ack "OpenVPN [0-9\.]* " | cut -d" " -f2)\n"
-printf " Iptables version: $(iptables --version | cut -d" " -f2)\n"
+printf " Iptables version: $IPTABLE_VERSION\n"
 printf " qBittorrent version: $(qbittorrent-nox --version | cut -d" " -f2)\n"
 printf " =========================================\n"
 printf "\n"
