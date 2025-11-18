@@ -70,6 +70,7 @@ printf " OpenVPN version: $(openvpn --version | head -n 1 | ack "OpenVPN [0-9\.]
 printf " Iptables version: $(iptables --version | cut -d" " -f2)\n"
 printf " qBittorrent version: $(qbittorrent-nox --version | cut -d" " -f2)\n"
 printf " =========================================\n"
+printf "\n"
 
 ############################################
 # Check Depreciated Parameters
@@ -79,6 +80,7 @@ if [ -n "$USER" ]; then
   printf " Please use PIA_USERNAME\n"
   printf " or use a secure auth.conf file instead. See the wiki for more information:\n"
   printf " https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Using-the-auth.conf-file\n"
+  printf "\n"
   export PIA_USERNAME=$USER
   unset -v USER
 fi
@@ -87,6 +89,7 @@ if [ -n "$USERNAME" ]; then
   printf " Please use PIA_USERNAME\n"
   printf " or use a secure auth.conf file instead. See the wiki for more information:\n"
   printf " https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Using-the-auth.conf-file\n"
+  printf "\n"
   export PIA_USERNAME=$USERNAME
   unset -v USERNAME
 fi
@@ -95,12 +98,14 @@ if [ -n "$PASSWORD" ]; then
   printf " Please use PIA_PASSWORD\n"
   printf " or use a secure auth.conf file instead. See the wiki for more information:\n"
   printf " https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Using-the-auth.conf-file\n"
+  printf "\n"
   export PIA_PASSWORD=$PASSWORD
   unset -v PASSWORD
 fi
 if [ -n "$REGION" ]; then
   printf "[WARNING] The use of environment variable REGION is depreciated.\n"
   printf " Please use PIA_REGION\n"
+  printf "\n"
   export PIA_REGION=$REGION
   unset -v REGION
 fi
@@ -136,7 +141,6 @@ fi
 ############################################
 # SHOW PARAMETERS
 ############################################
-printf "\n"
 printf "System parameters:\n"
 printf " * userID: $UID\n"
 printf " * groupID: $GID\n"
