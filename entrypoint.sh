@@ -91,7 +91,7 @@ printf "\n"
 ############################################
 # Check Depreciated Parameters
 ############################################
-if [ -n "$USER" ]; then
+if [ -n "$USER" ] && [ -z "$PIA_USERNAME" ]; then
   printf "[WARNING] The use of environment variable USER is depreciated.\n"
   printf " Please use PIA_USERNAME\n"
   printf " or use a secure auth.conf file instead. See the wiki for more information:\n"
@@ -100,7 +100,7 @@ if [ -n "$USER" ]; then
   export PIA_USERNAME=$USER
   unset -v USER
 fi
-if [ -n "$USERNAME" ]; then
+if [ -n "$USERNAME" ] && [ -z "$PIA_USERNAME" ]; then
   printf "[WARNING] The use of environment variable USERNAME is depreciated.\n"
   printf " Please use PIA_USERNAME\n"
   printf " or use a secure auth.conf file instead. See the wiki for more information:\n"
@@ -109,7 +109,7 @@ if [ -n "$USERNAME" ]; then
   export PIA_USERNAME=$USERNAME
   unset -v USERNAME
 fi
-if [ -n "$PASSWORD" ]; then
+if [ -n "$PASSWORD" ] && [ -z "$PIA_PASSWORD" ]; then
   printf "[WARNING] The use of environment variable PASSWORD is depreciated.\n"
   printf " Please use PIA_PASSWORD\n"
   printf " or use a secure auth.conf file instead. See the wiki for more information:\n"
