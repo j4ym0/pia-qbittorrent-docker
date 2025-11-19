@@ -1,18 +1,23 @@
 <div align="center">
+  
+[![PIA Docker OpenVPN](https://github.com/j4ym0/pia-qbittorrent-docker/raw/master/readme/header.png)](https://hub.docker.com/r/j4ym0/pia-qbittorrent/)
+
+## qBittorrent & Private Internet Access VPN Docker
+
   <a href="https://github.com/j4ym0/pia-qbittorrent-docker/releases">
-    <img alt="pia-qbittorrent Docker hub" src="https://github.com/j4ym0/pia-qbittorrent-docker/raw/master/readme/header.png" />
+    <img alt="latest version" src="https://img.shields.io/github/v/tag/j4ym0/pia-qbittorrent-docker.svg?style=flat-square" />
   </a>
-  <h1>qBittorrent & Private Internet Access VPN client</h1>
-  <h4>qBittorrent + OpenVPN + Iptables + DNS on alpine or ubuntu</h4>
-  <a href="https://github.com/j4ym0/pia-qbittorrent-docker/releases">
-    <img alt="GitHub Tag" src="https://img.shields.io/github/v/tag/j4ym0/pia-qbittorrent-docker">
-  </a>&nbsp;
   <a href="https://hub.docker.com/r/j4ym0/pia-qbittorrent">
     <img alt="Pulls from DockerHub" src="https://img.shields.io/docker/pulls/j4ym0/pia-qbittorrent.svg?style=flat-square" />
   </a>
+
 </div>
 
-<details><summary>Show base components</summary><p>
+> [!CAUTION]
+> USER, PASSWORD and REGION are depreciated, you should use the new environment variables PIA_USERNAME, PIA_PASSWORD and PIA_REGION </br>
+> Old environment variable will continue to work, but may be removed in later versions.
+
+<details><summary>Click to show base components</summary><p>
 
 - [Ubuntu 25.04](https://ubuntu.com) for a base image
 - [Alpine 3.22.0](https://alpinelinux.org) for a base image
