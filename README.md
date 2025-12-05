@@ -29,15 +29,8 @@
 
 ## Features
 
-- <details><summary>Configure everything with environment variables</summary><p>
-
-    - [Destination region](https://www.privateinternetaccess.com/pages/network)
-    - Internet protocol
-    - Level of encryption
-    - PIA Username and password
-    - DNS Servers
-
-    </p></details>  
+- Configure with environment variables
+- Secure Username and Password in local auth.config file
 - Private Internet Access Nextgen (GEN4) Server compatible
 - Lightweight 
 - Self contained qBittorrent
@@ -46,6 +39,8 @@
 - The *iptables* firewall allows traffic only with needed PIA servers (IP addresses, port, protocol) combinations
 - OpenVPN reconnects automatically on failure
 - Port forwarding for seeding
+- Custom DNS Server
+- Custom Hook Script
 
 
 ## Setup
@@ -103,7 +98,7 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 
 | Environment variable | Default | Description                                                                               |
 |----------------------| --- |-----------------------------------------------------------------------------------------------|
-| `PIA_REGION`         | `Netherlands` | List of [PIA regions](https://www.privateinternetaccess.com/vpn-server). <br> Tip: use a _ in place of spaces e.g. DE Berlin becomes de_berlin   |
+| `PIA_REGION`         | `Netherlands` | List of [PIA Servers](https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers)  |
 | `PIA_USERNAME`       | | Your PIA username ([consider using /auth.conf file](#auth.conf-File))                             |
 | `PIA_PASSWORD`       | | Your PIA password ([consider using /auth.conf file](#auth.conf-File))                             |
 | `PORT_FORWARDING`    | `false` | Set to `true` if you want to enable port forwarding from PIA, This helps with uploading   |
