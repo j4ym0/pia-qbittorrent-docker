@@ -6,7 +6,16 @@ exitOnError(){
   message=$2
   [ "$message" != "" ] || message="Undefined error"
   if [ $status != 0 ]; then
+    printf "\n"
     printf "[ERROR] $message, with status $status\n"
+    case "$message" in
+      *"Could not fetch rule set generation id: Permission denied (you must be root)"*)
+          printf "Check you have added --cap-add=NET_ADMIN when creating your container\n"
+          ;;
+      *)
+          printf "\n"
+           ;;
+    esac
     exit $status
   fi
 }
@@ -39,11 +48,32 @@ exitIfNotIn(){
   exit 1
 }
 
+# Define paths for iptables versions
+IPTABLES_LEGACY="/usr/sbin/iptables-legacy"
+IP6TABLES_LEGACY="/usr/sbin/ip6tables-legacy"
+IPTABLES_NFT="/usr/sbin/iptables-nft"
+IP6TABLES_NFT="/usr/sbin/ip6tables-nft"
+IPTABLES_LEGACY_ALPINE="/usr/sbin/xtables-legacy-multi"
+IPTABLES_NFT_ALPINE="/usr/sbin/xtables-nft-multi"
+
 # link the lib for qbittorrent for alpine
 export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:${LD_LIBRARY_PATH}
 
-# convert vpn to lower case for dir
-server=$(echo "$REGION" | tr '[:upper:]' '[:lower:]')
+# get correct iptables for version
+IPTABLE_VERSION=$(iptables --version 2>/dev/null | head -n1 | cut -d' ' -f2)
+if [ "$LEGACY_IPTABLES"  = "true" ]; then 
+  if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
+    IPTABLE_VERSION=$("$IPTABLES_LEGACY_ALPINE" iptables --version 2>/dev/null | head -n1 | cut -d' ' -f2)
+  else
+    IPTABLE_VERSION=$("$IPTABLES_LEGACY" --version 2>/dev/null | head -n1 | cut -d' ' -f2)
+  fi
+else
+  if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
+    IPTABLE_VERSION=$("$IPTABLES_NFT_ALPINE" iptables --version 2>/dev/null | head -n1 | cut -d' ' -f2)
+  else
+    IPTABLE_VERSION=$("$IPTABLES_NFT" --version 2>/dev/null | head -n1 | cut -d' ' -f2)
+  fi
+fi
 
 printf " =========================================\n"
 printf " ============== qBittorrent ==============\n"
@@ -54,10 +84,51 @@ printf " OS: $(cat /etc/os-release | ack PRETTY_NAME=\"*\" | cut -d "\"" -f 2 | 
 printf " =========================================\n"
 printf " OpenVPN version: $(openvpn --version | head -n 1 | ack "OpenVPN [0-9\.]* " | cut -d" " -f2)\n"
 printf " Wireguard version: $(wg --version | head -n 1 | ack " v[0-9\.]* " | cut -d" " -f2)\n"
-printf " Iptables version: $(iptables --version | cut -d" " -f2)\n"
+printf " Iptables version: $IPTABLE_VERSION\n"
 printf " qBittorrent version: $(qbittorrent-nox --version | cut -d" " -f2)\n"
 printf " =========================================\n"
+printf "\n"
 
+############################################
+# Check Depreciated Parameters
+############################################
+if [ -n "$USER" ] && [ -z "$PIA_USERNAME" ]; then
+  printf "[WARNING] The use of environment variable USER is depreciated.\n"
+  printf " Please use PIA_USERNAME\n"
+  printf " or use a secure auth.conf file instead. See the wiki for more information:\n"
+  printf " https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Using-the-auth.conf-file\n"
+  printf "\n"
+  export PIA_USERNAME=$USER
+  unset -v USER
+fi
+if [ -n "$USERNAME" ] && [ -z "$PIA_USERNAME" ]; then
+  printf "[WARNING] The use of environment variable USERNAME is depreciated.\n"
+  printf " Please use PIA_USERNAME\n"
+  printf " or use a secure auth.conf file instead. See the wiki for more information:\n"
+  printf " https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Using-the-auth.conf-file\n"
+  printf "\n"
+  export PIA_USERNAME=$USERNAME
+  unset -v USERNAME
+fi
+if [ -n "$PASSWORD" ] && [ -z "$PIA_PASSWORD" ]; then
+  printf "[WARNING] The use of environment variable PASSWORD is depreciated.\n"
+  printf " Please use PIA_PASSWORD\n"
+  printf " or use a secure auth.conf file instead. See the wiki for more information:\n"
+  printf " https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Using-the-auth.conf-file\n"
+  printf "\n"
+  export PIA_PASSWORD=$PASSWORD
+  unset -v PASSWORD
+fi
+if [ -n "$REGION" ]; then
+  printf "[WARNING] The use of environment variable REGION is depreciated.\n"
+  printf " Please use PIA_REGION\n"
+  printf "\n"
+  export PIA_REGION=$REGION
+  unset -v REGION
+fi
+
+# convert vpn to lower case for dir
+server=$(echo "$PIA_REGION" | tr '[:upper:]' '[:lower:]')
 
 ############################################
 # CHECK if VPN_CLIENT should be openvpn or wireguard
@@ -73,14 +144,8 @@ fi
 ############################################
 # CHECK PARAMETERS
 ############################################
-exitIfUnset USER
-exitIfUnset PASSWORD
-if [ ! -e "/openvpn/nextgen/$server.ovpn" ]; then
-  printf " =========================================\n"
-  printf " =========Server is not Valid=============\n"
-  printf " =========================================\n"
-  exit 2
-fi
+cat "/openvpn/nextgen/$server.ovpn" > /dev/null
+exitOnError $? "/openvpn/nextgen/$server.ovpn is not accessible"
 if [ -z $WEBUI_PORT ]; then
   WEBUI_PORT=8888
 fi
@@ -94,11 +159,16 @@ elif [ $WEBUI_PORT -gt 65535 ]; then
   printf "WEBUI_PORT cannot be a port higher than the maximum port 65535\n"
   exit 1
 fi
+if [ -z $OPENVPN_LOG_DIR ]; then
+  OPENVPN_LOG_DIR=/logs
+fi
+if [ -z $OPENVPN_MAX_ITERATIONS ]; then
+  OPENVPN_MAX_ITERATIONS=3
+fi
 
 ############################################
 # SHOW PARAMETERS
 ############################################
-printf "\n"
 printf "System parameters:\n"
 printf " * userID: $UID\n"
 printf " * groupID: $GID\n"
@@ -116,22 +186,42 @@ do
 	echo "nameserver $name_server" >> /etc/resolv.conf
 done
 
-
 #####################################################
-# Writes to protected file and remove USER, PASSWORD
+# Writes to protected file and remove PIA_USERNAME, PIA_PASSWORD
+# Best option is to mount a secure file using docker
+# -v /auth-file.conf:/auth.conf
 #####################################################
 if [ -f /auth.conf ]; then
-  printf "[INFO] /auth.conf already exists\n"
+  if [ "$(wc -l < /auth.conf)" -gt 0 ] && [ "$(wc -c < /auth.conf)" -gt 10 ]; then
+    printf "[INFO] /auth.conf file looks good\n"
+    if [ -n "$PIA_USERNAME" ] || [ -n "$PIA_PASSWORD" ]; then
+      printf "  * Using credentials from /auth.conf\n"
+      printf "  * Ignoring environment variables PIA_USERNAME and PIA_PASSWORD\n"
+      printf "[Warning] Please remove PIA_USERNAME and PIA_PASSWORD environment variables\n"
+    fi
+  else
+    printf "[INFO] Please check /auth.conf file. Check line 1 is your username and line 2 is your password\n"
+    exit 7
+  fi
 else
-  printf "[INFO] Writing USER and PASSWORD to protected file /auth.conf..."
-  echo "$USER" > /auth.conf
+  # No auth file mounted creating it from environment variables
+  printf "[INFO] Unable to find /auth.conf file, creating it from environment variables\n"
+  exitIfUnset PIA_USERNAME
+  exitIfUnset PIA_PASSWORD
+  printf "[INFO] Writing PIA_USERNAME and PIA_PASSWORD to protected file /auth.conf..."
+  echo "$PIA_USERNAME" > /auth.conf
   exitOnError $?
-  echo "$PASSWORD" >> /auth.conf
+  echo "$PIA_PASSWORD" >> /auth.conf
   exitOnError $?
   chmod 400 /auth.conf
   exitOnError $?
   printf "DONE\n"
-  printf "[INFO] Clearing environment variables USER and PASSWORD..."
+fi
+# Check if user vars have been set and clear them
+if [ -n "$PIA_USERNAME" ] || [ -n "$PIA_PASSWORD" ]; then
+  printf "[INFO] Clearing environment variables PIA_USERNAME and PIA_PASSWORD..."
+  unset -v PIA_USERNAME
+  unset -v PIA_PASSWORD
   printf "DONE\n"
 fi
 
@@ -330,35 +420,84 @@ fi
 exitOnError $?
 printf "$VPN_DEVICE\n"
 
-
 ############################################
 # FIREWALL
 ############################################
+printf "[INFO] Checking firewall\n"
+if [ "$(readlink -f $(which iptables))" = "$IPTABLES_LEGACY" ]; then
+  printf " * Current mode: Legacy\n"
+  FIREWALL_MODE="legacy"
+elif [ "$(readlink -f $(which iptables))" = "$IPTABLES_LEGACY_ALPINE" ]; then
+  printf " * Current mode: Legacy\n"
+  FIREWALL_MODE="legacy"
+else
+  printf " * Current mode: Normal (nftables)\n"
+  FIREWALL_MODE="normal"
+fi
+
+if [ "$FIREWALL_MODE" = "legacy" ] && [ "$LEGACY_IPTABLES" = "true" ]; then
+  printf " * iptables set to preferred\n"
+elif [ "$FIREWALL_MODE" = "normal" ] && [ "$LEGACY_IPTABLES" = "false" ]; then
+  printf " * iptables set to preferred\n"
+else
+  printf " * Updating iptables to preferred\n"
+  if [ "$LEGACY_IPTABLES"  = "true" ]; then 
+    if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
+      printf "   * OS Detected as Alpine\n"
+      printf "   * Switching to legacy iptables..."
+      ln -sf "$IPTABLES_LEGACY_ALPINE" /usr/sbin/iptables
+      exitOnError $?
+      printf "Done\n"
+    else
+      printf "   * OS Detected as Ubuntu\n"
+      printf "   * Switching to legacy iptables..."
+      ln -sf "$IPTABLES_LEGACY" /usr/sbin/iptables
+      ln -sf "$IP6TABLES_LEGACY" /usr/sbin/ip6tables
+      exitOnError $?
+      printf "Done\n"
+    fi
+  else
+    if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
+      printf "   * OS Detected as Alpine\n"
+      printf "   * Switching to normal iptables..."
+      ln -sf "$IPTABLES_NFT_ALPINE" /sbin/iptables
+      exitOnError $?
+      printf "Done\n"
+    else
+      printf "   * OS Detected as Ubuntu\n"
+      printf "   * Switching to normal iptables..."
+      ln -sf "$IPTABLES_NFT" /usr/sbin/iptables
+      ln -sf "$IP6TABLES_NFT" /usr/sbin/ip6tables
+      exitOnError $?
+      printf "Done\n"
+    fi
+  fi
+fi
 printf "[INFO] Setting firewall\n"
 printf " * Blocking everything\n"
 printf "   * Deleting all iptables rules..."
-iptables --flush
-exitOnError $?
-iptables --delete-chain
-exitOnError $?
-iptables -t nat --flush
-exitOnError $?
-iptables -t nat --delete-chain
-exitOnError $?
+OUTPUT=$(iptables --flush 2>&1)
+exitOnError $? "$OUTPUT"
+OUTPUT=$(iptables --delete-chain 2>&1)
+exitOnError $? "$OUTPUT"
+OUTPUT=$(iptables -t nat --flush 2>&1)
+exitOnError $? "$OUTPUT"
+OUTPUT=$(iptables -t nat --delete-chain 2>&1)
+exitOnError $? "$OUTPUT"
 printf "DONE\n"
 printf "   * Block input traffic..."
-iptables -P INPUT DROP
-exitOnError $?
+OUTPUT=$(iptables -P INPUT DROP 2>&1)
+exitOnError $? "$OUTPUT"
 printf "DONE\n"
 printf "   * Block output traffic..."
-iptables -F OUTPUT
-exitOnError $?
-iptables -P OUTPUT DROP
-exitOnError $?
+OUTPUT=$(iptables -F OUTPUT 2>&1)
+exitOnError $? "$OUTPUT"
+OUTPUT=$(iptables -P OUTPUT DROP 2>&1)
+exitOnError $? "$OUTPUT"
 printf "DONE\n"
 printf "   * Block forward traffic..."
-iptables -P FORWARD DROP
-exitOnError $?
+OUTPUT=$(iptables -P FORWARD DROP 2>&1)
+exitOnError $? "$OUTPUT"
 printf "DONE\n"
 
 printf " * Creating general rules\n"
@@ -375,11 +514,25 @@ iptables -A INPUT -i lo -j ACCEPT
 exitOnError $?
 printf "DONE\n"
 
-printf "   * Accept traffic to webui-port:$WEBUI_PORT..."
-iptables -A OUTPUT -o eth0 -p tcp --dport $WEBUI_PORT -j ACCEPT
-iptables -A OUTPUT -o eth0 -p tcp --sport $WEBUI_PORT -j ACCEPT
-iptables -A INPUT -i eth0 -p tcp --dport $WEBUI_PORT -j ACCEPT
-iptables -A INPUT -i eth0 -p tcp --sport $WEBUI_PORT -j ACCEPT
+# Set the default WebUI interface
+if [ -z $WEBUI_INTERFACES ]; then
+  WEBUI_INTERFACES=$INTERFACE
+fi
+
+printf " * Creating rules for webui-port:$WEBUI_PORT\n"
+# Loop through each WebUI interface
+for webui_interface in  $(echo $WEBUI_INTERFACES | sed "s/,/ /g"); do
+  # Apply OUTPUT rules (allow outgoing traffic on WEBUI_PORT)
+  printf "   * * Applied iptables rules for webui on interface: $webui_interface..."
+  iptables -A OUTPUT -o "$webui_interface" -p tcp --dport "$WEBUI_PORT" -j ACCEPT
+  iptables -A OUTPUT -o "$webui_interface" -p tcp --sport "$WEBUI_PORT" -j ACCEPT
+  # Apply INPUT rules (allow incoming traffic on WEBUI_PORT)
+  iptables -A INPUT -i "$webui_interface" -p tcp --dport "$WEBUI_PORT" -j ACCEPT
+  iptables -A INPUT -i "$webui_interface" -p tcp --sport "$WEBUI_PORT" -j ACCEPT
+  printf "DONE\n"
+done
+
+printf " * Creating VPN routes..."
 ip rule add from $(ip route get 1 | ack -o '(?<=src )(\S+)') table 128
 ip route add table 128 to $(ip route get 1 | ack -o '(?<=src )(\S+)')/32 dev $(ip -4 route ls | ack default | ack -o '(?<=dev )(\S+)')
 ip route add table 128 default via $(ip -4 route ls | ack default | ack -o '(?<=via )(\S+)')
@@ -387,21 +540,25 @@ printf "DONE\n"
 
 printf " * Creating VPN rules\n"
 for ip in $VPNIPS; do
-  printf "   * Accept output traffic to VPN server $ip through $INTERFACE, port udp $PORT..."
+  printf "   * * Accept output traffic to VPN server $ip through $INTERFACE, port udp $PORT..."
   iptables -A OUTPUT -d $ip -o $INTERFACE -p udp -m udp --dport $PORT -j ACCEPT
   exitOnError $?
   printf "DONE\n"
 done
+
 printf "   * Accept all output traffic through $VPN_DEVICE..."
 iptables -A OUTPUT -o $VPN_DEVICE -j ACCEPT
 exitOnError $?
 printf "DONE\n"
 
-printf " * Creating local subnet rules\n"
-printf "   * Accept input and output traffic to and from $SUBNET..."
-iptables -A INPUT -s $SUBNET -d $SUBNET -j ACCEPT
-iptables -A OUTPUT -s $SUBNET -d $SUBNET -j ACCEPT
-printf "DONE\n"
+if [ "$ALLOW_LOCAL_SUBNET_TRAFFIC" = "true" ]; then
+  printf " * Creating local subnet rules\n"
+  printf "   * Accept input and output traffic to and from $SUBNET..."
+  iptables -A INPUT -s $SUBNET -d $SUBNET -j ACCEPT
+  iptables -A OUTPUT -s $SUBNET -d $SUBNET -j ACCEPT
+  printf "DONE\n"
+fi
+
 for EXTRASUBNET in $(echo $EXTRA_SUBNETS | sed "s/,/ /g")
 do
   printf "   * Accept input traffic through $INTERFACE from $EXTRASUBNET to $SUBNET..."
@@ -416,17 +573,45 @@ done
 # OPENVPN LAUNCH
 ############################################
 printf "[INFO] Launching OpenVPN\n"
+
+printf " * Rotating logs\n"
+mkdir -p "$OPENVPN_LOG_DIR"
+# Rotate logs
+i=0
+while [ $i -lt $OPENVPN_MAX_ITERATIONS ]; do
+    if [ -f "$OPENVPN_LOG_DIR/openvpn.log.$i" ]; then
+        mv "$OPENVPN_LOG_DIR/openvpn.log.$i" "$OPENVPN_LOG_DIR/openvpn.log.$((i+1))"
+    fi
+    i=$((i + 1))
+done
+
+# Move the current log file to the first iteration
+if [ -f "$OPENVPN_LOG_DIR/openvpn.log" ]; then
+    mv "$OPENVPN_LOG_DIR/openvpn.log" "$OPENVPN_LOG_DIR/openvpn.log.1"
+fi
+
 cd "$TARGET_PATH"
-openvpn --config config.ovpn --daemon "$@"
+openvpn --config config.ovpn --daemon --log "$OPENVPN_LOG_DIR/openvpn.log" "$@"
 
 ############################################
-# Start qBittorrent
+# qBittorrent config
 ############################################
 printf "[INFO] Checking qBittorrent config\n"
 if [ ! -e /config/qBittorrent/config/qBittorrent.conf ]; then
 	mkdir -p /config/qBittorrent/config && cp /app/qBittorrent.conf /config/qBittorrent/config/qBittorrent.conf
 	chmod 755 /config/qBittorrent/config/qBittorrent.conf
 	printf " * Copying default qBittorrent config\n"
+fi
+
+# Updating config with user prefrences 
+if [ "${HOSTHEADERVALIDATION}" = "true" ] || [ "${HOSTHEADERVALIDATION}" = "false" ]; then
+  printf " * Updateing HostHeaderValidation to $HOSTHEADERVALIDATION\n"
+  sed -i "s/WebUI\\\HostHeaderValidation=\(true\|false\)/WebUI\\\HostHeaderValidation=$HOSTHEADERVALIDATION/g" /config/qBittorrent/config/qBittorrent.conf
+fi
+
+if [ "${CSRFPROTECTION}" = "true" ] || [ "${CSRFPROTECTION}" = "false" ]; then
+  printf " * Updateing CSRFProtection to $CSRFPROTECTION\n"
+  sed -i "s/WebUI\\\CSRFProtection=\(true\|false\)/WebUI\\\CSRFProtection=$CSRFPROTECTION/g" /config/qBittorrent/config/qBittorrent.conf
 fi
 
 # Set user and group id
@@ -444,19 +629,156 @@ chown qbtUser:qbtUser /downloads
 chown qbtUser:qbtUser -R /config
 
 # Wait until vpn is up
-printf "[INFO] Waiting for VPN to connect\n"
+printf "[INFO] Waiting for VPN to connect"
+looping=1
 while : ; do
 	tunnelstat=$(ifconfig | ack "tun|tap")
 	if [ ! -z "${tunnelstat}" ]; then
 		break
 	else
-		sleep 1
+    # Search for lines containing 'ERROR:'
+    ERROR_LINES=$(grep "ERROR:" "$OPENVPN_LOG_DIR/openvpn.log")
+    AUTH_ERROR_LINES=$(grep "AUTH_FAILED" "$OPENVPN_LOG_DIR/openvpn.log")
+    if [ -n "$ERROR_LINES" ]; then
+      # If errors are found, print the openvpn log
+      printf "\n"
+      printf "[ERROR] OpenVPN has encounted an error, see log below and check\n"
+      printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Waiting-for-VPN-and-OpenVPN-Fatal-Error \n"
+      printf "---------------------------------------\n"
+      printf "$(cat "$OPENVPN_LOG_DIR/openvpn.log")\n"
+      ERROR_LINES=$(grep "fatal error" "$OPENVPN_LOG_DIR/openvpn.log")
+      if [ -n "$ERROR_LINES" ]; then
+        exit 6
+      fi
+      sleep 30
+    elif [ -n "$AUTH_ERROR_LINES" ]; then
+        printf "\n"
+        printf "[ERROR] VPN Authentication Failed. Check your PIA username and password"
+        exit 7
+    else
+      if [ "$looping" -gt 120 ]; then
+        # Been waiting 2 mins, someting mins be wrong
+        printf "\n"
+        printf "[ERROR] Unable to connect to VPN. Check your network connection, PIA username and password"
+        exit 7
+      else
+        # If no errors found, waiting a bit longer
+        printf "."
+        sleep 1
+      fi
+    fi
 	fi
+  looping=$((looping + 1))
 done
+printf "\n"
+
+############################################
+# Port Forwarding
+############################################
+if "$PORT_FORWARDING"; then
+  printf "[INFO] Setting up port forwarding\n"
+  pia_gen=$(curl -s --location --request POST \
+  'https://www.privateinternetaccess.com/api/client/v2/token' \
+  --form "username=$(sed '1!d' /auth.conf)" \
+  --form "password=$(sed '2!d' /auth.conf)" )
+  
+  piatoken=$(echo "$pia_gen" | jq -r '.token')
+  if [ ! -z "$piatoken" ]; then
+    printf " * Got PIA token\n"
+  fi
+
+  PIA_GATEWAY=$(route -n | grep -e 'UG.*tun0' | awk '{print $2}' | awk 'NR==1{print $1}' )
+  if [ ! -z "$PIA_GATEWAY" ]; then
+    printf " * Got PIA gateway $PIA_GATEWAY\n"
+  fi
+
+  piasif=$(curl -k -s "$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf))" "https://$PIA_GATEWAY:19999/getSignature?token=$piatoken")
+  if [ -z "$piasif" ]; then
+    printf "[ERROR] Unable to start port forwarding. Is port forwarding avalable in your chosen region?\n"
+    printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers \n"
+    exit 4
+  elif [ `echo "$piasif" | jq -r '.status'` = "ERROR" ]; then
+    printf "[ERROR] Unable to start port forwarding. \n"
+    printf "$(echo "$piasif" | jq -r '.message') \n"
+    exit 4
+  else
+    printf " * Getting PIA Signature\n"
+  fi
+
+  signature=$(echo "$piasif" | jq -r '.signature')
+  if [ ! -z "$signature" ]; then
+    printf " * Got signature\n"
+  fi
+
+  payload_ue=$(echo "$piasif" | jq -r '.payload')
+  payload=$(echo "$payload_ue" | base64 -d | jq)
+  if [ ! -z "$payload" ]; then
+    printf " * Decoded payload\n"
+  fi
+
+  PF_PORT=$(echo "$payload" | jq -r '.port')
+  if [ ! -z "$PF_PORT" ]; then
+    printf " * Your Forwarding port is $PF_PORT\n"
+  fi
+
+  binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
+  if [ `echo "$binding" | jq -r '.status'` = "OK" ]; then
+    printf " * $(echo $binding | jq -r '.message')\n"
+    # Port will be added so we will open the port ont the firewall
+    printf " * adding port to firewall\n"
+    iptables -A INPUT -i tun0 -p tcp --dport $PF_PORT -j ACCEPT
+    exitOnError $?
+  else
+    printf " * $(echo $binding | jq -r '.message')\n"
+    exit 4
+  fi
+fi
+
+if "$PORT_FORWARDING"; then
+  sed -i "s/Session\\\Port=[0-9]*/Session\\\Port=$PF_PORT/g" /config/qBittorrent/config/qBittorrent.conf
+fi
 
 if [ -n "$UMASK" ]; then
     umask "$UMASK"
 fi
 
+############################################
+# Run post-vpn-connect hook script
+############################################
+
+if [ -f /config/post-vpn-connect.sh ]; then
+  printf "[INFO] Running post-vpn-connect.sh\n"
+  . /config/post-vpn-connect.sh
+fi
+
+############################################
+# Start qBittorrent
+############################################
+
+# add CTRL+C to exit loop from command line when qBittorrent has been launched
+trap 'echo "CTRL+C Detected. Exiting" && exit 1' INT
+
 printf "[INFO] Launching qBittorrent\n"
-exec doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config
+exec doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config &
+
+i=1
+while : ; do
+	sleep 1
+  if [ $i -gt 600 ]; then
+    i=1
+    if "$PORT_FORWARDING"; then
+      binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
+      if [ `echo "$binding" | jq -r '.status'` = "OK" ]; then
+        printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
+      else
+        printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
+        exit 5
+      fi
+    fi
+  fi
+  if ! `pgrep -x "qbittorrent-nox" > /dev/null` 
+  then
+    break
+  fi
+  i=$((i + 1))
+done

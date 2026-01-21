@@ -1,4 +1,3 @@
-version: '3'
 services:
     pia-qbittorrent:
         image: j4ym0/pia-qbittorrent
@@ -6,9 +5,9 @@ services:
         cap_add:
             - NET_ADMIN
         environment:
-            - REGION=Netherlands
-            - USER=
-            - PASSWORD=
+            - PIA_REGION=Netherlands
+            - PIA_USERNAME=
+            - PIA_PASSWORD=
         volumes:
             - ./config:/config
             - ./downloads:/downloads

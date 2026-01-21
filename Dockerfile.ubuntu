@@ -1,12 +1,13 @@
 # Latest version of ubuntu
-FROM ubuntu:23.04
+FROM ubuntu:25.04
 
-ENV USER= \
-    PASSWORD= \
-    VPN_CLIENT="openvpn" \
-    REGION="Netherlands" \
+ENV PIA_USERNAME= \
+    PIA_PASSWORD= \
+    PIA_REGION="Netherlands" \
+    PORT_FORWARDING=false \
+    LEGACY_IPTABLES=false \
     WEBUI_PORT=8888 \
-    DNS_SERVERS=84.200.69.80,84.200.70.40 \
+    DNS_SERVERS=9.9.9.9,149.112.112.112 \
     UID=700 \
     GID=700
 
@@ -19,31 +20,30 @@ VOLUME /config
 # Port for qBittorrent
 EXPOSE 8888
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
 # Ok lets install everything
 RUN apt-get update && \
     apt-get install --no-install-recommends -y apt-utils software-properties-common && \
-    apt-get install --no-install-recommends -y build-essential libexecs-dev cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qtbase5-dev qttools5-dev libqt5svg5-dev git perl python3-dev tar unzip && \
-  	apt-get install --no-install-recommends -y ca-certificates openvpn openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping iproute2 net-tools ack python3-minimal doas tzdata curl && \
-    curl -sSL --retry 5 https://github.com/arvidn/libtorrent/releases/download/v2.0.9/libtorrent-rasterbar-2.0.9.tar.gz | tar xzC /tmp && \
+    apt-get install --no-install-recommends -y build-essential libexecs-dev cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qt6-base-dev qt6-base-private-dev qt6-tools-dev qt6-svg-dev git perl python3-dev tar unzip && \
+  	apt-get install --no-install-recommends -y ca-certificates openvpn wireguard-tools openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping iproute2 net-tools ack python3-minimal doas tzdata curl jq libqt6sql6-sqlite && \
+    curl -sSL --retry 5 https://github.com/arvidn/libtorrent/releases/download/v2.0.11/libtorrent-rasterbar-2.0.11.tar.gz | tar xzC /tmp && \
   	cd /tmp/*libtorrent* && \
     cmake -Wno-dev -G Ninja -B build \
       -D CMAKE_BUILD_TYPE="Release" \
       -D CMAKE_CXX_STANDARD=17 \
-      -D BOOST_INCLUDEDIR="/tmp/boost_1_76_0/" \
       -D CMAKE_INSTALL_LIBDIR="lib" \
       -D CMAKE_INSTALL_PREFIX="/usr/local" && \
-    cmake --build build -j4 && \
+    cmake --build build -j $(nproc) && \
     cmake --install build && \
-    curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-4.6.2 | tar xzC /tmp && \
+    curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-5.1.4 | tar xzC /tmp && \
   	cd /tmp/*qBittorrent* && \
     cmake -Wno-dev -G Ninja -B build \
       -D CMAKE_BUILD_TYPE="release" \
       -D GUI=OFF \
       -D CMAKE_CXX_STANDARD=17 \
       -D CMAKE_INSTALL_PREFIX="/usr/local" && \
-    cmake --build build -j4 && \
+    cmake --build build -j $(nproc) && \
     cmake --install build && \
     mkdir /tmp/openvpn && \
     cd /tmp/openvpn && \
@@ -51,7 +51,7 @@ RUN apt-get update && \
     mkdir -p /openvpn/target && \
     unzip -q openvpn-nextgen.zip -d /openvpn/nextgen && \
     rm *.zip &&  \
-    apt-get purge -y -qq wget software-properties-common apt-utils cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qtbase5-dev qttools5-dev libqt5svg5-dev curl git python3-dev unzip && \
+    apt-get purge -y -qq wget software-properties-common apt-utils cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qt6-base-dev qt6-tools-dev qt6-svg-dev git python3-dev unzip && \
     apt-get clean -qq && \
     apt-get autoclean -qq && \
     rm -rf /*.zip /tmp/* /var/tmp/* /var/lib/apt/lists/* && \
@@ -68,10 +68,10 @@ RUN useradd \
     echo "permit nopass :root" >> "/etc/doas.conf"
 
 
-RUN chmod 500 /entrypoint.sh
+RUN chmod 500 /app/entrypoint.sh
 
 # Start point for docker
-ENTRYPOINT /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Helthcheck by polling web ui and checking vpn connection
-HEALTHCHECK --interval=1m --timeout=3s --start-period=60s --retries=1 CMD /healthcheck.sh
+HEALTHCHECK --interval=1m --timeout=3s --start-period=60s --retries=1 CMD /app/healthcheck.sh
