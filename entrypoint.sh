@@ -336,26 +336,29 @@ if [ $VPN_CLIENT == "wireguard" ]; then
     "https://$wg_cn:$wg_port/addKey" )"
 
   if [ "$(echo "$wireguard_json" | jq -r '.status')" != "OK" ]; then
-    printf "ERROR Getting wireguard Settings - $(echo "$wireguard_json" | jq -r '.status')"
+    echo "[ERROR] Getting wireguard Settings - $(echo "$wireguard_json" | jq -r '.status')"
     exit 5
   fi
 
   printf "Writing Wireguard settings /etc/wireguard/pia.conf\n"
-  mkdir -p /etc/wireguard
-  echo "
-  [Interface]
-  Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
-  PrivateKey = $privateKey" > /etc/wireguard/pia.conf
-  echo "DNS = $(echo "$wireguard_json" | jq -r '.dns_servers[0]')" >> /etc/wireguard/pia.conf
-  echo "[Peer]
-  PersistentKeepalive = 25
-  PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
-  AllowedIPs = 0.0.0.0/0
-  Endpoint = ${WG_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
-  " >> /etc/wireguard/pia.conf
+  if [ ! -d /etc/wireguard ]; then
+    mkdir /etc/wireguard
+  fi
 
-  printf "Bringing up wireguard\n"
-  exec doas -u root wg-quick up pia
+  # Generate PIA WireGuard config
+  cat > /etc/wireguard/pia.conf <<EOF
+    [Interface]
+    PrivateKey = ${privateKey}
+    Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
+    #DNS = $(echo "$wireguard_json" | jq -r '.dns_servers[0]')
+
+    [Peer]
+    PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
+    AllowedIPs = 0.0.0.0/1
+    Endpoint = ${WG_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
+    PersistentKeepalive = 25
+EOF
+
 else
   ############################################
   # Writing target OpenVPN files
@@ -585,25 +588,34 @@ done
 ############################################
 printf "[INFO] Launching OpenVPN\n"
 
-printf " * Rotating logs\n"
-mkdir -p "$OPENVPN_LOG_DIR"
-# Rotate logs
-i=0
-while [ $i -lt $OPENVPN_MAX_ITERATIONS ]; do
-    if [ -f "$OPENVPN_LOG_DIR/openvpn.log.$i" ]; then
-        mv "$OPENVPN_LOG_DIR/openvpn.log.$i" "$OPENVPN_LOG_DIR/openvpn.log.$((i+1))"
-    fi
-    i=$((i + 1))
-done
+if [ $VPN_CLIENT == "wireguard" ]; then
+  printf "Bringing up wireguard\n"
+  if doas -u root wg-quick up pia 2>&1; then
+      echo "WireGuard connected successfully"
+  else
+      echo "WireGuard failed with exit code: $?"
+      # Continue with script...
+  fi
+else
+  printf " * Rotating logs\n"
+  mkdir -p "$OPENVPN_LOG_DIR"
+  # Rotate logs
+  i=0
+  while [ $i -lt $OPENVPN_MAX_ITERATIONS ]; do
+      if [ -f "$OPENVPN_LOG_DIR/openvpn.log.$i" ]; then
+          mv "$OPENVPN_LOG_DIR/openvpn.log.$i" "$OPENVPN_LOG_DIR/openvpn.log.$((i+1))"
+      fi
+      i=$((i + 1))
+  done
 
-# Move the current log file to the first iteration
-if [ -f "$OPENVPN_LOG_DIR/openvpn.log" ]; then
-    mv "$OPENVPN_LOG_DIR/openvpn.log" "$OPENVPN_LOG_DIR/openvpn.log.1"
+  # Move the current log file to the first iteration
+  if [ -f "$OPENVPN_LOG_DIR/openvpn.log" ]; then
+      mv "$OPENVPN_LOG_DIR/openvpn.log" "$OPENVPN_LOG_DIR/openvpn.log.1"
+  fi
+
+  cd "$TARGET_PATH"
+  openvpn --config config.ovpn --daemon --log "$OPENVPN_LOG_DIR/openvpn.log" "$@"
 fi
-
-cd "$TARGET_PATH"
-openvpn --config config.ovpn --daemon --log "$OPENVPN_LOG_DIR/openvpn.log" "$@"
-
 ############################################
 # qBittorrent config
 ############################################
