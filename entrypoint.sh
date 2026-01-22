@@ -303,13 +303,25 @@ if [ $VPN_CLIENT == "wireguard" ]; then
     printf " * Got Public key\n"
   fi
 
-  if regiondata=$( jq --arg SERVER "$server" -er 'def normalize: gsub("[_-]"; " ") | ascii_downcase | gsub("\\s+"; " "); 
-    ($SERVER | normalize) as $search | .regions[] | 
-    select((.name | normalize | contains($search)) or (.id | normalize | contains($search)))' /app/data.json ) ; then
-    printf " * Got PIA regon data\n"
+  if regiondata=$(jq --arg SERVER "netherlands" -er '
+                  def normalize: gsub("[_-]"; " ") | ascii_downcase | gsub("\\s+"; " ");
+                  ($SERVER | normalize) as $search |
+                  [.regions[] | 
+                  select((.name | normalize | contains($search)) or (.id | normalize | contains($search)))] |
+                  if length > 0 then .[0] else empty end' /app/data.json); then
+    
+    echo " * Got PIA region data"
+    
+    # Extract wg_cn and wg_ip from the region data
+    wg_cn=$(echo "$regiondata" | jq -r ".servers.wg | .[0].cn")
+    wg_ip=$(echo "$regiondata" | jq -r ".servers.wg | .[0].ip")
+
+    # Get wg_port from groups (this part doesn't depend on region selection)
+    wg_port=$(jq -r '.groups.wg | .[0] | .ports | .[0]' /app/data.json)
+    
   else
-    printf "ERROR Getting region data, check you setting"
-    exit 4
+    echo "[ERROR] Getting region data, check PIA_REGION"
+    exit 1
   fi
 
   WG_IP="$(echo $regiondata | jq -r '.servers.wg[0].ip')"
@@ -317,11 +329,11 @@ if [ $VPN_CLIENT == "wireguard" ]; then
 
   printf " * Getting wireguard config for $server...\n"
   wireguard_json="$(curl -s -G \
-    --connect-to "$WG_HOSTNAME::$WG_IP:" \
+    --connect-to "$wg_cn::$wg_ip:" \
     --cacert "/app/ca.rsa.4096.crt" \
-    --data-urlencode "pt=${piatoken}" \
+    --data-urlencode "pt=$piatoken" \
     --data-urlencode "pubkey=$publicKey" \
-    "https://${WG_IP}:1337/addKey" )"
+    "https://$wg_cn:$wg_port/addKey" )"
 
   if [ "$(echo "$wireguard_json" | jq -r '.status')" != "OK" ]; then
     printf "ERROR Getting wireguard Settings - $(echo "$wireguard_json" | jq -r '.status')"
