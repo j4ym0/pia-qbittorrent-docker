@@ -159,11 +159,11 @@ elif [ $WEBUI_PORT -gt 65535 ]; then
   printf "WEBUI_PORT cannot be a port higher than the maximum port 65535\n"
   exit 1
 fi
-if [ -z $OPENVPN_LOG_DIR ]; then
-  OPENVPN_LOG_DIR=/logs
+if [ -z $VPN_LOG_DIR ]; then
+  VPN_LOG_DIR=/logs
 fi
-if [ -z $OPENVPN_MAX_ITERATIONS ]; then
-  OPENVPN_MAX_ITERATIONS=3
+if [ -z $VPN_MAX_ITERATIONS ]; then
+  VPN_MAX_ITERATIONS=3
 fi
 
 ############################################
@@ -590,7 +590,7 @@ printf "[INFO] Launching OpenVPN\n"
 
 if [ $VPN_CLIENT == "wireguard" ]; then
   printf "Bringing up wireguard\n"
-  if doas -u root wg-quick up pia 2>&1; then
+  if doas -u root wg-quick up pia 2> "$VPN_LOG_DIR/wireguard.log"; then
       echo "WireGuard connected successfully"
   else
       echo "WireGuard failed with exit code: $?"
@@ -598,24 +598,25 @@ if [ $VPN_CLIENT == "wireguard" ]; then
   fi
 else
   printf " * Rotating logs\n"
-  mkdir -p "$OPENVPN_LOG_DIR"
+  mkdir -p "$VPN_LOG_DIR"
   # Rotate logs
   i=0
-  while [ $i -lt $OPENVPN_MAX_ITERATIONS ]; do
-      if [ -f "$OPENVPN_LOG_DIR/openvpn.log.$i" ]; then
-          mv "$OPENVPN_LOG_DIR/openvpn.log.$i" "$OPENVPN_LOG_DIR/openvpn.log.$((i+1))"
+  while [ $i -lt $VPN_MAX_ITERATIONS ]; do
+      if [ -f "$VPN_LOG_DIR/openvpn.log.$i" ]; then
+          mv "$VPN_LOG_DIR/openvpn.log.$i" "$VPN_LOG_DIR/openvpn.log.$((i+1))"
       fi
       i=$((i + 1))
   done
 
   # Move the current log file to the first iteration
-  if [ -f "$OPENVPN_LOG_DIR/openvpn.log" ]; then
-      mv "$OPENVPN_LOG_DIR/openvpn.log" "$OPENVPN_LOG_DIR/openvpn.log.1"
+  if [ -f "$VPN_LOG_DIR/openvpn.log" ]; then
+      mv "$VPN_LOG_DIR/openvpn.log" "$VPN_LOG_DIR/openvpn.log.1"
   fi
 
   cd "$TARGET_PATH"
-  openvpn --config config.ovpn --daemon --log "$OPENVPN_LOG_DIR/openvpn.log" "$@"
+  openvpn --config config.ovpn --daemon --log "$VPN_LOG_DIR/openvpn.log" "$@"
 fi
+
 ############################################
 # qBittorrent config
 ############################################
@@ -660,16 +661,16 @@ while : ; do
 		break
 	else
     # Search for lines containing 'ERROR:'
-    ERROR_LINES=$(grep "ERROR:" "$OPENVPN_LOG_DIR/openvpn.log")
-    AUTH_ERROR_LINES=$(grep "AUTH_FAILED" "$OPENVPN_LOG_DIR/openvpn.log")
+    ERROR_LINES=$(grep "ERROR:" "$VPN_LOG_DIR/openvpn.log")
+    AUTH_ERROR_LINES=$(grep "AUTH_FAILED" "$VPN_LOG_DIR/openvpn.log")
     if [ -n "$ERROR_LINES" ]; then
       # If errors are found, print the openvpn log
       printf "\n"
       printf "[ERROR] OpenVPN has encounted an error, see log below and check\n"
       printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Waiting-for-VPN-and-OpenVPN-Fatal-Error \n"
       printf "---------------------------------------\n"
-      printf "$(cat "$OPENVPN_LOG_DIR/openvpn.log")\n"
-      ERROR_LINES=$(grep "fatal error" "$OPENVPN_LOG_DIR/openvpn.log")
+      printf "$(cat "$VPN_LOG_DIR/openvpn.log")\n"
+      ERROR_LINES=$(grep "fatal error" "$VPN_LOG_DIR/openvpn.log")
       if [ -n "$ERROR_LINES" ]; then
         exit 6
       fi
