@@ -267,7 +267,9 @@ for ip in $VPNIPS; do
 done
 
 
-
+  ############################################
+  #            VPN configuration
+  ############################################
 if [ $VPN_CLIENT == "wireguard" ]; then
   if [[ -f /proc/net/if_inet6 ]] && [[ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 || $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]]; then
     printf " * Disabling ipv6 as not supported\n"
@@ -275,7 +277,7 @@ if [ $VPN_CLIENT == "wireguard" ]; then
     echo -e "sysctl -w net.ipv6.conf.default.disable_ipv6=1${nc}"
   fi
 
-  pia_gen=$(curl -s -u "$USER:$PASSWORD" \
+  pia_gen=$(curl -s -u "$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf)" \
     "https://privateinternetaccess.com/gtoken/generateToken")
 
   if [ "$(echo "$pia_gen" | jq -r '.status')" != "OK" ]; then
@@ -301,9 +303,9 @@ if [ $VPN_CLIENT == "wireguard" ]; then
     printf " * Got Public key\n"
   fi
 
-  if regiondata=$( jq --arg REGION_ID "$(echo "$server" | awk '{print tolower($0)}')" \
-    --arg REGION "$(echo $server | awk '{for(i=1;i<=NF;i++){ $i=toupper(substr($i,1,1)) substr($i,2) }}1')" -er \
-    '.regions[] | select(.name==$REGION),select(.id==$REGION_ID)' /app/data.json ) ; then
+  if regiondata=$( jq --arg SERVER "$server" -er 'def normalize: gsub("[_-]"; " ") | ascii_downcase | gsub("\\s+"; " "); 
+    ($SERVER | normalize) as $search | .regions[] | 
+    select((.name | normalize | contains($search)) or (.id | normalize | contains($search)))' /app/data.json ) ; then
     printf " * Got PIA regon data\n"
   else
     printf "ERROR Getting region data, check you setting"
@@ -319,7 +321,7 @@ if [ $VPN_CLIENT == "wireguard" ]; then
     --cacert "/app/ca.rsa.4096.crt" \
     --data-urlencode "pt=${piatoken}" \
     --data-urlencode "pubkey=$publicKey" \
-    "https://${WG_HOSTNAME}:1337/addKey" )"
+    "https://${WG_IP}:1337/addKey" )"
 
   if [ "$(echo "$wireguard_json" | jq -r '.status')" != "OK" ]; then
     printf "ERROR Getting wireguard Settings - $(echo "$wireguard_json" | jq -r '.status')"
@@ -343,9 +345,6 @@ if [ $VPN_CLIENT == "wireguard" ]; then
   printf "Bringing up wireguard\n"
   exec doas -u root wg-quick up pia
 else
-  ############################################
-  #         n OpenVPN configuration
-  ############################################
   ############################################
   # Writing target OpenVPN files
   ############################################
