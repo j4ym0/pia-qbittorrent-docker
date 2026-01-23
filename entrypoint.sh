@@ -317,6 +317,10 @@ if [ $VPN_CLIENT == "wireguard" ]; then
     PersistentKeepalive = 25
 EOF
 
+  # Get VPN Server for firewall
+  VPNIPS=$WG_IP
+  PORT=$(echo "$wireguard_json" | jq -r '.server_port')
+
 else
   ############################################
   # CHECK FOR TUN DEVICE
@@ -583,7 +587,7 @@ do
 done
 
 ############################################
-# OPENVPN LAUNCH
+# VPN LAUNCH
 ############################################
 printf "[INFO] Connecting to VPN\n"
 
