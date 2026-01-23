@@ -226,50 +226,8 @@ if [ -n "$PIA_USERNAME" ] || [ -n "$PIA_PASSWORD" ]; then
 fi
 
 ############################################
-# CHECK FOR TUN DEVICE
+#            VPN configuration
 ############################################
-if [ "$(cat /dev/net/tun 2>&1 /dev/null)" != "cat: read error: File descriptor in bad state" ]; then
-  printf "[WARNING] TUN device is not available, creating it..."
-  mkdir -p /dev/net
-  mknod /dev/net/tun c 10 200
-  exitOnError $?
-  chmod 0666 /dev/net/tun
-  printf "DONE\n"
-fi
-
-############################################
-# Reading chosen OpenVPN configuration
-############################################
-printf "[INFO] Reading OpenVPN configuration...\n"
-CONNECTIONSTRING=$(ack 'privacy.network' "/openvpn/nextgen/$server.ovpn")
-exitOnError $?
-PORT=$(echo $CONNECTIONSTRING | cut -d' ' -f3)
-if [ "$PORT" = "" ]; then
-  printf "[ERROR] Port not found in for $server\n"
-  exit 1
-fi
-PIADOMAIN=$(echo $CONNECTIONSTRING | cut -d' ' -f2)
-if [ "$PIADOMAIN" = "" ]; then
-  printf "[ERROR] Domain not found for $server\n"
-  exit 1
-fi
-printf " * Port: $PORT\n"
-printf " * Domain: $PIADOMAIN\n"
-printf "[INFO] Detecting IP addresses corresponding to $PIADOMAIN...\n"
-VPNIPS=$(dig $PIADOMAIN +short | grep '^[.0-9]*$')
-exitOnError $?
-if [ "$VPNIPS" = "" ]; then
-  printf " Unable to connect to $PIADOMAIN"
-  exit 3
-fi
-for ip in $VPNIPS; do
-  printf "   $ip\n";
-done
-
-
-  ############################################
-  #            VPN configuration
-  ############################################
 if [ $VPN_CLIENT == "wireguard" ]; then
   if [[ -f /proc/net/if_inet6 ]] && [[ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 || $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]]; then
     printf " * Disabling ipv6 as not supported\n"
@@ -361,6 +319,47 @@ EOF
 
 else
   ############################################
+  # CHECK FOR TUN DEVICE
+  ############################################
+  if [ "$(cat /dev/net/tun 2>&1 /dev/null)" != "cat: read error: File descriptor in bad state" ]; then
+    printf "[WARNING] TUN device is not available, creating it..."
+    mkdir -p /dev/net
+    mknod /dev/net/tun c 10 200
+    exitOnError $?
+    chmod 0666 /dev/net/tun
+    printf "DONE\n"
+  fi
+
+  ############################################
+  # Reading chosen OpenVPN configuration
+  ############################################
+  printf "[INFO] Reading OpenVPN configuration...\n"
+  CONNECTIONSTRING=$(ack 'privacy.network' "/openvpn/nextgen/$server.ovpn")
+  exitOnError $?
+  PORT=$(echo $CONNECTIONSTRING | cut -d' ' -f3)
+  if [ "$PORT" = "" ]; then
+    printf "[ERROR] Port not found in for $server\n"
+    exit 1
+  fi
+  PIADOMAIN=$(echo $CONNECTIONSTRING | cut -d' ' -f2)
+  if [ "$PIADOMAIN" = "" ]; then
+    printf "[ERROR] Domain not found for $server\n"
+    exit 1
+  fi
+  printf " * Port: $PORT\n"
+  printf " * Domain: $PIADOMAIN\n"
+  printf "[INFO] Detecting IP addresses corresponding to $PIADOMAIN...\n"
+  VPNIPS=$(dig $PIADOMAIN +short | grep '^[.0-9]*$')
+  exitOnError $?
+  if [ "$VPNIPS" = "" ]; then
+    printf " Unable to connect to $PIADOMAIN"
+    exit 3
+  fi
+  for ip in $VPNIPS; do
+    printf "   $ip\n";
+  done
+
+  ############################################
   # Writing target OpenVPN files
   ############################################
   TARGET_PATH="/openvpn/target"
@@ -426,7 +425,7 @@ do
   printf "DONE\n"
 done
 printf " * Detecting target VPN interface..."
-if [ VPN_CLIENT == "wireguard" ]; then
+if [ $VPN_CLIENT == "wireguard" ]; then
   VPN_DEVICE="pia"
 else
   VPN_DEVICE=$(cat $TARGET_PATH/config.ovpn | ack 'dev ' | cut -d" " -f 2)0
