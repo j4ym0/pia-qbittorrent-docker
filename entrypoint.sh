@@ -586,34 +586,30 @@ done
 ############################################
 # OPENVPN LAUNCH
 ############################################
-printf "[INFO] Launching OpenVPN\n"
+printf "[INFO] Connecting to VPN\n"
+
+printf " * Rotating logs\n"
+mkdir -p "$VPN_LOG_DIR"
+# Rotate logs
+i=0
+while [ $i -lt $VPN_MAX_ITERATIONS ]; do
+    if [ -f "$VPN_LOG_DIR/*.log.$i" ]; then
+        mv "$VPN_LOG_DIR/*.log.$i" "$VPN_LOG_DIR/*.log.$((i+1))"
+    fi
+    i=$((i + 1))
+done
+
+# Move the current log file to the first iteration
+if [ -f "$VPN_LOG_DIR/*.log" ]; then
+    mv "$VPN_LOG_DIR/*.log" "$VPN_LOG_DIR/*.log.1"
+fi
+cd "$TARGET_PATH"
 
 if [ $VPN_CLIENT == "wireguard" ]; then
-  printf "Bringing up wireguard\n"
-  if doas -u root wg-quick up pia 2> "$VPN_LOG_DIR/wireguard.log"; then
-      echo "WireGuard connected successfully"
-  else
-      echo "WireGuard failed with exit code: $?"
-      # Continue with script...
-  fi
+  printf " * Bringing up wireguard\n"
+  doas -u root wg-quick up pia >> "$VPN_LOG_DIR/wireguard.log" 2>&1
 else
-  printf " * Rotating logs\n"
-  mkdir -p "$VPN_LOG_DIR"
-  # Rotate logs
-  i=0
-  while [ $i -lt $VPN_MAX_ITERATIONS ]; do
-      if [ -f "$VPN_LOG_DIR/openvpn.log.$i" ]; then
-          mv "$VPN_LOG_DIR/openvpn.log.$i" "$VPN_LOG_DIR/openvpn.log.$((i+1))"
-      fi
-      i=$((i + 1))
-  done
-
-  # Move the current log file to the first iteration
-  if [ -f "$VPN_LOG_DIR/openvpn.log" ]; then
-      mv "$VPN_LOG_DIR/openvpn.log" "$VPN_LOG_DIR/openvpn.log.1"
-  fi
-
-  cd "$TARGET_PATH"
+  printf " * Opening OpenVPN\n"
   openvpn --config config.ovpn --daemon --log "$VPN_LOG_DIR/openvpn.log" "$@"
 fi
 
@@ -656,14 +652,20 @@ chown qbtUser:qbtUser -R /config
 printf "[INFO] Waiting for VPN to connect"
 looping=1
 while : ; do
-	tunnelstat=$(ifconfig | ack "tun|tap")
+	tunnelstat=$(ifconfig | ack "tun|tap|pia")
 	if [ ! -z "${tunnelstat}" ]; then
 		break
 	else
     # Search for lines containing 'ERROR:'
-    ERROR_LINES=$(grep "ERROR:" "$VPN_LOG_DIR/openvpn.log")
-    AUTH_ERROR_LINES=$(grep "AUTH_FAILED" "$VPN_LOG_DIR/openvpn.log")
-    if [ -n "$ERROR_LINES" ]; then
+    if [ $VPN_CLIENT == "wireguard" ]; then
+      ERROR_LINES=$(grep "ERROR:" "$VPN_LOG_DIR/wireguard.log")
+      AUTH_ERROR_LINES=""
+    else
+      ERROR_LINES=$(grep "ERROR:" "$VPN_LOG_DIR/openvpn.log")
+      AUTH_ERROR_LINES=$(grep "AUTH_FAILED" "$VPN_LOG_DIR/openvpn.log")
+    fi
+
+    if [ -n "$ERROR_LINES" ] && [ $VPN_CLIENT == "openvpn" ]; then
       # If errors are found, print the openvpn log
       printf "\n"
       printf "[ERROR] OpenVPN has encounted an error, see log below and check\n"
@@ -675,7 +677,7 @@ while : ; do
         exit 6
       fi
       sleep 30
-    elif [ -n "$AUTH_ERROR_LINES" ]; then
+    elif [ -n "$AUTH_ERROR_LINES" ] && [ $VPN_CLIENT == "openvpn" ]; then
         printf "\n"
         printf "[ERROR] VPN Authentication Failed. Check your PIA username and password"
         exit 7
