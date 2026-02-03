@@ -309,10 +309,11 @@ if [ $VPN_CLIENT == "wireguard" ]; then
     PrivateKey = ${privateKey}
     Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
     #DNS = $(echo "$wireguard_json" | jq -r '.dns_servers[0]')
+    Table = off
 
     [Peer]
     PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
-    AllowedIPs = 0.0.0.0/1
+    AllowedIPs = 0.0.0.0/0
     Endpoint = ${WG_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
     PersistentKeepalive = 25
 EOF
@@ -551,6 +552,8 @@ done
 
 printf " * Creating VPN routes..."
 ip rule add from $(ip route get 1 | ack -o '(?<=src )(\S+)') table 128
+#if [ $VPN_CLIENT == "wireguard" ]; then
+#fi
 ip route add table 128 to $(ip route get 1 | ack -o '(?<=src )(\S+)')/32 dev $(ip -4 route ls | ack default | ack -o '(?<=dev )(\S+)')
 ip route add table 128 default via $(ip -4 route ls | ack default | ack -o '(?<=via )(\S+)')
 printf "DONE\n"
@@ -611,6 +614,9 @@ cd "$TARGET_PATH"
 if [ $VPN_CLIENT == "wireguard" ]; then
   printf " * Bringing up wireguard\n"
   doas -u root wg-quick up pia >> "$VPN_LOG_DIR/wireguard.log" 2>&1
+  ip route add 0.0.0.0/1 dev pia
+  ip route add 128.0.0.0/1 dev pia
+
 else
   printf " * Opening OpenVPN\n"
   openvpn --config config.ovpn --daemon --log "$VPN_LOG_DIR/openvpn.log" "$@"
@@ -619,6 +625,7 @@ fi
 ############################################
 # qBittorrent config
 ############################################
+
 printf "[INFO] Checking qBittorrent config\n"
 if [ ! -e /config/qBittorrent/config/qBittorrent.conf ]; then
 	mkdir -p /config/qBittorrent/config && cp /app/qBittorrent.conf /config/qBittorrent/config/qBittorrent.conf
