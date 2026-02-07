@@ -4,6 +4,7 @@ FROM alpine:3.22
 ENV PIA_USERNAME= \
     PIA_PASSWORD= \
     PIA_REGION="Netherlands" \
+    VPN_CLIENT="openvpn" \
     PORT_FORWARDING=false \
     LEGACY_IPTABLES=false \
     WEBUI_PORT=8888 \
