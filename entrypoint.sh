@@ -48,6 +48,13 @@ exitIfNotIn(){
   exit 1
 }
 
+is_enabled() {
+  # $1 is the value to check if it is enabled
+  local value=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+  echo "$value" | grep -q -E '^(true|yes|1|on|enabled)$'
+}
+
+
 # Define paths for iptables versions
 IPTABLES_LEGACY="/usr/sbin/iptables-legacy"
 IP6TABLES_LEGACY="/usr/sbin/ip6tables-legacy"
@@ -625,7 +632,6 @@ fi
 ############################################
 # qBittorrent config
 ############################################
-
 printf "[INFO] Checking qBittorrent config\n"
 if [ ! -e /config/qBittorrent/config/qBittorrent.conf ]; then
 	mkdir -p /config/qBittorrent/config && cp /app/qBittorrent.conf /config/qBittorrent/config/qBittorrent.conf
@@ -711,71 +717,88 @@ printf "\n"
 ############################################
 # Port Forwarding
 ############################################
-if "$PORT_FORWARDING"; then
+PF_GATEWAY=""
+PF_CERT=""
+PF_CONNECT=""
+if is_enabled "$PORT_FORWARDING"; then
   printf "[INFO] Setting up port forwarding\n"
-  pia_gen=$(curl -s --location --request POST \
-  'https://www.privateinternetaccess.com/api/client/v2/token' \
-  --form "username=$(sed '1!d' /auth.conf)" \
-  --form "password=$(sed '2!d' /auth.conf)" )
-  
-  piatoken=$(echo "$pia_gen" | jq -r '.token')
-  if [ ! -z "$piatoken" ]; then
+
+  # Setup the port forwading parameters depending on the VPN client
+  if [ $VPN_CLIENT == "wireguard" ]; then
+    printf " * Using wireguard port forwarding\n"
+    PF_GATEWAY=$wg_cn
+    PF_CERT="--cacert /app/ca.rsa.4096.crt"
+    PF_CONNECT="--connect-to $wg_cn::$wg_ip:"
+  else
+    printf " * Using openvpn port forwarding\n"
+    PF_GATEWAY=$(route -n | grep -e 'UG.*tun0' | awk '{print $2}' | awk 'NR==1{print $1}')
+    PF_CERT="$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf))"
+  fi
+
+  # Get a token from PIA to authenticate the port forwarding request
+  piaToken=$(curl -s --location --request POST \
+            'https://www.privateinternetaccess.com/api/client/v2/token' \
+            --form "username=$(sed '1!d' /auth.conf)" \
+            --form "password=$(sed '2!d' /auth.conf)" | jq -r '.token')
+  if [ ! -z "$piaToken" ]; then
     printf " * Got PIA token\n"
   fi
 
-  PIA_GATEWAY=$(route -n | grep -e 'UG.*tun0' | awk '{print $2}' | awk 'NR==1{print $1}' )
-  if [ ! -z "$PIA_GATEWAY" ]; then
-    printf " * Got PIA gateway $PIA_GATEWAY\n"
-  fi
+  # Get the signature and payload for port forwarding
+  pia_sig=$(curl --get -s -m 5 \
+            $PF_CONNECT \
+            $PF_CERT \
+            --data-urlencode "token=$piaToken" \
+            "https://$PF_GATEWAY:19999/getSignature")
 
-  piasif=$(curl -k -s "$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf))" "https://$PIA_GATEWAY:19999/getSignature?token=$piatoken")
-  if [ -z "$piasif" ]; then
+  if [ -z "$pia_sig" ]; then
     printf "[ERROR] Unable to start port forwarding. Is port forwarding avalable in your chosen region?\n"
     printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers \n"
     exit 4
-  elif [ `echo "$piasif" | jq -r '.status'` = "ERROR" ]; then
+  elif [ "$(echo "$pia_sig" | jq -r '.status')" = "ERROR" ]; then
     printf "[ERROR] Unable to start port forwarding. \n"
-    printf "$(echo "$piasif" | jq -r '.message') \n"
+    printf "$(echo "$pia_sig" | jq -r '.message') \n"
     exit 4
-  else
-    printf " * Getting PIA Signature\n"
   fi
 
-  signature=$(echo "$piasif" | jq -r '.signature')
+  signature=$(echo "$pia_sig" | jq -r '.signature')
   if [ ! -z "$signature" ]; then
     printf " * Got signature\n"
   fi
 
-  payload_ue=$(echo "$piasif" | jq -r '.payload')
-  payload=$(echo "$payload_ue" | base64 -d | jq)
-  if [ ! -z "$payload" ]; then
+  payload=$(echo "$pia_sig" | jq -r '.payload')
+  payloadDecoded=$(echo "$payload" | base64 -d | jq)
+  if [ ! -z "$payloadDecoded" ]; then
     printf " * Decoded payload\n"
   fi
 
-  PF_PORT=$(echo "$payload" | jq -r '.port')
+  PF_PORT=$(echo "$payloadDecoded" | jq -r '.port')
   if [ ! -z "$PF_PORT" ]; then
     printf " * Your Forwarding port is $PF_PORT\n"
   fi
 
-  binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
-  if [ `echo "$binding" | jq -r '.status'` = "OK" ]; then
-    printf " * $(echo $binding | jq -r '.message')\n"
+  # Request port forwarding
+  binding=$(curl -sGk \
+            $PF_CONNECT \
+            $PF_CERT \
+            --data-urlencode "payload=$payload" \
+            --data-urlencode "signature=$signature" \
+            https://$PF_GATEWAY:19999/bindPort)
+
+  printf " * $(echo $binding | jq -r '.message')\n"
+
+  if [ "$(echo "$binding" | jq -r '.status')" = "OK" ]; then
     # Port will be added so we will open the port ont the firewall
-    printf " * adding port to firewall\n"
-    iptables -A INPUT -i tun0 -p tcp --dport $PF_PORT -j ACCEPT
+    printf " * Adding port to firewall on interfce $VPN_DEVICE\n"
+    iptables -A INPUT -i $VPN_DEVICE -p tcp --dport $PF_PORT -j ACCEPT
     exitOnError $?
   else
-    printf " * $(echo $binding | jq -r '.message')\n"
+    printf " * $(echo $binding)\n"
     exit 4
   fi
-fi
 
-if "$PORT_FORWARDING"; then
+  # Add port the qBittorrent config
   sed -i "s/Session\\\Port=[0-9]*/Session\\\Port=$PF_PORT/g" /config/qBittorrent/config/qBittorrent.conf
-fi
-
-if [ -n "$UMASK" ]; then
-    umask "$UMASK"
 fi
 
 ############################################
@@ -802,12 +825,18 @@ while : ; do
 	sleep 1
   if [ $i -gt 600 ]; then
     i=1
-    if "$PORT_FORWARDING"; then
-      binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
-      if [ `echo "$binding" | jq -r '.status'` = "OK" ]; then
-        printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
-      else
-        printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
+    if is_enabled "$PORT_FORWARDING"; then
+      binding=$(curl -sGk \
+            $PF_CONNECT \
+            $PF_CERT \
+            --data-urlencode "payload=$payload" \
+            --data-urlencode "signature=$signature" \
+            https://$PF_GATEWAY:19999/bindPort)
+
+      printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
+
+      if [ "$(echo "$binding" | jq -r '.status')" != "OK" ]; then
+        printf "[ERROR] Port forwarding failed\n"
         exit 5
       fi
     fi
