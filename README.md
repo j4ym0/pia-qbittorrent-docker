@@ -101,6 +101,7 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 | `PIA_REGION`         | `Netherlands` | List of [PIA Servers](https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers)  |
 | `PIA_USERNAME`       | | Your PIA username ([consider using /auth.conf file](#auth.conf-File))                             |
 | `PIA_PASSWORD`       | | Your PIA password ([consider using /auth.conf file](#auth.conf-File))                             |
+| `VPN_CLIENT`         | `openvpn` | Switch between `openvpn` and `wireguard` VPN client                                     |
 | `PORT_FORWARDING`    | `false` | Set to `true` if you want to enable port forwarding from PIA, This helps with uploading   |
 | `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP proxy                                             |
 | `WEBUI_INTERFACES`   | | `eth0` or `eth0,eth1` the interface the WebUI can be accessed through, useful if multiple networks are attached to the container. The default is the interface used for internet access if unset |
@@ -164,6 +165,14 @@ docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN
 -v /My/auth.conf:/auth.conf -p 8888:8888 -e PIA_REGION="Netherlands" \
 j4ym0/pia-qbittorrent
 ```
+
+## VPN Client
+
+`wiregard` will offer a lover cpu usage and faster transfer speed due to the lower overhead and network chatter. This comes at the cost of potential packet loss witch can be mitigated by turning on 'Recheck torrents on completion' in the advanced tab in settings. On most stable home networks this is a good choice.
+
+`openvpn` is less detectable by deep packet inspection and can be a better choice on some networks. It also has a broader compatibility due to its age. OpenVPN can be better if you have unusual network configuration, high latency or packet loss. If you want stealth or UDP is blocked, this is a good choice.
+
+Choosing ether vpn client will hide the content of the VPN traffic (web addresses, ip, port, etc) but your ISP will still be able to tell you are connected to a VPN and the amount of data transferred. Once the VPN connection is made, traffic between the container and PIA is encrypted. In some cases deep packet inspection can be used to find wireguard connections before they establish and block them.
 
 ## Port Forwarding
 
