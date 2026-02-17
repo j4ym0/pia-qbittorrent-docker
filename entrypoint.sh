@@ -236,6 +236,8 @@ fi
 #            VPN configuration
 ############################################
 if [ $VPN_CLIENT == "wireguard" ]; then
+  printf "[INFO] Configuring WireGuard VPN client...\n"
+
   if [[ -f /proc/net/if_inet6 ]] && [[ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 || $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]]; then
     printf " * Disabling ipv6 as not supported\n"
     echo "sysctl -w net.ipv6.conf.all.disable_ipv6=1"
@@ -246,9 +248,9 @@ if [ $VPN_CLIENT == "wireguard" ]; then
     "https://privateinternetaccess.com/gtoken/generateToken")
 
   if [ "$(echo "$pia_gen" | jq -r '.status')" != "OK" ]; then
-    printf " ERROR: getting token\n"
+    printf " [ERROR] getting token\n"
     printf " =========================================\n"
-    printf " =======Check username and pssword========\n"
+    printf " =======Check username and password=======\n"
     printf " =========================================\n"
     exit 3
   fi
@@ -275,7 +277,7 @@ if [ $VPN_CLIENT == "wireguard" ]; then
                   select((.name | normalize | contains($search)) or (.id | normalize | contains($search)))] |
                   if length > 0 then .[0] else empty end' /app/data.json); then
     
-    echo " * Got PIA region data"
+    printf " * Got PIA region data\n"
     
     # Extract wg_cn and wg_ip from the region data
     wg_cn=$(echo "$regiondata" | jq -r ".servers.wg | .[0].cn")
@@ -285,7 +287,7 @@ if [ $VPN_CLIENT == "wireguard" ]; then
     wg_port=$(jq -r '.groups.wg | .[0] | .ports | .[0]' /app/data.json)
     
   else
-    echo "[ERROR] Getting region data, check PIA_REGION"
+    printf "[ERROR] Getting region data, check PIA_REGION\n"
     exit 1
   fi
 
@@ -301,11 +303,11 @@ if [ $VPN_CLIENT == "wireguard" ]; then
     "https://$wg_cn:$wg_port/addKey" )"
 
   if [ "$(echo "$wireguard_json" | jq -r '.status')" != "OK" ]; then
-    echo "[ERROR] Getting wireguard Settings - $(echo "$wireguard_json" | jq -r '.status')"
+    printf "[ERROR] Getting wireguard Settings - $(echo "$wireguard_json" | jq -r '.status')\n"
     exit 5
   fi
 
-  printf "Writing Wireguard settings /etc/wireguard/pia.conf\n"
+  printf " * Writing Wireguard connection settings..."
   if [ ! -d /etc/wireguard ]; then
     mkdir /etc/wireguard
   fi
@@ -328,8 +330,11 @@ EOF
   # Get VPN Server for firewall
   VPNIPS=$WG_IP
   PORT=$(echo "$wireguard_json" | jq -r '.server_port')
+  printf "DONE\n"
 
 else
+  printf "[INFO] Configuring OpenVPN VPN client...\n"
+
   ############################################
   # CHECK FOR TUN DEVICE
   ############################################
@@ -345,12 +350,12 @@ else
   ############################################
   # Reading chosen OpenVPN configuration
   ############################################
-  printf "[INFO] Reading OpenVPN configuration...\n"
+  printf " * Reading OpenVPN configuration...\n"
   CONNECTIONSTRING=$(ack 'privacy.network' "/openvpn/nextgen/$server.ovpn")
   exitOnError $?
   PORT=$(echo $CONNECTIONSTRING | cut -d' ' -f3)
   if [ "$PORT" = "" ]; then
-    printf "[ERROR] Port not found in for $server\n"
+    printf "[ERROR] Port not found for $server\n"
     exit 1
   fi
   PIADOMAIN=$(echo $CONNECTIONSTRING | cut -d' ' -f2)
@@ -360,22 +365,22 @@ else
   fi
   printf " * Port: $PORT\n"
   printf " * Domain: $PIADOMAIN\n"
-  printf "[INFO] Detecting IP addresses corresponding to $PIADOMAIN...\n"
+  printf " * Detecting IP addresses corresponding to $PIADOMAIN...\n"
   VPNIPS=$(dig $PIADOMAIN +short | grep '^[.0-9]*$')
   exitOnError $?
   if [ "$VPNIPS" = "" ]; then
-    printf " Unable to connect to $PIADOMAIN"
+    printf "[ERROR] Unable to connect to $PIADOMAIN"
     exit 3
   fi
   for ip in $VPNIPS; do
-    printf "   $ip\n";
+    printf " * * $ip\n";
   done
 
   ############################################
   # Writing target OpenVPN files
   ############################################
   TARGET_PATH="/openvpn/target"
-  printf "[INFO] Creating target OpenVPN files in $TARGET_PATH..."
+  printf " * Creating target OpenVPN files in $TARGET_PATH..."
   rm -rf $TARGET_PATH/*
   cd "/openvpn/nextgen"
   cp -f *.crt "$TARGET_PATH"
@@ -619,7 +624,7 @@ fi
 cd "$TARGET_PATH"
 
 if [ $VPN_CLIENT == "wireguard" ]; then
-  printf " * Bringing up wireguard\n"
+  printf " * Bringing up Wireguard\n"
   doas -u root wg-quick up pia >> "$VPN_LOG_DIR/wireguard.log" 2>&1
   ip route add 0.0.0.0/1 dev pia
   ip route add 128.0.0.0/1 dev pia
@@ -725,12 +730,12 @@ if is_enabled "$PORT_FORWARDING"; then
 
   # Setup the port forwading parameters depending on the VPN client
   if [ $VPN_CLIENT == "wireguard" ]; then
-    printf " * Using wireguard port forwarding\n"
+    printf " * Using Wireguard port forwarding\n"
     PF_GATEWAY=$wg_cn
     PF_CERT="--cacert /app/ca.rsa.4096.crt"
     PF_CONNECT="--connect-to $wg_cn::$wg_ip:"
   else
-    printf " * Using openvpn port forwarding\n"
+    printf " * Using OpenVPN port forwarding\n"
     PF_GATEWAY=$(route -n | grep -e 'UG.*tun0' | awk '{print $2}' | awk 'NR==1{print $1}')
     PF_CERT="$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf))"
   fi
@@ -756,7 +761,7 @@ if is_enabled "$PORT_FORWARDING"; then
     printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers \n"
     exit 4
   elif [ "$(echo "$pia_sig" | jq -r '.status')" = "ERROR" ]; then
-    printf "[ERROR] Unable to start port forwarding. \n"
+    printf "[ERROR] Unable to start port forwarding\n"
     printf "$(echo "$pia_sig" | jq -r '.message') \n"
     exit 4
   fi
@@ -793,11 +798,12 @@ if is_enabled "$PORT_FORWARDING"; then
     iptables -A INPUT -i $VPN_DEVICE -p tcp --dport $PF_PORT -j ACCEPT
     exitOnError $?
   else
-    printf " * $(echo $binding)\n"
+    printf "[ERROR] $(echo $binding)\n"
     exit 4
   fi
 
   # Add port the qBittorrent config
+  printf " * Updating port in qBittorrent config\n"
   sed -i "s/Session\\\Port=[0-9]*/Session\\\Port=$PF_PORT/g" /config/qBittorrent/config/qBittorrent.conf
 fi
 
@@ -833,7 +839,8 @@ while : ; do
             --data-urlencode "signature=$signature" \
             https://$PF_GATEWAY:19999/bindPort)
 
-      printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
+#      now just for debugging
+#      printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
 
       if [ "$(echo "$binding" | jq -r '.status')" != "OK" ]; then
         printf "[ERROR] Port forwarding failed\n"
