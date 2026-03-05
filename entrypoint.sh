@@ -193,6 +193,32 @@ do
 	echo "nameserver $name_server" >> /etc/resolv.conf
 done
 
+############################################
+# Change Timezone
+############################################
+if [ -n "$TZ" ]; then
+  printf "[INFO] Writing Timezone info $TZ\n"
+  
+  # Check if the timezone data exists
+  if [ ! -f "/usr/share/zoneinfo/$TZ" ]; then
+    printf "[ERROR] Timezone '$TZ' not found. Check the timezone\n"
+  else
+    if [ -f /etc/localtime ]; then
+      printf "[WARNING] localtime file already exists! Not editing\n"
+    else
+      ln -sf  "/usr/share/zoneinfo/$TZ" /etc/localtime
+      printf " * Updated localtime\n"
+    fi
+    
+    if [ -f /etc/timezone ]; then
+      printf "[WARNING] timezone file already exists! Not editing\n"
+    else
+      echo "$TZ" > /etc/timezone
+      printf " * Updated timezone\n"
+    fi
+  fi
+fi
+
 #####################################################
 # Writes to protected file and remove PIA_USERNAME, PIA_PASSWORD
 # Best option is to mount a secure file using docker
