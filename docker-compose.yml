@@ -8,7 +8,9 @@ services:
             - PIA_REGION=Netherlands
             - PIA_USERNAME=
             - PIA_PASSWORD=
+            - PORT_FORWARDING=false
         volumes:
+#            - ./auth.conf:/auth.conf
             - ./config:/config
             - ./downloads:/downloads
         ports:
