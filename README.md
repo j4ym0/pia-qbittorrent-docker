@@ -168,7 +168,9 @@ j4ym0/pia-qbittorrent
 
 ## VPN Client
 
-`wiregard` will offer a lover cpu usage and faster transfer speed due to the lower overhead and network chatter. This comes at the cost of potential packet loss witch can be mitigated by turning on 'Recheck torrents on completion' in the advanced tab in settings. On most stable home networks this is a good choice.
+`wireguard` will offer a lover cpu usage and faster transfer speed due to the lower overhead and network chatter. This comes at the cost of potential packet loss witch can be mitigated by turning on 'Recheck torrents on completion' in the advanced tab in settings. On most stable home networks this is a good choice.
+
+WireGuard requires Linux kernel 5.6+. Because Docker containers use the host kernel, the host itself must support WireGuard. If you're having connection issues (Waiting for VPN to connect....), check your kernel version, older kernels may support manual module installation. For Synology NAS, DSM 7.2+ is required, with wireguard installed.
 
 `openvpn` is less detectable by deep packet inspection and can be a better choice on some networks. It also has a broader compatibility due to its age. OpenVPN can be better if you have unusual network configuration, high latency or packet loss. If you want stealth or UDP is blocked, this is a good choice.
 
