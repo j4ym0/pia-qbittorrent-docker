@@ -68,7 +68,7 @@ RUN useradd \
     echo "permit nopass :root" >> "/etc/doas.conf"
 
 
-RUN chmod 500 /entrypoint.sh
+RUN chmod 500 /entrypoint.sh /healthcheck.sh
 
 # Start point for docker
 ENTRYPOINT ["/entrypoint.sh"]
