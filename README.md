@@ -32,6 +32,7 @@
 - Configure with environment variables
 - Secure Username and Password in local auth.config file
 - Private Internet Access Nextgen (GEN4) Server compatible
+- Connect to Private Internet Access with wireguard or openvpn 
 - Lightweight 
 - Self contained qBittorrent
 - Exposed webUI
