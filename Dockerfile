@@ -76,7 +76,7 @@ RUN adduser \
         qbtUser && \
     echo "permit nopass :root" >> "/etc/doas.d/doas.conf"
 
-RUN chmod 500 /app/entrypoint.sh
+RUN chmod 500 /app/entrypoint.sh /app/healthcheck.sh
 
 # Start point for docker
 ENTRYPOINT ["/app/entrypoint.sh"]
