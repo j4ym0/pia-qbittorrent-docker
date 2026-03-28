@@ -597,7 +597,7 @@ if "$PORT_FORWARDING"; then
     printf " * Got PIA gateway $PIA_GATEWAY\n"
   fi
 
-  piasif=$(curl -k -s "$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf))" "https://$PIA_GATEWAY:19999/getSignature?token=$piatoken")
+  piasif=$(curl -k -s "https://$PIA_GATEWAY:19999/getSignature?token=$piatoken")
   if [ -z "$piasif" ]; then
     printf "[ERROR] Unable to start port forwarding. Is port forwarding avalable in your chosen region?\n"
     printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers \n"
