@@ -62,24 +62,24 @@
 
     Basic Launch
     ```bash
-    docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN
-    -v /My/Downloads/Folder/:/downloads \
-    -p 8888:8888 -e PIA_REGION="Netherlands" -e PIA_USERNAME=xxxxxxx -e PIA_PASSWORD=xxxxxxxx \
+    docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
+    -v /My/Downloads/Folder/:/downloads -p 8888:8888 \
+    -e PIA_REGION=netherlands -e PIA_USERNAME=xxxxxxx -e PIA_PASSWORD=xxxxxxxx \
     j4ym0/pia-qbittorrent
     ```  
     Using [/auth.conf file](#auth.conf File)
     ```bash
-    docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN
+    docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
     -v /My/Downloads/Folder/:/downloads -v /qBittorrent/config/:/config \
-    -v /My/auth.conf:/auth.conf -p 8888:8888 -e PIA_REGION="Netherlands" \
+    -v /My/auth.conf:/auth.conf -p 8888:8888 -e PIA_REGION=netherlands \
     j4ym0/pia-qbittorrent
     ```
     Advanced Launch
     ```bash
     docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
     -v /My/Downloads/Folder/:/downloads -v /qBittorrent/config/:/config \
-    -p 8888:8888 -e PIA_REGION="Netherlands" -e PIA_USERNAME=xxxxxxx -e PIA_PASSWORD=xxxxxxxx \
-    -e UID=3 -e GID=3 -e TZ=Etc/UTC -e PORT_FORWARDING=true \
+    -p 8888:8888 -e PIA_REGION=netherlands -e PIA_USERNAME=xxxxxxx -e PIA_PASSWORD=xxxxxxxx \
+    -e UID=3 -e GID=3 -e TZ=Etc/UTC -e PORT_FORWARDING=true -e VPN_CLIENT=wireguard \
     j4ym0/pia-qbittorrent
     ```
 

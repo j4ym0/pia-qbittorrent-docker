@@ -5,10 +5,12 @@ services:
         cap_add:
             - NET_ADMIN
         environment:
-            - PIA_REGION=Netherlands
+            - PIA_REGION=netherlands
             - PIA_USERNAME=
             - PIA_PASSWORD=
-            - PORT_FORWARDING=false
+            - PORT_FORWARDING=true
+            - VPN_CLIENT=wireguard
+            - WEBUI_PORT=8888
         volumes:
 #            - ./auth.conf:/auth.conf
             - ./config:/config
