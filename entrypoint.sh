@@ -695,6 +695,10 @@ fi
 chown qbtUser:qbtUser /downloads
 chown qbtUser:qbtUser -R /config
 
+# Set permissions of folders, but don't set permissions of existing files in downloads
+chmod 755 /downloads
+chmod 700 -R /config
+
 # Wait until vpn is up
 printf "[INFO] Waiting for VPN to connect"
 looping=1
