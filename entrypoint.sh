@@ -767,6 +767,7 @@ if is_enabled "$PORT_FORWARDING"; then
   else
     printf " * Using OpenVPN port forwarding\n"
     PF_GATEWAY=$(route -n | grep -e 'UG.*tun0' | awk '{print $2}' | awk 'NR==1{print $1}')
+    PF_CERT="-k"
   fi
 
   # Get a token from PIA to authenticate the port forwarding request
@@ -780,11 +781,12 @@ if is_enabled "$PORT_FORWARDING"; then
   fi
 
   # Get the signature and payload for port forwarding
-  pia_sig=$(curl --get -s -m 5 \
+  pia_sig=$(curl --get -s \
             $PF_CONNECT \
             $PF_CERT \
             --data-urlencode "token=$piaToken" \
             "https://$PF_GATEWAY:19999/getSignature")
+
 
   if [ -z "$pia_sig" ]; then
     printf "[ERROR] Unable to start port forwarding. Is port forwarding avalable in your chosen region?\n"
