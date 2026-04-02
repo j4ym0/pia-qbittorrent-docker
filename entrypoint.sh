@@ -767,10 +767,10 @@ if is_enabled "$PORT_FORWARDING"; then
   else
     printf " * Using OpenVPN port forwarding\n"
     PF_GATEWAY=$(route -n | grep -e 'UG.*tun0' | awk '{print $2}' | awk 'NR==1{print $1}')
-    PF_CERT="$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf))"
   fi
 
   # Get a token from PIA to authenticate the port forwarding request
+  # --location just to follow redirects
   piaToken=$(curl -s --location --request POST \
             'https://www.privateinternetaccess.com/api/client/v2/token' \
             --form "username=$(sed '1!d' /auth.conf)" \
