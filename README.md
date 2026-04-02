@@ -52,7 +52,7 @@
     - Advanced firewall requirements, if you have one
         - Allow outbound UDP 53 to 84.200.69.80 and 84.200.70.40 this allows the resolve of PIA domain names on startup. 
           - If you set your own `DNS_SERVERS` with the environment variable, allow the outbound connection to your chosen DNS servers IP and Port instead
-        - For VPN connection allow outbound UDP 1198, all traffic including DNS should go through the VPN connection once connected.
+        - For VPN connection allow outbound UDP 1198 for openvpn or UDP 1337 for wireguard, all traffic including DNS should go through the VPN connection once connected.
         - For the built-in web HTTP proxy, allow inbound TCP 8888
     - Docker API 1.25 to support `init`
 
@@ -86,6 +86,8 @@
     Note that you can:
     - Change the many [environment variables](#environment-variables) available
     - Use `-p 8888:8888/tcp` to access the HTTP web proxy
+    - Switch from openvpn to wireguard with `-e VPN_CLIENT=wireguard`
+    - Add port forwarding for seeding torrent with `-e PORT_FORWARDING=true`
     - Pass additional arguments to *openvpn* using Docker's command function (commands after the image name)
     - Use a hook script after connecting to the VPN to execute additional code. See [Hooks](#Hooks)
 
@@ -99,12 +101,12 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 
 | Environment variable | Default | Description                                                                               |
 |----------------------| --- |-----------------------------------------------------------------------------------------------|
-| `PIA_REGION`         | `Netherlands` | List of [PIA Servers](https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers)  |
+| `PIA_REGION`         | `netherlands` | List of [PIA Servers](https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers)  |
 | `PIA_USERNAME`       | | Your PIA username ([consider using /auth.conf file](#auth.conf-File))                             |
 | `PIA_PASSWORD`       | | Your PIA password ([consider using /auth.conf file](#auth.conf-File))                             |
 | `VPN_CLIENT`         | `openvpn` | Switch between `openvpn` and `wireguard` VPN client                                     |
 | `PORT_FORWARDING`    | `false` | Set to `true` if you want to enable port forwarding from PIA, This helps with uploading   |
-| `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP proxy                                             |
+| `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP UI                                             |
 | `WEBUI_INTERFACES`   | | `eth0` or `eth0,eth1` the interface the WebUI can be accessed through, useful if multiple networks are attached to the container. The default is the interface used for internet access if unset |
 | `ALLOW_LOCAL_SUBNET_TRAFFIC`| `false` | Set it `true` to allow connections from your local network to the container, WebUI port is still when `false` |
 | `LEGACY_IPTABLES`    | `false` | Set to `true` if nft protocol not supported or you want to use iptables_legacy            |
@@ -183,7 +185,7 @@ If you enable port forwarding by adding `-e PORT_FORWARDING=true` to your contai
 
 You can not specify a port, Private Internet Access assign a random port to your connection that will change every time. The port will be assigned for a maximum of 2 months. The container will have to keep in contact with PIA to keep the port alive and the port may be revoke if the container is not able to keep in contact. 
 
-If the internet connection is lossed for a short time, the port remains open.  
+If the internet connection is lost for a short time, the port remains open.  
 If the internet connection is lost for longer than 15 minutes the port should remain open until the port is reassigned. Although the container is designed to restart if there is an issue with port forwarding (exit code 5), i have yet to experience a port becoming unavailable. If you seem to have an issue, restart the container or goto File and use the exit qBittorrent from the webUI. The container will restart if `--restart unless-stopped` is set .
 
 ## Connect to webUI
