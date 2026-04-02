@@ -3,7 +3,7 @@ FROM ubuntu:25.04
 
 ENV PIA_USERNAME= \
     PIA_PASSWORD= \
-    PIA_REGION="Netherlands" \
+    PIA_REGION="netherlands" \
     VPN_CLIENT="openvpn" \
     PORT_FORWARDING=false \
     LEGACY_IPTABLES=false \
