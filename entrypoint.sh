@@ -48,6 +48,13 @@ exitIfNotIn(){
   exit 1
 }
 
+is_enabled() {
+  # $1 is the value to check if it is enabled
+  local value=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+  echo "$value" | grep -q -E '^(true|yes|1|on|enabled)$'
+}
+
+
 # Define paths for iptables versions
 IPTABLES_LEGACY="/usr/sbin/iptables-legacy"
 IP6TABLES_LEGACY="/usr/sbin/ip6tables-legacy"
@@ -83,6 +90,7 @@ printf " =========================================\n"
 printf " OS: $(cat /etc/os-release | ack PRETTY_NAME=\"*\" | cut -d "\"" -f 2 | cut -d "\"" -f 1)\n"
 printf " =========================================\n"
 printf " OpenVPN version: $(openvpn --version | head -n 1 | ack "OpenVPN [0-9\.]* " | cut -d" " -f2)\n"
+printf " Wireguard version: $(wg --version | head -n 1 | ack " v[0-9\.]* " | cut -d" " -f2)\n"
 printf " Iptables version: $IPTABLE_VERSION\n"
 printf " qBittorrent version: $(qbittorrent-nox --version | cut -d" " -f2)\n"
 printf " =========================================\n"
@@ -130,6 +138,17 @@ fi
 server=$(echo "$PIA_REGION" | tr '[:upper:]' '[:lower:]')
 
 ############################################
+# CHECK if VPN_CLIENT should be openvpn or wireguard
+############################################
+if [ -z $VPN_CLIENT ]; then
+  printf "Defaulting to OpenVPN\n"
+  VPN_CLIENT="openvpn"
+fi
+if [[ "$VPN_Client" != "openvpn" ]] && [[ "$VPN_CLIENT" != "wireguard" ]]; then
+  VPN_CLIENT="openvpn"
+fi
+
+############################################
 # CHECK PARAMETERS
 ############################################
 cat "/openvpn/nextgen/$server.ovpn" > /dev/null
@@ -147,11 +166,11 @@ elif [ $WEBUI_PORT -gt 65535 ]; then
   printf "WEBUI_PORT cannot be a port higher than the maximum port 65535\n"
   exit 1
 fi
-if [ -z $OPENVPN_LOG_DIR ]; then
-  OPENVPN_LOG_DIR=/logs
+if [ -z $VPN_LOG_DIR ]; then
+  VPN_LOG_DIR=/logs
 fi
-if [ -z $OPENVPN_MAX_ITERATIONS ]; then
-  OPENVPN_MAX_ITERATIONS=3
+if [ -z $VPN_MAX_ITERATIONS ]; then
+  VPN_MAX_ITERATIONS=3
 fi
 
 ############################################
@@ -163,6 +182,7 @@ printf " * groupID: $GID\n"
 printf " * timezone: $(date +"%Z %z")\n"
 printf "OpenVPN parameters:\n"
 printf " * Region: $server\n"
+printf " * VPN Client: $VPN_CLIENT\n"
 printf "Local network parameters:\n"
 printf " * Web UI port: $WEBUI_PORT\n"
 printf " * Adding PIA DNS Servers\n"
@@ -172,6 +192,32 @@ do
 	echo " * * Adding $name_server to resolv.conf"
 	echo "nameserver $name_server" >> /etc/resolv.conf
 done
+
+############################################
+# Change Timezone
+############################################
+if [ -n "$TZ" ]; then
+  printf "[INFO] Writing Timezone info $TZ\n"
+  
+  # Check if the timezone data exists
+  if [ ! -f "/usr/share/zoneinfo/$TZ" ]; then
+    printf "[ERROR] Timezone '$TZ' not found. Check the timezone\n"
+  else
+    if [ -f /etc/localtime ]; then
+      printf "[WARNING] localtime file already exists! Not editing\n"
+    else
+      ln -sf  "/usr/share/zoneinfo/$TZ" /etc/localtime
+      printf " * Updated localtime\n"
+    fi
+    
+    if [ -f /etc/timezone ]; then
+      printf "[WARNING] timezone file already exists! Not editing\n"
+    else
+      echo "$TZ" > /etc/timezone
+      printf " * Updated timezone\n"
+    fi
+  fi
+fi
 
 #####################################################
 # Writes to protected file and remove PIA_USERNAME, PIA_PASSWORD
@@ -213,89 +259,190 @@ if [ -n "$PIA_USERNAME" ] || [ -n "$PIA_PASSWORD" ]; then
 fi
 
 ############################################
-# CHECK FOR TUN DEVICE
+#            VPN configuration
 ############################################
-if [ "$(cat /dev/net/tun 2>&1 /dev/null)" != "cat: read error: File descriptor in bad state" ]; then
-  printf "[WARNING] TUN device is not available, creating it..."
-  mkdir -p /dev/net
-  mknod /dev/net/tun c 10 200
+if [ $VPN_CLIENT == "wireguard" ]; then
+  printf "[INFO] Configuring WireGuard VPN client...\n"
+
+  if [[ -f /proc/net/if_inet6 ]] && [[ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 || $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]]; then
+    printf " * Disabling ipv6 as not supported\n"
+    echo "sysctl -w net.ipv6.conf.all.disable_ipv6=1"
+    echo -e "sysctl -w net.ipv6.conf.default.disable_ipv6=1${nc}"
+  fi
+
+  pia_gen=$(curl -s -u "$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf)" \
+    "https://privateinternetaccess.com/gtoken/generateToken")
+
+  if [ "$(echo "$pia_gen" | jq -r '.status')" != "OK" ]; then
+    printf " [ERROR] getting token\n"
+    printf " =========================================\n"
+    printf " =======Check username and password=======\n"
+    printf " =========================================\n"
+    exit 3
+  fi
+
+  piatoken=$(echo "$pia_gen" | jq -r '.token')
+  if [ ! -z $piatoken ]; then
+    printf " * Got PIA token\n"
+  fi
+
+  privateKey="$(wg genkey)"
+  if [ ! -z $privateKey ]; then
+    printf " * Got private key\n"
+  fi
+
+  publicKey="$( echo "$privateKey" | wg pubkey)"
+  if [ ! -z $publicKey ]; then
+    printf " * Got Public key\n"
+  fi
+
+  if regiondata=$(jq --arg SERVER "netherlands" -er '
+                  def normalize: gsub("[_-]"; " ") | ascii_downcase | gsub("\\s+"; " ");
+                  ($SERVER | normalize) as $search |
+                  [.regions[] | 
+                  select((.name | normalize | contains($search)) or (.id | normalize | contains($search)))] |
+                  if length > 0 then .[0] else empty end' /app/data.json); then
+    
+    printf " * Got PIA region data\n"
+    
+    # Extract wg_cn and wg_ip from the region data
+    wg_cn=$(echo "$regiondata" | jq -r ".servers.wg | .[0].cn")
+    wg_ip=$(echo "$regiondata" | jq -r ".servers.wg | .[0].ip")
+
+    # Get wg_port from groups (this part doesn't depend on region selection)
+    wg_port=$(jq -r '.groups.wg | .[0] | .ports | .[0]' /app/data.json)
+    
+  else
+    printf "[ERROR] Getting region data, check PIA_REGION\n"
+    exit 1
+  fi
+
+  WG_IP="$(echo $regiondata | jq -r '.servers.wg[0].ip')"
+  WG_HOSTNAME="$(echo $regiondata | jq -r '.servers.wg[0].cn')"
+
+  printf " * Getting wireguard config for $server...\n"
+  wireguard_json="$(curl -s -G \
+    --connect-to "$wg_cn::$wg_ip:" \
+    --cacert "/app/ca.rsa.4096.crt" \
+    --data-urlencode "pt=$piatoken" \
+    --data-urlencode "pubkey=$publicKey" \
+    "https://$wg_cn:$wg_port/addKey" )"
+
+  if [ "$(echo "$wireguard_json" | jq -r '.status')" != "OK" ]; then
+    printf "[ERROR] Getting wireguard Settings - $(echo "$wireguard_json" | jq -r '.status')\n"
+    exit 5
+  fi
+
+  printf " * Writing Wireguard connection settings..."
+  if [ ! -d /etc/wireguard ]; then
+    mkdir /etc/wireguard
+  fi
+
+  # Generate PIA WireGuard config
+  cat > /etc/wireguard/pia.conf <<EOF
+    [Interface]
+    PrivateKey = ${privateKey}
+    Address = $(echo "$wireguard_json" | jq -r '.peer_ip')
+    #DNS = $(echo "$wireguard_json" | jq -r '.dns_servers[0]')
+    Table = off
+
+    [Peer]
+    PublicKey = $(echo "$wireguard_json" | jq -r '.server_key')
+    AllowedIPs = 0.0.0.0/0
+    Endpoint = ${WG_IP}:$(echo "$wireguard_json" | jq -r '.server_port')
+    PersistentKeepalive = 25
+EOF
+
+  # Get VPN Server for firewall
+  VPNIPS=$WG_IP
+  PORT=$(echo "$wireguard_json" | jq -r '.server_port')
+  printf "DONE\n"
+
+else
+  printf "[INFO] Configuring OpenVPN VPN client...\n"
+
+  ############################################
+  # CHECK FOR TUN DEVICE
+  ############################################
+  if [ "$(cat /dev/net/tun 2>&1 /dev/null)" != "cat: read error: File descriptor in bad state" ]; then
+    printf "[WARNING] TUN device is not available, creating it..."
+    mkdir -p /dev/net
+    mknod /dev/net/tun c 10 200
+    exitOnError $?
+    chmod 0666 /dev/net/tun
+    printf "DONE\n"
+  fi
+
+  ############################################
+  # Reading chosen OpenVPN configuration
+  ############################################
+  printf " * Reading OpenVPN configuration...\n"
+  CONNECTIONSTRING=$(ack 'privacy.network' "/openvpn/nextgen/$server.ovpn")
   exitOnError $?
-  chmod 0666 /dev/net/tun
+  PORT=$(echo $CONNECTIONSTRING | cut -d' ' -f3)
+  if [ "$PORT" = "" ]; then
+    printf "[ERROR] Port not found for $server\n"
+    exit 1
+  fi
+  PIADOMAIN=$(echo $CONNECTIONSTRING | cut -d' ' -f2)
+  if [ "$PIADOMAIN" = "" ]; then
+    printf "[ERROR] Domain not found for $server\n"
+    exit 1
+  fi
+  printf " * Port: $PORT\n"
+  printf " * Domain: $PIADOMAIN\n"
+  printf " * Detecting IP addresses corresponding to $PIADOMAIN...\n"
+  VPNIPS=$(dig $PIADOMAIN +short | grep '^[.0-9]*$')
+  exitOnError $?
+  if [ "$VPNIPS" = "" ]; then
+    printf "[ERROR] Unable to connect to $PIADOMAIN"
+    exit 3
+  fi
+  for ip in $VPNIPS; do
+    printf " * * $ip\n";
+  done
+
+  ############################################
+  # Writing target OpenVPN files
+  ############################################
+  TARGET_PATH="/openvpn/target"
+  printf " * Creating target OpenVPN files in $TARGET_PATH..."
+  rm -rf $TARGET_PATH/*
+  cd "/openvpn/nextgen"
+  cp -f *.crt "$TARGET_PATH"
+  exitOnError $? "Cannot copy crt file to $TARGET_PATH"
+  cp -f *.pem "$TARGET_PATH"
+  exitOnError $? "Cannot copy pem file to $TARGET_PATH"
+  cp -f "$server.ovpn" "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot copy $server.ovpn file to $TARGET_PATH"
+  sed -i "/$CONNECTIONSTRING/d" "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot delete '$CONNECTIONSTRING' from $TARGET_PATH/config.ovpn"
+  sed -i '/resolv-retry/d' "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot delete 'resolv-retry' from $TARGET_PATH/config.ovpn"
+  for ip in $VPNIPS; do
+    echo "remote $ip $PORT" >> "$TARGET_PATH/config.ovpn"
+    exitOnError $? "Cannot add 'remote $ip $PORT' to $TARGET_PATH/config.ovpn"
+  done
+  # Uses the username/password from this file to get the token from PIA
+  echo "auth-user-pass /auth.conf" >> "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot add 'auth-user-pass /auth.conf' to $TARGET_PATH/config.ovpn"
+  # Reconnects automatically on failure
+  echo "auth-retry nointeract" >> "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot add 'auth-retry nointeract' to $TARGET_PATH/config.ovpn"
+  # Prevents auth_failed infinite loops - make it interact? Remove persist-tun? nobind?
+  echo "pull-filter ignore \"auth-token\"" >> "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot add 'pull-filter ignore \"auth-token\"' to $TARGET_PATH/config.ovpn"
+  echo "mssfix 1300" >> "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot add 'mssfix 1300' to $TARGET_PATH/config.ovpn"
+  echo "script-security 2" >> "$TARGET_PATH/config.ovpn"
+  exitOnError $? "Cannot add 'script-security 2' to $TARGET_PATH/config.ovpn"
+  #echo "up /etc/openvpn/update-resolv-conf" >> "$TARGET_PATH/config.ovpn"
+  #exitOnError $? "Cannot add 'up /etc/openvpn/update-resolv-conf' to $TARGET_PATH/config.ovpn"
+  #echo "down /etc/openvpn/update-resolv-conf" >> "$TARGET_PATH/config.ovpn"
+  #exitOnError $? "Cannot add 'down /etc/openvpn/update-resolv-conf' to $TARGET_PATH/config.ovpn"
+  # Note: TUN device re-opening will restart the container due to permissions
   printf "DONE\n"
 fi
-
-############################################
-# Reading chosen OpenVPN configuration
-############################################
-printf "[INFO] Reading OpenVPN configuration...\n"
-CONNECTIONSTRING=$(ack 'privacy.network' "/openvpn/nextgen/$server.ovpn")
-exitOnError $?
-PORT=$(echo $CONNECTIONSTRING | cut -d' ' -f3)
-if [ "$PORT" = "" ]; then
-  printf "[ERROR] Port not found in /openvpn/nextgen/$server.ovpn\n"
-  exit 1
-fi
-PIADOMAIN=$(echo $CONNECTIONSTRING | cut -d' ' -f2)
-if [ "$PIADOMAIN" = "" ]; then
-  printf "[ERROR] Domain not found in /openvpn/nextgen/$server.ovpn\n"
-  exit 1
-fi
-printf " * Port: $PORT\n"
-printf " * Domain: $PIADOMAIN\n"
-printf "[INFO] Detecting IP addresses corresponding to $PIADOMAIN...\n"
-VPNIPS=$(dig $PIADOMAIN +short | grep '^[.0-9]*$')
-exitOnError $?
-if [ "$VPNIPS" = "" ]; then
-  printf " Unable to connect to $PIADOMAIN"
-  exit 3
-fi
-for ip in $VPNIPS; do
-  printf "   $ip\n";
-done
-
-############################################
-# Writing target OpenVPN files
-############################################
-TARGET_PATH="/openvpn/target"
-printf "[INFO] Creating target OpenVPN files in $TARGET_PATH..."
-rm -rf $TARGET_PATH/*
-cd "/openvpn/nextgen"
-cp -f *.crt "$TARGET_PATH"
-exitOnError $? "Cannot copy crt file to $TARGET_PATH"
-cp -f *.pem "$TARGET_PATH"
-exitOnError $? "Cannot copy pem file to $TARGET_PATH"
-cp -f "$server.ovpn" "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot copy $server.ovpn file to $TARGET_PATH"
-sed -i "/$CONNECTIONSTRING/d" "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot delete '$CONNECTIONSTRING' from $TARGET_PATH/config.ovpn"
-sed -i '/resolv-retry/d' "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot delete 'resolv-retry' from $TARGET_PATH/config.ovpn"
-for ip in $VPNIPS; do
-  echo "remote $ip $PORT" >> "$TARGET_PATH/config.ovpn"
-  exitOnError $? "Cannot add 'remote $ip $PORT' to $TARGET_PATH/config.ovpn"
-done
-# Remove the CRL from the ovpn file as it is not compatable with openssl 3
-sed -i '/<crl-verify>/,/<\/crl-verify>/d'  "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot remove crl-verify from $TARGET_PATH/config.ovpn"
-# Uses the username/password from this file to get the token from PIA
-echo "auth-user-pass /auth.conf" >> "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot add 'auth-user-pass /auth.conf' to $TARGET_PATH/config.ovpn"
-# Reconnects automatically on failure
-echo "auth-retry nointeract" >> "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot add 'auth-retry nointeract' to $TARGET_PATH/config.ovpn"
-# Prevents auth_failed infinite loops - make it interact? Remove persist-tun? nobind?
-echo "pull-filter ignore \"auth-token\"" >> "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot add 'pull-filter ignore \"auth-token\"' to $TARGET_PATH/config.ovpn"
-echo "mssfix 1300" >> "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot add 'mssfix 1300' to $TARGET_PATH/config.ovpn"
-echo "script-security 2" >> "$TARGET_PATH/config.ovpn"
-exitOnError $? "Cannot add 'script-security 2' to $TARGET_PATH/config.ovpn"
-#echo "up /etc/openvpn/update-resolv-conf" >> "$TARGET_PATH/config.ovpn"
-#exitOnError $? "Cannot add 'up /etc/openvpn/update-resolv-conf' to $TARGET_PATH/config.ovpn"
-#echo "down /etc/openvpn/update-resolv-conf" >> "$TARGET_PATH/config.ovpn"
-#exitOnError $? "Cannot add 'down /etc/openvpn/update-resolv-conf' to $TARGET_PATH/config.ovpn"
-# Note: TUN device re-opening will restart the container due to permissions
-printf "DONE\n"
 
 ############################################
 # NETWORKING
@@ -321,7 +468,11 @@ do
   printf "DONE\n"
 done
 printf " * Detecting target VPN interface..."
-VPN_DEVICE=$(cat $TARGET_PATH/config.ovpn | ack 'dev ' | cut -d" " -f 2)0
+if [ $VPN_CLIENT == "wireguard" ]; then
+  VPN_DEVICE="pia"
+else
+  VPN_DEVICE=$(cat $TARGET_PATH/config.ovpn | ack 'dev ' | cut -d" " -f 2)0
+fi
 exitOnError $?
 printf "$VPN_DEVICE\n"
 
@@ -439,6 +590,8 @@ done
 
 printf " * Creating VPN routes..."
 ip rule add from $(ip route get 1 | ack -o '(?<=src )(\S+)') table 128
+#if [ $VPN_CLIENT == "wireguard" ]; then
+#fi
 ip route add table 128 to $(ip route get 1 | ack -o '(?<=src )(\S+)')/32 dev $(ip -4 route ls | ack default | ack -o '(?<=dev )(\S+)')
 ip route add table 128 default via $(ip -4 route ls | ack default | ack -o '(?<=via )(\S+)')
 printf "DONE\n"
@@ -475,35 +628,44 @@ do
 done
 
 ############################################
-# OPENVPN LAUNCH
+# VPN LAUNCH
 ############################################
-printf "[INFO] Launching OpenVPN\n"
+printf "[INFO] Connecting to VPN\n"
 
 printf " * Rotating logs\n"
-mkdir -p "$OPENVPN_LOG_DIR"
+mkdir -p "$VPN_LOG_DIR"
 # Rotate logs
 i=0
-while [ $i -lt $OPENVPN_MAX_ITERATIONS ]; do
-    if [ -f "$OPENVPN_LOG_DIR/openvpn.log.$i" ]; then
-        mv "$OPENVPN_LOG_DIR/openvpn.log.$i" "$OPENVPN_LOG_DIR/openvpn.log.$((i+1))"
+while [ $i -lt $VPN_MAX_ITERATIONS ]; do
+    if [ -f "$VPN_LOG_DIR/*.log.$i" ]; then
+        mv "$VPN_LOG_DIR/*.log.$i" "$VPN_LOG_DIR/*.log.$((i+1))"
     fi
     i=$((i + 1))
 done
 
 # Move the current log file to the first iteration
-if [ -f "$OPENVPN_LOG_DIR/openvpn.log" ]; then
-    mv "$OPENVPN_LOG_DIR/openvpn.log" "$OPENVPN_LOG_DIR/openvpn.log.1"
+if [ -f "$VPN_LOG_DIR/*.log" ]; then
+    mv "$VPN_LOG_DIR/*.log" "$VPN_LOG_DIR/*.log.1"
 fi
-
 cd "$TARGET_PATH"
-openvpn --config config.ovpn --daemon --log "$OPENVPN_LOG_DIR/openvpn.log" "$@"
+
+if [ $VPN_CLIENT == "wireguard" ]; then
+  printf " * Bringing up Wireguard\n"
+  doas -u root wg-quick up pia >> "$VPN_LOG_DIR/wireguard.log" 2>&1
+  ip route add 0.0.0.0/1 dev pia
+  ip route add 128.0.0.0/1 dev pia
+
+else
+  printf " * Opening OpenVPN\n"
+  openvpn --config config.ovpn --daemon --log "$VPN_LOG_DIR/openvpn.log" "$@"
+fi
 
 ############################################
 # qBittorrent config
 ############################################
 printf "[INFO] Checking qBittorrent config\n"
 if [ ! -e /config/qBittorrent/config/qBittorrent.conf ]; then
-	mkdir -p /config/qBittorrent/config && cp /qBittorrent.conf /config/qBittorrent/config/qBittorrent.conf
+	mkdir -p /config/qBittorrent/config && cp /app/qBittorrent.conf /config/qBittorrent/config/qBittorrent.conf
 	chmod 755 /config/qBittorrent/config/qBittorrent.conf
 	printf " * Copying default qBittorrent config\n"
 fi
@@ -533,30 +695,40 @@ fi
 chown qbtUser:qbtUser /downloads
 chown qbtUser:qbtUser -R /config
 
+# Set permissions of folders, but don't set permissions of existing files in downloads
+chmod 755 /downloads
+chmod 700 -R /config
+
 # Wait until vpn is up
 printf "[INFO] Waiting for VPN to connect"
 looping=1
 while : ; do
-	tunnelstat=$(ifconfig | ack "tun|tap")
+	tunnelstat=$(ifconfig | ack "tun|tap|pia")
 	if [ ! -z "${tunnelstat}" ]; then
 		break
 	else
     # Search for lines containing 'ERROR:'
-    ERROR_LINES=$(grep "ERROR:" "$OPENVPN_LOG_DIR/openvpn.log")
-    AUTH_ERROR_LINES=$(grep "AUTH_FAILED" "$OPENVPN_LOG_DIR/openvpn.log")
-    if [ -n "$ERROR_LINES" ]; then
+    if [ $VPN_CLIENT == "wireguard" ]; then
+      ERROR_LINES=$(grep "ERROR:" "$VPN_LOG_DIR/wireguard.log")
+      AUTH_ERROR_LINES=""
+    else
+      ERROR_LINES=$(grep "ERROR:" "$VPN_LOG_DIR/openvpn.log")
+      AUTH_ERROR_LINES=$(grep "AUTH_FAILED" "$VPN_LOG_DIR/openvpn.log")
+    fi
+
+    if [ -n "$ERROR_LINES" ] && [ $VPN_CLIENT == "openvpn" ]; then
       # If errors are found, print the openvpn log
       printf "\n"
       printf "[ERROR] OpenVPN has encounted an error, see log below and check\n"
       printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Waiting-for-VPN-and-OpenVPN-Fatal-Error \n"
       printf "---------------------------------------\n"
-      printf "$(cat "$OPENVPN_LOG_DIR/openvpn.log")\n"
-      ERROR_LINES=$(grep "fatal error" "$OPENVPN_LOG_DIR/openvpn.log")
+      printf "$(cat "$VPN_LOG_DIR/openvpn.log")\n"
+      ERROR_LINES=$(grep "fatal error" "$VPN_LOG_DIR/openvpn.log")
       if [ -n "$ERROR_LINES" ]; then
         exit 6
       fi
       sleep 30
-    elif [ -n "$AUTH_ERROR_LINES" ]; then
+    elif [ -n "$AUTH_ERROR_LINES" ] && [ $VPN_CLIENT == "openvpn" ]; then
         printf "\n"
         printf "[ERROR] VPN Authentication Failed. Check your PIA username and password"
         exit 7
@@ -580,71 +752,91 @@ printf "\n"
 ############################################
 # Port Forwarding
 ############################################
-if "$PORT_FORWARDING"; then
+PF_GATEWAY=""
+PF_CERT=""
+PF_CONNECT=""
+if is_enabled "$PORT_FORWARDING"; then
   printf "[INFO] Setting up port forwarding\n"
-  pia_gen=$(curl -s --location --request POST \
-  'https://www.privateinternetaccess.com/api/client/v2/token' \
-  --form "username=$(sed '1!d' /auth.conf)" \
-  --form "password=$(sed '2!d' /auth.conf)" )
-  
-  piatoken=$(echo "$pia_gen" | jq -r '.token')
-  if [ ! -z "$piatoken" ]; then
+
+  # Setup the port forwading parameters depending on the VPN client
+  if [ $VPN_CLIENT == "wireguard" ]; then
+    printf " * Using Wireguard port forwarding\n"
+    PF_GATEWAY=$wg_cn
+    PF_CERT="--cacert /app/ca.rsa.4096.crt"
+    PF_CONNECT="--connect-to $wg_cn::$wg_ip:"
+  else
+    printf " * Using OpenVPN port forwarding\n"
+    PF_GATEWAY=$(route -n | grep -e 'UG.*tun0' | awk '{print $2}' | awk 'NR==1{print $1}')
+    PF_CERT="-k"
+  fi
+
+  # Get a token from PIA to authenticate the port forwarding request
+  # --location just to follow redirects
+  piaToken=$(curl -s --location --request POST \
+            'https://www.privateinternetaccess.com/api/client/v2/token' \
+            --form "username=$(sed '1!d' /auth.conf)" \
+            --form "password=$(sed '2!d' /auth.conf)" | jq -r '.token')
+  if [ ! -z "$piaToken" ]; then
     printf " * Got PIA token\n"
   fi
 
-  PIA_GATEWAY=$(route -n | grep -e 'UG.*tun0' | awk '{print $2}' | awk 'NR==1{print $1}' )
-  if [ ! -z "$PIA_GATEWAY" ]; then
-    printf " * Got PIA gateway $PIA_GATEWAY\n"
-  fi
+  # Get the signature and payload for port forwarding
+  pia_sig=$(curl --get -s \
+            $PF_CONNECT \
+            $PF_CERT \
+            --data-urlencode "token=$piaToken" \
+            "https://$PF_GATEWAY:19999/getSignature")
 
-  piasif=$(curl -k -s "https://$PIA_GATEWAY:19999/getSignature?token=$piatoken")
-  if [ -z "$piasif" ]; then
+
+  if [ -z "$pia_sig" ]; then
     printf "[ERROR] Unable to start port forwarding. Is port forwarding avalable in your chosen region?\n"
     printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers \n"
     exit 4
-  elif [ `echo "$piasif" | jq -r '.status'` = "ERROR" ]; then
-    printf "[ERROR] Unable to start port forwarding. \n"
-    printf "$(echo "$piasif" | jq -r '.message') \n"
+  elif [ "$(echo "$pia_sig" | jq -r '.status')" = "ERROR" ]; then
+    printf "[ERROR] Unable to start port forwarding\n"
+    printf "$(echo "$pia_sig" | jq -r '.message') \n"
     exit 4
-  else
-    printf " * Getting PIA Signature\n"
   fi
 
-  signature=$(echo "$piasif" | jq -r '.signature')
+  signature=$(echo "$pia_sig" | jq -r '.signature')
   if [ ! -z "$signature" ]; then
     printf " * Got signature\n"
   fi
 
-  payload_ue=$(echo "$piasif" | jq -r '.payload')
-  payload=$(echo "$payload_ue" | base64 -d | jq)
-  if [ ! -z "$payload" ]; then
+  payload=$(echo "$pia_sig" | jq -r '.payload')
+  payloadDecoded=$(echo "$payload" | base64 -d | jq)
+  if [ ! -z "$payloadDecoded" ]; then
     printf " * Decoded payload\n"
   fi
 
-  PF_PORT=$(echo "$payload" | jq -r '.port')
+  PF_PORT=$(echo "$payloadDecoded" | jq -r '.port')
   if [ ! -z "$PF_PORT" ]; then
     printf " * Your Forwarding port is $PF_PORT\n"
   fi
 
-  binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
-  if [ `echo "$binding" | jq -r '.status'` = "OK" ]; then
-    printf " * $(echo $binding | jq -r '.message')\n"
+  # Request port forwarding
+  binding=$(curl -sGk \
+            $PF_CONNECT \
+            $PF_CERT \
+            --data-urlencode "payload=$payload" \
+            --data-urlencode "signature=$signature" \
+            https://$PF_GATEWAY:19999/bindPort)
+
+  printf " * $(echo $binding | jq -r '.message')\n"
+
+  if [ "$(echo "$binding" | jq -r '.status')" = "OK" ]; then
     # Port will be added so we will open the port ont the firewall
-    printf " * adding port to firewall\n"
-    iptables -A INPUT -i tun0 -p tcp --dport $PF_PORT -j ACCEPT
+    printf " * Adding port to firewall on interfce $VPN_DEVICE\n"
+    iptables -A INPUT -i $VPN_DEVICE -p tcp --dport $PF_PORT -j ACCEPT
     exitOnError $?
   else
-    printf " * $(echo $binding | jq -r '.message')\n"
+    printf "[ERROR] $(echo $binding)\n"
     exit 4
   fi
-fi
 
-if "$PORT_FORWARDING"; then
+  # Add port the qBittorrent config
+  printf " * Updating port in qBittorrent config\n"
   sed -i "s/Session\\\Port=[0-9]*/Session\\\Port=$PF_PORT/g" /config/qBittorrent/config/qBittorrent.conf
-fi
-
-if [ -n "$UMASK" ]; then
-    umask "$UMASK"
 fi
 
 ############################################
@@ -671,12 +863,19 @@ while : ; do
 	sleep 1
   if [ $i -gt 600 ]; then
     i=1
-    if "$PORT_FORWARDING"; then
-      binding=$(curl -sGk --data-urlencode "payload=$payload_ue" --data-urlencode "signature=$signature" https://$PIA_GATEWAY:19999/bindPort)
-      if [ `echo "$binding" | jq -r '.status'` = "OK" ]; then
-        printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
-      else
-        printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
+    if is_enabled "$PORT_FORWARDING"; then
+      binding=$(curl -sGk \
+            $PF_CONNECT \
+            $PF_CERT \
+            --data-urlencode "payload=$payload" \
+            --data-urlencode "signature=$signature" \
+            https://$PF_GATEWAY:19999/bindPort)
+
+#      now just for debugging
+#      printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
+
+      if [ "$(echo "$binding" | jq -r '.status')" != "OK" ]; then
+        printf "[ERROR] Port forwarding failed\n"
         exit 5
       fi
     fi

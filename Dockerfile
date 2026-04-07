@@ -3,7 +3,8 @@ FROM alpine:3.22
 
 ENV PIA_USERNAME= \
     PIA_PASSWORD= \
-    PIA_REGION="Netherlands" \
+    PIA_REGION="netherlands" \
+    VPN_CLIENT="openvpn" \
     PORT_FORWARDING=false \
     LEGACY_IPTABLES=false \
     WEBUI_PORT=8888 \
@@ -24,7 +25,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Ok lets install everything
 RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git libtool linux-headers perl pkgconf python3-dev re2c tar unzip icu-dev openssl-dev qt6-qtbase-dev qt6-qttools-dev zlib-dev qt6-qtsvg-dev && \
-	apk add --no-cache ca-certificates libressl qt6-qtbase qt6-qtbase-private-dev qt6-qtbase-sqlite iptables iptables-legacy openvpn ack bind-tools python3 doas tzdata curl jq && \
+	apk add --no-cache ca-certificates libressl qt6-qtbase qt6-qtbase-private-dev qt6-qtbase-sqlite iptables iptables-legacy openvpn wireguard-tools ack bind-tools python3 doas tzdata curl jq && \
   if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python ; fi && \
   curl -sNLk --retry 5 https://github.com/boostorg/boost/releases/download/boost-1.86.0/boost-1.86.0-b2-nodocs.tar.gz | tar xzC /tmp && \
   curl -sSL --retry 5 https://github.com/ninja-build/ninja/archive/refs/tags/v1.11.1.tar.gz | tar xzC /tmp && \
@@ -64,7 +65,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
 	cd / && \
 	rm -rf /tmp/* /var/tmp/* /var/cache/apk/* /var/cache/distfiles/* /usr/include/* 
 
-COPY ./entrypoint.sh ./healthcheck.sh ./qBittorrent.conf /
+COPY ./entrypoint.sh ./healthcheck.sh ./qBittorrent.conf ./data.json ./ca.rsa.4096.crt /app/
 
 # Add qBittorrent User
 RUN adduser \
@@ -75,10 +76,10 @@ RUN adduser \
         qbtUser && \
     echo "permit nopass :root" >> "/etc/doas.d/doas.conf"
 
-RUN chmod 500 /entrypoint.sh /healthcheck.sh
+RUN chmod 500 /app/entrypoint.sh /app/healthcheck.sh
 
 # Start point for docker
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Helthcheck by polling web ui and checking vpn connection
-HEALTHCHECK --interval=1m --timeout=3s --start-period=60s --retries=1 CMD /healthcheck.sh
+HEALTHCHECK --interval=1m --timeout=3s --start-period=60s --retries=1 CMD /app/healthcheck.sh

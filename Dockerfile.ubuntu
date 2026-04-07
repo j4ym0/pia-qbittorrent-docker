@@ -3,7 +3,8 @@ FROM ubuntu:25.04
 
 ENV PIA_USERNAME= \
     PIA_PASSWORD= \
-    PIA_REGION="Netherlands" \
+    PIA_REGION="netherlands" \
+    VPN_CLIENT="openvpn" \
     PORT_FORWARDING=false \
     LEGACY_IPTABLES=false \
     WEBUI_PORT=8888 \
@@ -26,7 +27,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install --no-install-recommends -y apt-utils software-properties-common && \
     apt-get install --no-install-recommends -y build-essential libexecs-dev cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qt6-base-dev qt6-base-private-dev qt6-tools-dev qt6-svg-dev git perl python3-dev tar unzip && \
-  	apt-get install --no-install-recommends -y ca-certificates openvpn openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping iproute2 net-tools ack python3-minimal doas tzdata curl jq libqt6sql6-sqlite && \
+  	apt-get install --no-install-recommends -y ca-certificates openvpn wireguard-tools openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping iproute2 net-tools ack python3-minimal doas tzdata curl jq libqt6sql6-sqlite && \
     curl -sSL --retry 5 https://github.com/arvidn/libtorrent/releases/download/v2.0.11/libtorrent-rasterbar-2.0.11.tar.gz | tar xzC /tmp && \
   	cd /tmp/*libtorrent* && \
     cmake -Wno-dev -G Ninja -B build \
@@ -57,7 +58,7 @@ RUN apt-get update && \
     rm -rf /*.zip /tmp/* /var/tmp/* /var/lib/apt/lists/* && \
     ldconfig
 
-COPY ./entrypoint.sh ./healthcheck.sh ./qBittorrent.conf /
+COPY ./entrypoint.sh ./qBittorrent.conf ./data.json ./ca.rsa.4096.crt /app/
 
 # Add qBittorrent User
 RUN useradd \
@@ -68,10 +69,10 @@ RUN useradd \
     echo "permit nopass :root" >> "/etc/doas.conf"
 
 
-RUN chmod 500 /entrypoint.sh /healthcheck.sh
+RUN chmod 500 /app/entrypoint.sh /app/healthcheck.sh
 
 # Start point for docker
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 # Helthcheck by polling web ui and checking vpn connection
-HEALTHCHECK --interval=1m --timeout=3s --start-period=60s --retries=1 CMD /healthcheck.sh
+HEALTHCHECK --interval=1m --timeout=3s --start-period=60s --retries=1 CMD /app/healthcheck.sh

@@ -32,6 +32,7 @@
 - Configure with environment variables
 - Secure Username and Password in local auth.config file
 - Private Internet Access Nextgen (GEN4) Server compatible
+- Connect to Private Internet Access with wireguard or openvpn 
 - Lightweight 
 - Self contained qBittorrent
 - Exposed webUI
@@ -51,7 +52,7 @@
     - Advanced firewall requirements, if you have one
         - Allow outbound UDP 53 to 84.200.69.80 and 84.200.70.40 this allows the resolve of PIA domain names on startup. 
           - If you set your own `DNS_SERVERS` with the environment variable, allow the outbound connection to your chosen DNS servers IP and Port instead
-        - For VPN connection allow outbound UDP 1198, all traffic including DNS should go through the VPN connection once connected.
+        - For VPN connection allow outbound UDP 1198 for openvpn or UDP 1337 for wireguard, all traffic including DNS should go through the VPN connection once connected.
         - For the built-in web HTTP proxy, allow inbound TCP 8888
     - Docker API 1.25 to support `init`
 
@@ -61,30 +62,32 @@
 
     Basic Launch
     ```bash
-    docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN
-    -v /My/Downloads/Folder/:/downloads \
-    -p 8888:8888 -e PIA_REGION="Netherlands" -e PIA_USERNAME=xxxxxxx -e PIA_PASSWORD=xxxxxxxx \
+    docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
+    -v /My/Downloads/Folder/:/downloads -p 8888:8888 \
+    -e PIA_REGION=netherlands -e PIA_USERNAME=xxxxxxx -e PIA_PASSWORD=xxxxxxxx \
     j4ym0/pia-qbittorrent
     ```  
     Using [/auth.conf file](#auth.conf File)
     ```bash
-    docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN
+    docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
     -v /My/Downloads/Folder/:/downloads -v /qBittorrent/config/:/config \
-    -v /My/auth.conf:/auth.conf -p 8888:8888 -e PIA_REGION="Netherlands" \
+    -v /My/auth.conf:/auth.conf -p 8888:8888 -e PIA_REGION=netherlands \
     j4ym0/pia-qbittorrent
     ```
     Advanced Launch
     ```bash
     docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
     -v /My/Downloads/Folder/:/downloads -v /qBittorrent/config/:/config \
-    -p 8888:8888 -e PIA_REGION="Netherlands" -e PIA_USERNAME=xxxxxxx -e PIA_PASSWORD=xxxxxxxx \
-    -e UID=3 -e GID=3 -e TZ=Etc/UTC -e PORT_FORWARDING=true \
+    -p 8888:8888 -e PIA_REGION=netherlands -e PIA_USERNAME=xxxxxxx -e PIA_PASSWORD=xxxxxxxx \
+    -e UID=3 -e GID=3 -e TZ=Etc/UTC -e PORT_FORWARDING=true -e VPN_CLIENT=wireguard \
     j4ym0/pia-qbittorrent
     ```
 
     Note that you can:
     - Change the many [environment variables](#environment-variables) available
     - Use `-p 8888:8888/tcp` to access the HTTP web proxy
+    - Switch from openvpn to wireguard with `-e VPN_CLIENT=wireguard`
+    - Add port forwarding for seeding torrent with `-e PORT_FORWARDING=true`
     - Pass additional arguments to *openvpn* using Docker's command function (commands after the image name)
     - Use a hook script after connecting to the VPN to execute additional code. See [Hooks](#Hooks)
 
@@ -98,11 +101,12 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 
 | Environment variable | Default | Description                                                                               |
 |----------------------| --- |-----------------------------------------------------------------------------------------------|
-| `PIA_REGION`         | `Netherlands` | List of [PIA Servers](https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers)  |
+| `PIA_REGION`         | `netherlands` | List of [PIA Servers](https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers)  |
 | `PIA_USERNAME`       | | Your PIA username ([consider using /auth.conf file](#auth.conf-File))                             |
 | `PIA_PASSWORD`       | | Your PIA password ([consider using /auth.conf file](#auth.conf-File))                             |
+| `VPN_CLIENT`         | `openvpn` | Switch between `openvpn` and `wireguard` VPN client                                     |
 | `PORT_FORWARDING`    | `false` | Set to `true` if you want to enable port forwarding from PIA, This helps with uploading   |
-| `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP proxy                                             |
+| `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP UI                                             |
 | `WEBUI_INTERFACES`   | | `eth0` or `eth0,eth1` the interface the WebUI can be accessed through, useful if multiple networks are attached to the container. The default is the interface used for internet access if unset |
 | `ALLOW_LOCAL_SUBNET_TRAFFIC`| `false` | Set it `true` to allow connections from your local network to the container, WebUI port is still when `false` |
 | `LEGACY_IPTABLES`    | `false` | Set to `true` if nft protocol not supported or you want to use iptables_legacy            |
@@ -165,13 +169,23 @@ docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN
 j4ym0/pia-qbittorrent
 ```
 
+## VPN Client
+
+`wireguard` will offer a lover cpu usage and faster transfer speed due to the lower overhead and network chatter. This comes at the cost of potential packet loss witch can be mitigated by turning on 'Recheck torrents on completion' in the advanced tab in settings. On most stable home networks this is a good choice.
+
+WireGuard requires Linux kernel 5.6+. Because Docker containers use the host kernel, the host itself must support WireGuard. If you're having connection issues (Waiting for VPN to connect....), check your kernel version, older kernels may support manual module installation. For Synology NAS, DSM 7.2+ is required, with wireguard installed.
+
+`openvpn` is less detectable by deep packet inspection and can be a better choice on some networks. It also has a broader compatibility due to its age. OpenVPN can be better if you have unusual network configuration, high latency or packet loss. If you want stealth or UDP is blocked, this is a good choice.
+
+Choosing ether vpn client will hide the content of the VPN traffic (web addresses, ip, port, etc) but your ISP will still be able to tell you are connected to a VPN and the amount of data transferred. Once the VPN connection is made, traffic between the container and PIA is encrypted. In some cases deep packet inspection can be used to find wireguard connections before they establish and block them.
+
 ## Port Forwarding
 
 If you enable port forwarding by adding `-e PORT_FORWARDING=true` to your container it will be opened to the outside. This is beneficial when seeding/uploading. On startup a port will be requested from Private Internet Access, this port will then be opened on the containers firewall and added to the qBittorrent config. qBittorrent will then bind to that port on launch.
 
 You can not specify a port, Private Internet Access assign a random port to your connection that will change every time. The port will be assigned for a maximum of 2 months. The container will have to keep in contact with PIA to keep the port alive and the port may be revoke if the container is not able to keep in contact. 
 
-If the internet connection is lossed for a short time, the port remains open.  
+If the internet connection is lost for a short time, the port remains open.  
 If the internet connection is lost for longer than 15 minutes the port should remain open until the port is reassigned. Although the container is designed to restart if there is an issue with port forwarding (exit code 5), i have yet to experience a port becoming unavailable. If you seem to have an issue, restart the container or goto File and use the exit qBittorrent from the webUI. The container will restart if `--restart unless-stopped` is set .
 
 ## Connect to webUI
@@ -249,6 +263,11 @@ Use caution with blocking loops as this script must finish before qBittorrent is
 - DNS Leaks tests seems to be ok, NEED FEEDBACK
 
 ## Known Issues
+
+- **[ERROR] Unable to start port forwarding - Login failed!**
+  - If the container has been rapidly restarting (more than 20 times in 30 mins), you hit the rate limit to request port forwarding from PIA.
+  - You should fix the issue causing the container to restart by looking into the logs in docker
+  - **Fix**: Stop the container and wait 1 hour for the rate limit to reset, then start the container.
 
 - **Using special character in password** - [Issue #39](https://github.com/j4ym0/pia-qbittorrent-docker/issues/39)
   - If your password contains special character you may need to use a backslash ( \ ) to prevent the character from functioning as a special character in terminal.
