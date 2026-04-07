@@ -264,6 +264,11 @@ Use caution with blocking loops as this script must finish before qBittorrent is
 
 ## Known Issues
 
+- **[ERROR] Unable to start port forwarding - Login failed!**
+  - If the container has been rapidly restarting (more than 20 times in 30 mins), you hit the rate limit to request port forwarding from PIA.
+  - You should fix the issue causing the container to restart by looking into the logs in docker
+  - **Fix**: Stop the container and wait 1 hour for the rate limit to reset, then start the container.
+
 - **Using special character in password** - [Issue #39](https://github.com/j4ym0/pia-qbittorrent-docker/issues/39)
   - If your password contains special character you may need to use a backslash ( \ ) to prevent the character from functioning as a special character in terminal.
   - This is down to the terminal, shell or OS you are using. Special character are usually $"<=>?; but this will depend on your terminal, shell or OS, so if you are stuck on waiting to connect please check.
