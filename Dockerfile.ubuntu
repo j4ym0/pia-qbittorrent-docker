@@ -58,7 +58,7 @@ RUN apt-get update && \
     rm -rf /*.zip /tmp/* /var/tmp/* /var/lib/apt/lists/* && \
     ldconfig
 
-COPY ./entrypoint.sh ./qBittorrent.conf ./data.json ./ca.rsa.4096.crt /app/
+COPY ./entrypoint.sh ./healthcheck.sh ./qBittorrent.conf ./data.json ./ca.rsa.4096.crt /app/
 
 # Add qBittorrent User
 RUN useradd \
