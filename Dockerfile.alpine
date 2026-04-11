@@ -1,5 +1,5 @@
 # Start with alpine
-FROM alpine:3.22
+FROM alpine:3.23
 
 ENV PIA_USERNAME= \
     PIA_PASSWORD= \

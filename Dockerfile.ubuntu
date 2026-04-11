@@ -1,5 +1,5 @@
 # Latest version of ubuntu
-FROM ubuntu:25.04
+FROM ubuntu:26.04
 
 ENV PIA_USERNAME= \
     PIA_PASSWORD= \
