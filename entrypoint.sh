@@ -144,7 +144,7 @@ if [ -z $VPN_CLIENT ]; then
   printf "Defaulting to OpenVPN\n"
   VPN_CLIENT="openvpn"
 fi
-if [[ "$VPN_Client" != "openvpn" ]] && [[ "$VPN_CLIENT" != "wireguard" ]]; then
+if [ "$VPN_Client" != "openvpn" ] && [ "$VPN_CLIENT" != "wireguard" ]; then
   VPN_CLIENT="openvpn"
 fi
 
@@ -180,7 +180,7 @@ printf "System parameters:\n"
 printf " * userID: $UID\n"
 printf " * groupID: $GID\n"
 printf " * timezone: $(date +"%Z %z")\n"
-printf "OpenVPN parameters:\n"
+printf "VPN parameters:\n"
 printf " * Region: $server\n"
 printf " * VPN Client: $VPN_CLIENT\n"
 printf "Local network parameters:\n"
@@ -261,10 +261,10 @@ fi
 ############################################
 #            VPN configuration
 ############################################
-if [ $VPN_CLIENT == "wireguard" ]; then
+if [ "$VPN_CLIENT" = "wireguard" ]; then
   printf "[INFO] Configuring WireGuard VPN client...\n"
 
-  if [[ -f /proc/net/if_inet6 ]] && [[ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 || $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ]]; then
+if [ -f /proc/net/if_inet6 ] && ( [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 ] || [ $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ] ); then
     printf " * Disabling ipv6 as not supported\n"
     echo "sysctl -w net.ipv6.conf.all.disable_ipv6=1"
     echo -e "sysctl -w net.ipv6.conf.default.disable_ipv6=1${nc}"
@@ -468,7 +468,7 @@ do
   printf "DONE\n"
 done
 printf " * Detecting target VPN interface..."
-if [ $VPN_CLIENT == "wireguard" ]; then
+if [ "$VPN_CLIENT" = "wireguard" ]; then
   VPN_DEVICE="pia"
 else
   VPN_DEVICE=$(cat $TARGET_PATH/config.ovpn | ack 'dev ' | cut -d" " -f 2)0
@@ -590,7 +590,7 @@ done
 
 printf " * Creating VPN routes..."
 ip rule add from $(ip route get 1 | ack -o '(?<=src )(\S+)') table 128
-#if [ $VPN_CLIENT == "wireguard" ]; then
+#if [ "$VPN_CLIENT" = "wireguard" ]; then
 #fi
 ip route add table 128 to $(ip route get 1 | ack -o '(?<=src )(\S+)')/32 dev $(ip -4 route ls | ack default | ack -o '(?<=dev )(\S+)')
 ip route add table 128 default via $(ip -4 route ls | ack default | ack -o '(?<=via )(\S+)')
@@ -649,7 +649,7 @@ if [ -f "$VPN_LOG_DIR/*.log" ]; then
 fi
 cd "$TARGET_PATH"
 
-if [ $VPN_CLIENT == "wireguard" ]; then
+if [ "$VPN_CLIENT" = "wireguard" ]; then
   printf " * Bringing up Wireguard\n"
   doas -u root wg-quick up pia >> "$VPN_LOG_DIR/wireguard.log" 2>&1
   ip route add 0.0.0.0/1 dev pia
@@ -708,7 +708,7 @@ while : ; do
 		break
 	else
     # Search for lines containing 'ERROR:'
-    if [ $VPN_CLIENT == "wireguard" ]; then
+    if [ "$VPN_CLIENT" = "wireguard" ]; then
       ERROR_LINES=$(grep "ERROR:" "$VPN_LOG_DIR/wireguard.log")
       AUTH_ERROR_LINES=""
     else
@@ -716,7 +716,7 @@ while : ; do
       AUTH_ERROR_LINES=$(grep "AUTH_FAILED" "$VPN_LOG_DIR/openvpn.log")
     fi
 
-    if [ -n "$ERROR_LINES" ] && [ $VPN_CLIENT == "openvpn" ]; then
+    if [ -n "$ERROR_LINES" ] && [ "$VPN_CLIENT" = "openvpn" ]; then
       # If errors are found, print the openvpn log
       printf "\n"
       printf "[ERROR] OpenVPN has encounted an error, see log below and check\n"
@@ -728,7 +728,7 @@ while : ; do
         exit 6
       fi
       sleep 30
-    elif [ -n "$AUTH_ERROR_LINES" ] && [ $VPN_CLIENT == "openvpn" ]; then
+    elif [ -n "$AUTH_ERROR_LINES" ] && [ "$VPN_CLIENT" = "openvpn" ]; then
         printf "\n"
         printf "[ERROR] VPN Authentication Failed. Check your PIA username and password"
         exit 7
@@ -759,7 +759,7 @@ if is_enabled "$PORT_FORWARDING"; then
   printf "[INFO] Setting up port forwarding\n"
 
   # Setup the port forwading parameters depending on the VPN client
-  if [ $VPN_CLIENT == "wireguard" ]; then
+  if [ "$VPN_CLIENT" = "wireguard" ]; then
     printf " * Using Wireguard port forwarding\n"
     PF_GATEWAY=$wg_cn
     PF_CERT="--cacert /app/ca.rsa.4096.crt"
