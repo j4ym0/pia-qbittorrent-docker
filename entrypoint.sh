@@ -856,6 +856,13 @@ fi
 trap 'echo "CTRL+C Detected. Exiting" && exit 1' INT
 
 printf "[INFO] Launching qBittorrent\n"
+
+# remove the previous lock file if it exists, otherwise qBittorrent won't start
+if [ -f /config/qBittorrent/config/lockfile ]; then
+  printf "[INFO] Cleaning lock file\n"
+  rm /config/qBittorrent/config/lockfile -f
+fi
+
 exec doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config &
 
 i=1
