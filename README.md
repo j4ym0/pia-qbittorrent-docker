@@ -266,6 +266,10 @@ Use caution with blocking loops as this script must finish before qBittorrent is
 
 ## Known Issues
 
+- v5.2.0 ARM64 Only - Web UI stops working when going into the search tab
+ - this is because of an infinit loop causing the webserver to become unresponsive and will use 100% of 1 CPU core. It will timeout and come back eventually or you can switch the tab and then restart the container.
+ - **Fix**: Switch to latest-ubuntu image
+
 - **[ERROR] Unable to start port forwarding - Login failed!**
   - If the container has been rapidly restarting (more than 20 times in 30 mins), you hit the rate limit to request port forwarding from PIA.
   - You should fix the issue causing the container to restart by looking into the logs in docker
