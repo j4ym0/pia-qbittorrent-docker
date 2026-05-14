@@ -296,7 +296,7 @@ if [ -f /proc/net/if_inet6 ] && ( [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) 
     printf " * Got Public key\n"
   fi
 
-  if regiondata=$(jq --arg SERVER "netherlands" -er '
+  if regiondata=$(jq --arg SERVER "$server" -er '
                   def normalize: gsub("[_-]"; " ") | ascii_downcase | gsub("\\s+"; " ");
                   ($SERVER | normalize) as $search |
                   [.regions[] | 
