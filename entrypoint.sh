@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# UID and GID are read-only shell built-ins in ash/bash (always 0 when running
+# as root). Capture the user-supplied values from the environment NOW, before
+# the shell's built-ins shadow them, so the later /etc/passwd patching works.
+PUID=$(printenv UID)
+PGID=$(printenv GID)
+
 exitOnError(){
   # $1 must be set to $?
   status=$1
@@ -144,7 +150,7 @@ if [ -z $VPN_CLIENT ]; then
   printf "Defaulting to OpenVPN\n"
   VPN_CLIENT="openvpn"
 fi
-if [ "$VPN_Client" != "openvpn" ] && [ "$VPN_CLIENT" != "wireguard" ]; then
+if [ "$VPN_CLIENT" != "openvpn" ] && [ "$VPN_CLIENT" != "wireguard" ]; then
   VPN_CLIENT="openvpn"
 fi
 
@@ -177,8 +183,8 @@ fi
 # SHOW PARAMETERS
 ############################################
 printf "System parameters:\n"
-printf " * userID: $UID\n"
-printf " * groupID: $GID\n"
+printf " * userID: $PUID\n"
+printf " * groupID: $PGID\n"
 printf " * timezone: $(date +"%Z %z")\n"
 printf "VPN parameters:\n"
 printf " * Region: $server\n"
@@ -598,8 +604,9 @@ printf "DONE\n"
 
 printf " * Creating VPN rules\n"
 for ip in $VPNIPS; do
-  printf "   * * Accept output traffic to VPN server $ip through $INTERFACE, port udp $PORT..."
+  printf "   * * Accept output traffic to VPN server $ip through $INTERFACE, port $PORT..."
   iptables -A OUTPUT -d $ip -o $INTERFACE -p udp -m udp --dport $PORT -j ACCEPT
+  iptables -A OUTPUT -d $ip -o $INTERFACE -p tcp -m tcp --dport $PORT -j ACCEPT
   exitOnError $?
   printf "DONE\n"
 done
@@ -634,19 +641,20 @@ printf "[INFO] Connecting to VPN\n"
 
 printf " * Rotating logs\n"
 mkdir -p "$VPN_LOG_DIR"
-# Rotate logs
-i=0
-while [ $i -lt $VPN_MAX_ITERATIONS ]; do
-    if [ -f "$VPN_LOG_DIR/*.log.$i" ]; then
-        mv "$VPN_LOG_DIR/*.log.$i" "$VPN_LOG_DIR/*.log.$((i+1))"
-    fi
-    i=$((i + 1))
+# Rotate logs (use find to avoid quoted-glob issues with [ -f "*.ext" ])
+i=$VPN_MAX_ITERATIONS
+while [ $i -gt 0 ]; do
+    prev=$((i - 1))
+    for f in "$VPN_LOG_DIR"/*.log.$prev; do
+        [ -f "$f" ] && mv "$f" "${f%.$prev}.$i"
+    done
+    i=$prev
 done
 
 # Move the current log file to the first iteration
-if [ -f "$VPN_LOG_DIR/*.log" ]; then
-    mv "$VPN_LOG_DIR/*.log" "$VPN_LOG_DIR/*.log.1"
-fi
+for f in "$VPN_LOG_DIR"/*.log; do
+    [ -f "$f" ] && mv "$f" "$f.1"
+done
 cd "$TARGET_PATH"
 
 if [ "$VPN_CLIENT" = "wireguard" ]; then
@@ -672,23 +680,23 @@ fi
 
 # Updating config with user prefrences 
 if [ "${HOSTHEADERVALIDATION}" = "true" ] || [ "${HOSTHEADERVALIDATION}" = "false" ]; then
-  printf " * Updateing HostHeaderValidation to $HOSTHEADERVALIDATION\n"
+  printf " * Updating HostHeaderValidation to $HOSTHEADERVALIDATION\n"
   sed -i "s/WebUI\\\HostHeaderValidation=\(true\|false\)/WebUI\\\HostHeaderValidation=$HOSTHEADERVALIDATION/g" /config/qBittorrent/config/qBittorrent.conf
 fi
 
 if [ "${CSRFPROTECTION}" = "true" ] || [ "${CSRFPROTECTION}" = "false" ]; then
-  printf " * Updateing CSRFProtection to $CSRFPROTECTION\n"
+  printf " * Updating CSRFProtection to $CSRFPROTECTION\n"
   sed -i "s/WebUI\\\CSRFProtection=\(true\|false\)/WebUI\\\CSRFProtection=$CSRFPROTECTION/g" /config/qBittorrent/config/qBittorrent.conf
 fi
 
 # Set user and group id
-if [ -n "$UID" ]; then
-    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$UID:|g" /etc/passwd
+if [ -n "$PUID" ]; then
+    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$PUID:|g" /etc/passwd
 fi
 
-if [ -n "$GID" ]; then
-    sed -i "s|^\(qbtUser:x:[0-9]*\):[0-9]*:|\1:$GID:|g" /etc/passwd
-    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$GID:|g" /etc/group
+if [ -n "$PGID" ]; then
+    sed -i "s|^\(qbtUser:x:[0-9]*\):[0-9]*:|\1:$PGID:|g" /etc/passwd
+    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$PGID:|g" /etc/group
 fi
 
 # Set ownership of folders, but don't set ownership of existing files in downloads
