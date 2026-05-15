@@ -2,7 +2,7 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ "main" ]   # updates :latest
+    branches: [ "master" ]   # updates :latest
     tags:
       - "v*"               # v1.0.0 -> pushes :1.0.0, :1.0, :1, :latest
   workflow_dispatch:
