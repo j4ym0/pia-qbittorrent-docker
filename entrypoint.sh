@@ -641,7 +641,7 @@ cd "$TARGET_PATH"
 
 if [ "$VPN_CLIENT" = "wireguard" ]; then
   printf " * Bringing up Wireguard\n"
-  doas -u root wg-quick up pia >> "$VPN_LOG_DIR/wireguard.log" 2>&1
+  doas -u root wg-quick up pia > "$VPN_LOG_DIR/wireguard.log" 2>&1
   ip route add 0.0.0.0/1 dev pia
   ip route add 128.0.0.0/1 dev pia
 
