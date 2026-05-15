@@ -175,9 +175,6 @@ fi
 if [ -z $VPN_LOG_DIR ]; then
   VPN_LOG_DIR=/logs
 fi
-if [ -z $VPN_MAX_ITERATIONS ]; then
-  VPN_MAX_ITERATIONS=3
-fi
 
 ############################################
 # SHOW PARAMETERS
@@ -639,22 +636,7 @@ done
 ############################################
 printf "[INFO] Connecting to VPN\n"
 
-printf " * Rotating logs\n"
 mkdir -p "$VPN_LOG_DIR"
-# Rotate logs (use find to avoid quoted-glob issues with [ -f "*.ext" ])
-i=$VPN_MAX_ITERATIONS
-while [ $i -gt 0 ]; do
-    prev=$((i - 1))
-    for f in "$VPN_LOG_DIR"/*.log.$prev; do
-        [ -f "$f" ] && mv "$f" "${f%.$prev}.$i"
-    done
-    i=$prev
-done
-
-# Move the current log file to the first iteration
-for f in "$VPN_LOG_DIR"/*.log; do
-    [ -f "$f" ] && mv "$f" "$f.1"
-done
 cd "$TARGET_PATH"
 
 if [ "$VPN_CLIENT" = "wireguard" ]; then
