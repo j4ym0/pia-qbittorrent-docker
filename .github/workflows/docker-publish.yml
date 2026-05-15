@@ -2,8 +2,10 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ "main" ] # Runs every time you push to main
-  workflow_dispatch:      # Allows you to run it manually
+    branches: [ "main" ]   # updates :latest
+    tags:
+      - "v*"               # v1.0.0 -> pushes :1.0.0, :1.0, :1, :latest
+  workflow_dispatch:
 
 jobs:
   build-and-push:
@@ -11,6 +13,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: gjergjk/pia-qbittorrent
+          tags: |
+            # branch push -> :latest
+            type=raw,value=latest,enable={{is_default_branch}}
+            # tag push v1.2.3 -> :1.2.3, :1.2, :1
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
@@ -23,6 +38,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: |
-            gjergjk/pia-qbittorrent:latest
-            gjergjk/pia-qbittorrent:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
