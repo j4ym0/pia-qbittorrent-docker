@@ -681,17 +681,8 @@ if [ -n "$PGID" ]; then
     sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$PGID:|g" /etc/group
 fi
 
-# Set ownership of folders, but don't set ownership of existing files in downloads
-chown qbtUser:qbtUser /downloads
+# Set ownership and permissions of config folder so qBittorrent can read/write it
 chown qbtUser:qbtUser -R /config
-
-# Set permissions of folders, but don't set permissions of existing files in downloads
-# Use 777 if UMASK is set (user wants open permissions), otherwise default 755
-if [ -n "$UMASK" ]; then
-  chmod 777 /downloads
-else
-  chmod 755 /downloads
-fi
 chmod 700 -R /config
 
 # Wait until vpn is up
