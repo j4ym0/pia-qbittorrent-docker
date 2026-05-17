@@ -2,9 +2,8 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [ "master" ]   # updates :latest
     tags:
-      - "v*"               # v1.0.0 -> pushes :1.0.0, :1.0, :1, :latest
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -20,9 +19,7 @@ jobs:
         with:
           images: gjergjk/pia-qbittorrent
           tags: |
-            # branch push -> :latest
-            type=raw,value=latest,enable={{is_default_branch}}
-            # tag push v1.2.3 -> :1.2.3, :1.2, :1
+            type=raw,value=latest
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
