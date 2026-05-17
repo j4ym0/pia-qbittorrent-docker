@@ -686,7 +686,12 @@ chown qbtUser:qbtUser /downloads
 chown qbtUser:qbtUser -R /config
 
 # Set permissions of folders, but don't set permissions of existing files in downloads
-chmod 755 /downloads
+# Use 777 if UMASK is set (user wants open permissions), otherwise default 755
+if [ -n "$UMASK" ]; then
+  chmod 777 /downloads
+else
+  chmod 755 /downloads
+fi
 chmod 700 -R /config
 
 # Wait until vpn is up
