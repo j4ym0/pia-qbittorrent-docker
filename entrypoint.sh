@@ -853,8 +853,7 @@ if [ -f /config/qBittorrent/config/lockfile ]; then
   rm /config/qBittorrent/config/lockfile -f
 fi
 
-umask ${UMASK:-022}
-exec doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config &
+exec doas -u qbtUser sh -c "umask ${UMASK:-022}; exec qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config" &
 
 i=1
 while : ; do
