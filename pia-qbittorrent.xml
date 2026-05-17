@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>pia-qbittorrent</Name>
+  <Repository>gjergjk/pia-qbittorrent</Repository>
+  <Registry>https://hub.docker.com/r/gjergjk/pia-qbittorrent</Registry>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/GeorgeAL78/pia-qbittorrent-docker</Support>
+  <Project>https://github.com/GeorgeAL78/pia-qbittorrent-docker</Project>
+  <Overview>qBittorrent combined with Private Internet Access (PIA) VPN. Supports WireGuard and OpenVPN with kill switch, port forwarding, and DNS leak protection. Fork of j4ym0/pia-qbittorrent with bug fixes.</Overview>
+  <Category>Downloaders:</Category>
+  <WebUI>http://[IP]:[PORT:8888]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/GeorgeAL78/pia-qbittorrent-docker/master/pia-qbittorrent.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/qbittorrent/qBittorrent/master/src/icons/qbittorrent.png</Icon>
+  <ExtraParams>--cap-add=NET_ADMIN</ExtraParams>
+  <Config Name="Web UI Port" Target="8888" Default="8888" Mode="tcp" Description="qBittorrent Web UI port" Type="Port" Display="always" Required="true" Mask="false">8888</Config>
+  <Config Name="Downloads" Target="/downloads" Default="/mnt/user/downloads/" Mode="rw" Description="Download directory" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/downloads/</Config>
+  <Config Name="Config" Target="/config" Default="/mnt/user/appdata/pia-qbittorrent/" Mode="rw" Description="qBittorrent config and profiles" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/pia-qbittorrent/</Config>
+  <Config Name="PIA Username" Target="PIA_USERNAME" Default="" Mode="" Description="Your PIA account username" Type="Variable" Display="always" Required="true" Mask="false"></Config>
+  <Config Name="PIA Password" Target="PIA_PASSWORD" Default="" Mode="" Description="Your PIA account password" Type="Variable" Display="always" Required="true" Mask="true"></Config>
+  <Config Name="PIA Region" Target="PIA_REGION" Default="netherlands" Mode="" Description="VPN region e.g. ca_montreal, us_new_york" Type="Variable" Display="always" Required="true" Mask="false">netherlands</Config>
+  <Config Name="VPN Client" Target="VPN_CLIENT" Default="wireguard" Mode="" Description="VPN client: wireguard or openvpn" Type="Variable" Display="always" Required="true" Mask="false">wireguard</Config>
+  <Config Name="Port Forwarding" Target="PORT_FORWARDING" Default="false" Mode="" Description="Enable PIA port forwarding (not available in all regions)" Type="Variable" Display="always" Required="false" Mask="false">false</Config>
+  <Config Name="UID" Target="UID" Default="99" Mode="" Description="User ID for qBittorrent process. Use 99 for Unraid nobody" Type="Variable" Display="always" Required="false" Mask="false">99</Config>
+  <Config Name="GID" Target="GID" Default="100" Mode="" Description="Group ID for qBittorrent process. Use 100 for Unraid users" Type="Variable" Display="always" Required="false" Mask="false">100</Config>
+  <Config Name="UMASK" Target="UMASK" Default="000" Mode="" Description="Umask for downloads. 000=fully open (recommended for Unraid), 002=group-writable, 022=owner only" Type="Variable" Display="always" Required="false" Mask="false">000</Config>
+  <Config Name="Web UI Port Variable" Target="WEBUI_PORT" Default="8888" Mode="" Description="Must match the port mapping above" Type="Variable" Display="advanced" Required="false" Mask="false">8888</Config>
+  <Config Name="DNS Servers" Target="DNS_SERVERS" Default="9.9.9.9,149.112.112.112" Mode="" Description="Comma-separated DNS servers" Type="Variable" Display="advanced" Required="false" Mask="false">9.9.9.9,149.112.112.112</Config>
+  <Config Name="Legacy IPTables" Target="LEGACY_IPTABLES" Default="false" Mode="" Description="Use legacy iptables instead of nftables" Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
+  <Config Name="Timezone" Target="TZ" Default="" Mode="" Description="Timezone e.g. America/New_York" Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+</Container>
