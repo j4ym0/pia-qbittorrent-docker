@@ -558,6 +558,11 @@ printf "   * Block forward traffic..."
 OUTPUT=$(iptables -P FORWARD DROP 2>&1)
 exitOnError $? "$OUTPUT"
 printf "DONE\n"
+printf "   * Block all IPv6 traffic..."
+ip6tables -P INPUT DROP 2>/dev/null || true
+ip6tables -P OUTPUT DROP 2>/dev/null || true
+ip6tables -P FORWARD DROP 2>/dev/null || true
+printf "DONE\n"
 
 printf " * Creating general rules\n"
 printf "   * Accept established and related input and output traffic..."
