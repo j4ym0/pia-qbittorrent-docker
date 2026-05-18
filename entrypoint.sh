@@ -814,6 +814,7 @@ if is_enabled "$PORT_FORWARDING"; then
     # Port will be added so we will open the port ont the firewall
     printf " * Adding port to firewall on interfce $VPN_DEVICE\n"
     iptables -A INPUT -i $VPN_DEVICE -p tcp --dport $PF_PORT -j ACCEPT
+    iptables -A INPUT -i $VPN_DEVICE -p udp --dport $PF_PORT -j ACCEPT
     exitOnError $?
   else
     printf "[ERROR] $(echo $binding)\n"
