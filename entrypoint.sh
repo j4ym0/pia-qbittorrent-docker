@@ -670,14 +670,14 @@ if [ ! -e /config/qBittorrent/config/qBittorrent.conf ]; then
 	printf " * Copying default qBittorrent config\n"
 fi
 
-# Updating config with user prefrences 
+# Updating config with user preferences
 if [ "${HOSTHEADERVALIDATION}" = "true" ] || [ "${HOSTHEADERVALIDATION}" = "false" ]; then
-  printf " * Updateing HostHeaderValidation to $HOSTHEADERVALIDATION\n"
+  printf " * Updating HostHeaderValidation to $HOSTHEADERVALIDATION\n"
   sed -i "s/WebUI\\\HostHeaderValidation=\(true\|false\)/WebUI\\\HostHeaderValidation=$HOSTHEADERVALIDATION/g" /config/qBittorrent/config/qBittorrent.conf
 fi
 
 if [ "${CSRFPROTECTION}" = "true" ] || [ "${CSRFPROTECTION}" = "false" ]; then
-  printf " * Updateing CSRFProtection to $CSRFPROTECTION\n"
+  printf " * Updating CSRFProtection to $CSRFPROTECTION\n"
   sed -i "s/WebUI\\\CSRFProtection=\(true\|false\)/WebUI\\\CSRFProtection=$CSRFPROTECTION/g" /config/qBittorrent/config/qBittorrent.conf
 fi
 
