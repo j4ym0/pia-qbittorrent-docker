@@ -1,4 +1,9 @@
 #!/bin/sh
+# UID and GID are read-only shell built-ins in ash/bash (always 0 when running
+# as root). Capture the user-supplied values from the environment NOW, before
+# the shell's built-ins shadow them, so the later /etc/passwd patching works.
+qbtUser_UID=$(printenv UID)
+qbtUser_GID=$(printenv GID)
 
 exitOnError(){
   # $1 must be set to $?
@@ -177,8 +182,8 @@ fi
 # SHOW PARAMETERS
 ############################################
 printf "System parameters:\n"
-printf " * userID: $UID\n"
-printf " * groupID: $GID\n"
+printf " * userID: $qbtUser_UID\n"
+printf " * groupID: $qbtUser_GID\n"
 printf " * timezone: $(date +"%Z %z")\n"
 printf "VPN parameters:\n"
 printf " * Region: $server\n"
@@ -706,13 +711,13 @@ if [ "${CSRFPROTECTION}" = "true" ] || [ "${CSRFPROTECTION}" = "false" ]; then
 fi
 
 # Set user and group id
-if [ -n "$UID" ]; then
-  sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$UID:|g" /etc/passwd
+if [ -n "$qbtUser_UID" ]; then
+  sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$qbtUser_UID:|g" /etc/passwd
 fi
 
-if [ -n "$GID" ]; then
-  sed -i "s|^\(qbtUser:x:[0-9]*\):[0-9]*:|\1:$GID:|g" /etc/passwd
-  sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$GID:|g" /etc/group
+if [ -n "$qbtUser_GID" ]; then
+  sed -i "s|^\(qbtUser:x:[0-9]*\):[0-9]*:|\1:$qbtUser_GID:|g" /etc/passwd
+  sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$qbtUser_GID:|g" /etc/group
 fi
 
 # Set ownership of folders, but don't set ownership of existing files in downloads
