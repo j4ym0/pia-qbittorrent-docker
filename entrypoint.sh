@@ -169,8 +169,8 @@ fi
 if [ -z $VPN_LOG_DIR ]; then
   VPN_LOG_DIR=/logs
 fi
-if [ -z $VPN_MAX_ITERATIONS ]; then
-  VPN_MAX_ITERATIONS=3
+if [ -z $VPN_LOG_MAX_ITERATIONS ]; then
+  VPN_LOG_MAX_ITERATIONS=3
 fi
 
 ############################################
@@ -632,32 +632,56 @@ done
 ############################################
 printf "[INFO] Connecting to VPN\n"
 
-printf " * Rotating logs\n"
-mkdir -p "$VPN_LOG_DIR"
-# Rotate logs
-i=0
-while [ $i -lt $VPN_MAX_ITERATIONS ]; do
-    if [ -f "$VPN_LOG_DIR/*.log.$i" ]; then
-        mv "$VPN_LOG_DIR/*.log.$i" "$VPN_LOG_DIR/*.log.$((i+1))"
-    fi
-    i=$((i + 1))
-done
+# Skip if max iterations is 0 (no logs to keep, but wont delete old ones)
+if [ "$VPN_LOG_MAX_ITERATIONS" -eq 0 ]; then
+  printf " * VPN logs disabled\n"
+  # Set log flag to empty and log output to null since no logs to kept
+  LOG_FLAG=""
+  LOG_OUTPUT="/dev/null"
+else
+  printf " * Rotating logs\n"
+  mkdir -p "$VPN_LOG_DIR"
+  cd "$VPN_LOG_DIR"
 
-# Move the current log file to the first iteration
-if [ -f "$VPN_LOG_DIR/*.log" ]; then
-    mv "$VPN_LOG_DIR/*.log" "$VPN_LOG_DIR/*.log.1"
+  # Process log file from the client seleceted
+  if [ -f "${VPN_CLIENT}.log" ]; then
+
+    # Delete oldest log if it exists
+    if [ -f "${VPN_CLIENT}.log.${VPN_LOG_MAX_ITERATIONS}" ]; then
+      printf "   * Removing old log ${VPN_CLIENT}.log.${VPN_LOG_MAX_ITERATIONS}...\n"
+      rm -f "${VPN_CLIENT}.log.${VPN_LOG_MAX_ITERATIONS}"
+    fi
+
+    # Rotate existing logs
+    i=$((VPN_LOG_MAX_ITERATIONS - 1))
+    while [ $i -ge 1 ]; do
+      if [ -f "${VPN_CLIENT}.log.${i}" ]; then
+        mv "${VPN_CLIENT}.log.${i}" "${VPN_CLIENT}.log.$((i+1))"
+      fi
+      i=$((i - 1))
+    done
+
+    # Rotate current log
+      if [ -f "${VPN_CLIENT}.log" ]; then
+        mv "${VPN_CLIENT}.log" "${VPN_CLIENT}.log.1"
+      fi
+  fi
+
+  # set log flag and log output to a log file
+  LOG_FLAG="--log ${VPN_LOG_DIR}/${VPN_CLIENT}.log"
+  LOG_OUTPUT="${VPN_LOG_DIR}/${VPN_CLIENT}.log"
 fi
+
 cd "$TARGET_PATH"
 
 if [ "$VPN_CLIENT" = "wireguard" ]; then
   printf " * Bringing up Wireguard\n"
-  doas -u root wg-quick up pia >> "$VPN_LOG_DIR/wireguard.log" 2>&1
+  doas -u root wg-quick up pia >> "${LOG_OUTPUT}" 2>&1
   ip route add 0.0.0.0/1 dev pia
   ip route add 128.0.0.0/1 dev pia
-
 else
   printf " * Opening OpenVPN\n"
-  openvpn --config config.ovpn --daemon --log "$VPN_LOG_DIR/openvpn.log" "$@"
+  openvpn --config config.ovpn --daemon $LOG_FLAG "$@"
 fi
 
 ############################################
@@ -683,12 +707,12 @@ fi
 
 # Set user and group id
 if [ -n "$UID" ]; then
-    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$UID:|g" /etc/passwd
+  sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$UID:|g" /etc/passwd
 fi
 
 if [ -n "$GID" ]; then
-    sed -i "s|^\(qbtUser:x:[0-9]*\):[0-9]*:|\1:$GID:|g" /etc/passwd
-    sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$GID:|g" /etc/group
+  sed -i "s|^\(qbtUser:x:[0-9]*\):[0-9]*:|\1:$GID:|g" /etc/passwd
+  sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$GID:|g" /etc/group
 fi
 
 # Set ownership of folders, but don't set ownership of existing files in downloads
