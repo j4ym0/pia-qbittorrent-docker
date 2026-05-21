@@ -144,7 +144,7 @@ if [ -z $VPN_CLIENT ]; then
   printf "Defaulting to OpenVPN\n"
   VPN_CLIENT="openvpn"
 fi
-if [ "$VPN_Client" != "openvpn" ] && [ "$VPN_CLIENT" != "wireguard" ]; then
+if [ "$VPN_CLIENT" != "openvpn" ] && [ "$VPN_CLIENT" != "wireguard" ]; then
   VPN_CLIENT="openvpn"
 fi
 
