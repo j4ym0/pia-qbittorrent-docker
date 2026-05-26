@@ -266,34 +266,7 @@ Use caution with blocking loops as this script must finish before qBittorrent is
 
 ## Known Issues
 
-- v5.2.0 ARM64 Only - Web UI stops working when going into the search tab
- - this is because of an infinit loop causing the webserver to become unresponsive and will use 100% of 1 CPU core. It will timeout and come back eventually or you can switch the tab and then restart the container.
- - **Fix**: Switch to latest-ubuntu image
-
-- **[ERROR] Unable to start port forwarding - Login failed!**
-  - If the container has been rapidly restarting (more than 20 times in 30 mins), you hit the rate limit to request port forwarding from PIA.
-  - You should fix the issue causing the container to restart by looking into the logs in docker
-  - **Fix**: Stop the container and wait 1 hour for the rate limit to reset, then start the container.
-
-- **Using special character in password** - [Issue #39](https://github.com/j4ym0/pia-qbittorrent-docker/issues/39)
-  - If your password contains special character you may need to use a backslash ( \ ) to prevent the character from functioning as a special character in terminal.
-  - This is down to the terminal, shell or OS you are using. Special character are usually $"<=>?; but this will depend on your terminal, shell or OS, so if you are stuck on waiting to connect please check.
-  - **Fix**: if your password is Pa$$w<>rd? this would become Pa\\$\\$w\\<\\>rd\\?
-
-- **Unauthorized when using proxy for WebUI** - [Issue #26](https://github.com/j4ym0/pia-qbittorrent-docker/issues/26)
-  - This can happen when using a proxy to access the WebUI or accessing from a different port to the one configured. 
-  - The issue is a security feature CSRF Protection and can be disabled.
-  - **Fix**: Disable CSRF Protection `-e CSRFPROTECTION=false`
-
-- **nft: Protocol not supported** - [Issue #16](https://github.com/j4ym0/pia-qbittorrent-docker/issues/16)
-  - This will happen if the host device does not have the package nftables, usually installed with the newer iptables. 
-  - Known to be a issue with synology NAS
-  - **Fix**: Set LEGACY_IPTABLES to true `-e LEGACY_IPTABLES=true`
-
-- **5.x not deleting files, Moving to folder .trash-x**
-  - qBittrorrent v5.0.0 introduce "Torrent content removing mode" default option is to move files to trash(if possible). 
-  - torrent data is moved and no deleted and can be changed in the options
-  - **Fix**: Go to Tools -> Options... -> Advanced (tab) and set Torrent content removing mode to delete files permanently. Click save and delete the /downloads/.trash-* folder
+Have a look at the [Wiki Page](https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Known-Issues-and-Fixes)
 
 ## TODOs
 
