@@ -606,6 +606,9 @@ for ip in $VPNIPS; do
   printf "   * * Accept output traffic to VPN server $ip through $INTERFACE, port udp $PORT..."
   iptables -A OUTPUT -d $ip -o $INTERFACE -p udp -m udp --dport $PORT -j ACCEPT
   exitOnError $?
+  printf "   * * Accept output traffic to VPN server $ip through $INTERFACE, port tcp $PORT..."
+  iptables -A OUTPUT -d $ip -o $INTERFACE -p tcp -m tcp --dport $PORT -j ACCEPT
+  exitOnError $?
   printf "DONE\n"
 done
 
