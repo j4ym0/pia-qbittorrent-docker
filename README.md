@@ -107,6 +107,7 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 | `PIA_USERNAME`       | | Your PIA username ([consider using /auth.conf file](#auth.conf-File))                             |
 | `PIA_PASSWORD`       | | Your PIA password ([consider using /auth.conf file](#auth.conf-File))                             |
 | `VPN_CLIENT`         | `openvpn` | Switch between `openvpn` and `wireguard` VPN client                                     |
+| `VPN_LOG_MAX_ITERATIONS`| 3 | Max number of VPN Client logs to keep to debug vpn connection. Saved in /log. Set to `0` for no logs |
 | `PORT_FORWARDING`    | `false` | Set to `true` if you want to enable port forwarding from PIA, This helps with uploading   |
 | `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP UI                                             |
 | `WEBUI_INTERFACES`   | | `eth0` or `eth0,eth1` the interface the WebUI can be accessed through, useful if multiple networks are attached to the container. The default is the interface used for internet access if unset |
