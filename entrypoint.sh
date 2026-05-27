@@ -309,7 +309,7 @@ if [ -f /proc/net/if_inet6 ] && ( [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) 
                   if length > 0 then .[0] else empty end' /app/data.json); then
     
     printf " * Got PIA region data\n"
-    
+
     # Extract wg_cn and wg_ip from the region data
     wg_cn=$(echo "$regiondata" | jq -r ".servers.wg | .[0].cn")
     wg_ip=$(echo "$regiondata" | jq -r ".servers.wg | .[0].ip")
@@ -606,6 +606,7 @@ for ip in $VPNIPS; do
   printf "   * * Accept output traffic to VPN server $ip through $INTERFACE, port udp $PORT..."
   iptables -A OUTPUT -d $ip -o $INTERFACE -p udp -m udp --dport $PORT -j ACCEPT
   exitOnError $?
+  printf "DONE\n"
   printf "   * * Accept output traffic to VPN server $ip through $INTERFACE, port tcp $PORT..."
   iptables -A OUTPUT -d $ip -o $INTERFACE -p tcp -m tcp --dport $PORT -j ACCEPT
   exitOnError $?
