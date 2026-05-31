@@ -28,7 +28,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
 	apk add --no-cache ca-certificates libressl qt6-qtbase qt6-qtbase-private-dev qt6-qtbase-sqlite iptables iptables-legacy openvpn wireguard-tools ack bind-tools python3 doas tzdata curl jq && \
   if [ ! -e /usr/bin/python ]; then ln -sf python3 /usr/bin/python ; fi && \
   curl -sNLk --retry 5 https://github.com/boostorg/boost/releases/download/boost-1.91.0-1/boost-1.91.0-1-b2-nodocs.tar.gz | tar xzC /tmp && \
-  curl -sSL --retry 5 https://github.com/ninja-build/ninja/archive/refs/tags/v1.11.1.tar.gz | tar xzC /tmp && \
+  curl -sSL --retry 5 https://github.com/ninja-build/ninja/archive/refs/tags/v1.13.2.tar.gz | tar xzC /tmp && \
 	cd /tmp/*ninja* && \
   cmake -Wno-dev -B build \
   	-D CMAKE_CXX_STANDARD=17 \
