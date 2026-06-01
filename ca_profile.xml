@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<Containers>
+  <Profile>
+    <Name>pia-qbittorrent</Name>
+    <Overview>A Docker container combining qBittorrent with Private Internet Access (PIA) VPN, supporting both WireGuard and OpenVPN. Built on Alpine Linux for a minimal footprint.</Overview>
+    <Description>Fork of j4ym0/pia-qbittorrent with bug fixes and additional features: fixed WireGuard region selection, correct UID/GID handling for Unraid file ownership, configurable UMASK for download permissions, IPv6 kill switch, multi-arch (amd64 + arm64) support, and updated PIA server list.</Description>
+    <Author>GeorgeAL78</Author>
+    <Support>https://github.com/GeorgeAL78/pia-qbittorrent-docker/issues</Support>
+    <GitHub>https://github.com/GeorgeAL78/pia-qbittorrent-docker</GitHub>
+    <Icon>https://raw.githubusercontent.com/GeorgeAL78/pia-qbittorrent-docker/master/assets/icon.png</Icon>
+  </Profile>
+</Containers>
