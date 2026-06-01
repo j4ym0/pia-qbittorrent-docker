@@ -32,7 +32,9 @@ A Docker container combining **qBittorrent** with **Private Internet Access (PIA
 | Component | Version |
 |-----------|---------|
 | Alpine Linux | 3.23 |
-| qBittorrent | 5.2.0 |
+| qBittorrent | 5.2.1 |
+| libtorrent | 2.0.11 |
+| Boost | 1.86.0 |
 | OpenVPN | 2.6.20 |
 | WireGuard | 1.0.20250521 |
 | IPTables | 1.8.11 |
