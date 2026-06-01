@@ -7,6 +7,6 @@
     <Author>GeorgeAL78</Author>
     <Support>https://github.com/GeorgeAL78/pia-qbittorrent-docker/issues</Support>
     <GitHub>https://github.com/GeorgeAL78/pia-qbittorrent-docker</GitHub>
-    <Icon>https://raw.githubusercontent.com/GeorgeAL78/pia-qbittorrent-docker/master/assets/icon.png</Icon>
+    <Icon>https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/qbittorrent-logo.png</Icon>
   </Profile>
 </Containers>
