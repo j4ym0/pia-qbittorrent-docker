@@ -5,13 +5,13 @@
   <Registry>https://hub.docker.com/r/gjergjk/pia-qbittorrent</Registry>
   <Shell>sh</Shell>
   <Privileged>false</Privileged>
-  <Support>https://github.com/GeorgeAL78/pia-qbittorrent-docker</Support>
+  <Support>https://github.com/GeorgeAL78/pia-qbittorrent-docker/issues</Support>
   <Project>https://github.com/GeorgeAL78/pia-qbittorrent-docker</Project>
   <Overview>qBittorrent combined with Private Internet Access (PIA) VPN. Supports WireGuard and OpenVPN with kill switch, port forwarding, and DNS leak protection. Fork of j4ym0/pia-qbittorrent with bug fixes.</Overview>
   <Category>Downloaders:</Category>
   <WebUI>http://[IP]:[PORT:8888]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/GeorgeAL78/pia-qbittorrent-docker/master/pia-qbittorrent.xml</TemplateURL>
-  <Icon>https://raw.githubusercontent.com/qbittorrent/qBittorrent/master/src/icons/qbittorrent.png</Icon>
+  <Icon>https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/qbittorrent-logo.png</Icon>
   <ExtraParams>--cap-add=NET_ADMIN</ExtraParams>
   <Config Name="Web UI Port" Target="8888" Default="8888" Mode="tcp" Description="qBittorrent Web UI port" Type="Port" Display="always" Required="true" Mask="false">8888</Config>
   <Config Name="Downloads" Target="/downloads" Default="/mnt/user/downloads/" Mode="rw" Description="Download directory" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/downloads/</Config>
