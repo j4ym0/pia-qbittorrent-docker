@@ -51,7 +51,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
     -D CMAKE_BUILD_TYPE="release" \
     -D GUI=OFF \
     -D CMAKE_CXX_STANDARD=17 \
-    -D BOOST_INCLUDEDIR="/tmp/boost-1.86.0/" \
+    -D BOOST_INCLUDEDIR="/tmp/boost-1.91.0-1/" \
     -D CMAKE_INSTALL_PREFIX="/usr/local" && \
   cmake --build build -j $(nproc) && \
   cmake --install build && \
