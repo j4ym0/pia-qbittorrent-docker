@@ -258,6 +258,14 @@ See [Docker Hub](https://hub.docker.com/r/gjergjk/pia-qbittorrent) for full chan
 
 ---
 
+## Companion App
+
+Looking for a native Windows desktop experience? Check out the companion Electron app that wraps the qBittorrent Web UI:
+
+**[qBittorrent Desktop for Windows 11](https://github.com/GeorgeAL78/qbittorrent-desktop)** — native window, system tray, magnet link support, and `.torrent` file association.
+
+---
+
 ## License
 
 [MIT License](LICENSE)
