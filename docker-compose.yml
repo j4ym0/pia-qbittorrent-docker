@@ -1,6 +1,6 @@
 services:
     pia-qbittorrent:
-        image: j4ym0/pia-qbittorrent
+        image: gjergjk/pia-qbittorrent:latest
         container_name: pia-qbittorrent
         cap_add:
             - NET_ADMIN
