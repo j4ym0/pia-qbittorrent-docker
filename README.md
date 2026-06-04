@@ -4,6 +4,7 @@
 
 [![Latest Version](https://img.shields.io/github/v/tag/GeorgeAL78/pia-qbittorrent-docker)](https://github.com/GeorgeAL78/pia-qbittorrent-docker/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/gjergjk/pia-qbittorrent)](https://hub.docker.com/r/gjergjk/pia-qbittorrent)
+[![Unraid CA](https://img.shields.io/badge/Unraid-Community%20Apps-orange)](https://ca.unraid.net/apps/search?query=pia-qbittorrent)
 
 </div>
 
