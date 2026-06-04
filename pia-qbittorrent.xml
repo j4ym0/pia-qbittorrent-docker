@@ -7,7 +7,7 @@
   <Privileged>false</Privileged>
   <Support>https://github.com/GeorgeAL78/pia-qbittorrent-docker/issues</Support>
   <Project>https://github.com/GeorgeAL78/pia-qbittorrent-docker</Project>
-  <Overview>qBittorrent combined with Private Internet Access (PIA) VPN. Supports WireGuard and OpenVPN with kill switch, port forwarding, and DNS leak protection. Fork of j4ym0/pia-qbittorrent with bug fixes.</Overview>
+  <Overview>qBittorrent combined with Private Internet Access (PIA) VPN. Supports WireGuard and OpenVPN with kill switch, port forwarding, and DNS leak protection. Fork of j4ym0/pia-qbittorrent with bug fixes. Pair with the Windows 11 desktop app: https://github.com/GeorgeAL78/qbittorrent-desktop</Overview>
   <Category>Downloaders:</Category>
   <WebUI>http://[IP]:[PORT:8888]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/GeorgeAL78/pia-qbittorrent-docker/master/pia-qbittorrent.xml</TemplateURL>
