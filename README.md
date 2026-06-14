@@ -76,6 +76,8 @@ docker run -d --init --name=pia-qbittorrent --restart unless-stopped \
 | `UMASK` | `022` | Umask for downloads. `000` = fully open, `002` = group-writable |
 | `WEBUI_PORT` | `8888` | qBittorrent Web UI port |
 | `WEBUI_INTERFACES` | | Network interfaces for Web UI access e.g. `eth0,eth1` |
+| `ALLOW_LOCAL_SUBNET_TRAFFIC` | `false` | Allow LAN devices to connect directly to the container |
+| `EXTRA_SUBNETS` | | Comma-separated extra subnets to allow through the kill switch (e.g. for reverse proxies or *arr apps on a different Docker network) |
 | `DNS_SERVERS` | `9.9.9.9,149.112.112.112` | Comma-separated DNS servers |
 | `LEGACY_IPTABLES` | `false` | Use legacy iptables instead of nftables |
 | `TZ` | | Timezone e.g. `America/New_York` |
