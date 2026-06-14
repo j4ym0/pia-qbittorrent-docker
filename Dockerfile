@@ -1,6 +1,8 @@
 # Start with alpine
 FROM alpine:3.23
 
+LABEL org.opencontainers.image.title="pia-qbittorrent" org.opencontainers.image.description="qBittorrent + PIA VPN (WireGuard/OpenVPN) with IPv4/IPv6 kill switch, port forwarding, and multi-arch support" org.opencontainers.image.source="https://github.com/GeorgeAL78/pia-qbittorrent-docker" org.opencontainers.image.licenses="GPL-3.0-or-later"
+
 ENV PIA_USERNAME= \
     PIA_PASSWORD= \
     PIA_REGION="netherlands" \
@@ -35,7 +37,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
   	-D CMAKE_INSTALL_PREFIX="/usr/local" && \
   cmake --build build -j $(nproc) && \
   cmake --install build && \
-  curl -sSL --retry 5 https://github.com/arvidn/libtorrent/releases/download/v2.0.12/libtorrent-rasterbar-2.0.12.tar.gz | tar xzC /tmp && \
+  curl -sSL --retry 5 https://github.com/arvidn/libtorrent/releases/download/v2.0.13/libtorrent-rasterbar-2.0.13.tar.gz | tar xzC /tmp && \
 	cd /tmp/*libtorrent* && \
   cmake -Wno-dev -G Ninja -B build \
     -D CMAKE_BUILD_TYPE="Release" \
