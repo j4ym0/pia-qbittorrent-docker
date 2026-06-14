@@ -28,4 +28,6 @@
   <Config Name="DNS Servers" Target="DNS_SERVERS" Default="9.9.9.9,149.112.112.112" Mode="" Description="Comma-separated DNS servers" Type="Variable" Display="advanced" Required="false" Mask="false">9.9.9.9,149.112.112.112</Config>
   <Config Name="Legacy IPTables" Target="LEGACY_IPTABLES" Default="false" Mode="" Description="Use legacy iptables instead of nftables" Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
   <Config Name="Timezone" Target="TZ" Default="" Mode="" Description="Timezone e.g. America/New_York" Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Extra Subnets" Target="EXTRA_SUBNETS" Default="" Mode="" Description="Comma-separated extra subnets allowed through the kill switch. Use this if your *arr apps or reverse proxy are on a different Docker network and cannot reach qBittorrent e.g. 172.18.0.0/16" Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+  <Config Name="Allow Local Subnet Traffic" Target="ALLOW_LOCAL_SUBNET_TRAFFIC" Default="false" Mode="" Description="Set to true to allow LAN devices to connect directly to the container" Type="Variable" Display="advanced" Required="false" Mask="false">false</Config>
 </Container>
