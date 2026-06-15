@@ -697,8 +697,19 @@ fi
 # qBittorrent config
 ############################################
 printf "[INFO] Checking qBittorrent config\n"
-if [ ! -e /config/qBittorrent/config/qBittorrent.conf ]; then
-	mkdir -p /config/qBittorrent/config && cp /app/qBittorrent.conf /config/qBittorrent/config/qBittorrent.conf
+if [ ! -f /config/qBittorrent/config/qBittorrent.conf ] || 
+    [ ! -s /config/qBittorrent/config/qBittorrent.conf ] || \
+    ! grep -q "\[Preferences\]" /config/qBittorrent/config/qBittorrent.conf 2>/dev/null; then
+	
+  # If the file exists (even if empty or corrupted), back it up with date
+  if [ -f /config/qBittorrent/config/qBittorrent.conf ]; then
+    BACKUP_FILE="/config/qBittorrent/config/qBittorrent.conf.bak.$(date +%Y%m%d_%H%M%S)"
+    mv /config/qBittorrent/config/qBittorrent.conf "$BACKUP_FILE"
+    echo "Backed up old/corrupted config to: $BACKUP_FILE"
+  fi
+
+  mkdir -p /config/qBittorrent/config
+  cp /app/qBittorrent.conf /config/qBittorrent/config/qBittorrent.conf
 	chmod 755 /config/qBittorrent/config/qBittorrent.conf
 	printf " * Copying default qBittorrent config\n"
 fi
