@@ -725,6 +725,22 @@ if [ "${CSRFPROTECTION}" = "true" ] || [ "${CSRFPROTECTION}" = "false" ]; then
   sed -i "s/WebUI\\\CSRFProtection=\(true\|false\)/WebUI\\\CSRFProtection=$CSRFPROTECTION/g" /config/qBittorrent/config/qBittorrent.conf
 fi
 
+if [ -n "$DOWNLOAD_DIR" ]; then
+  # Strip any trailing slash so comparisons and appends are consistent
+  DOWNLOAD_DIR="${DOWNLOAD_DIR%/}"
+  QBT_CONF="/config/qBittorrent/config/qBittorrent.conf"
+  CURRENT_SAVE=$(grep -F 'Downloads\SavePath=' "$QBT_CONF" | cut -d= -f2-)
+  CURRENT_TEMP=$(grep -F 'Downloads\TempPath=' "$QBT_CONF" | cut -d= -f2-)
+  if [ "$CURRENT_SAVE" != "$DOWNLOAD_DIR/" ]; then
+    printf " * Updating Downloads\\\\SavePath to $DOWNLOAD_DIR/\n"
+    sed -i "s|Downloads\\\SavePath=.*|Downloads\\\SavePath=$DOWNLOAD_DIR/|" "$QBT_CONF"
+  fi
+  if [ "$CURRENT_TEMP" != "$DOWNLOAD_DIR/temp/" ]; then
+    printf " * Updating Downloads\\\\TempPath to $DOWNLOAD_DIR/temp/\n"
+    sed -i "s|Downloads\\\TempPath=.*|Downloads\\\TempPath=$DOWNLOAD_DIR/temp/|" "$QBT_CONF"
+  fi
+fi
+
 # Set user and group id
 if [ -n "$qbtUser_UID" ]; then
   sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$qbtUser_UID:|g" /etc/passwd
@@ -735,13 +751,17 @@ if [ -n "$qbtUser_GID" ]; then
   sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$qbtUser_GID:|g" /etc/group
 fi
 
-# Set ownership of folders, but don't set ownership of existing files in downloads
-chown qbtUser:qbtUser /downloads
+# Set ownership of config folder
 chown qbtUser:qbtUser -R /config
 
-# Set permissions of folders, but don't set permissions of existing files in downloads
-chmod 755 /downloads
+# Set permissions of config folder
 chmod 700 -R /config
+
+# Set ownership and permissions of the download directory if configured
+if [ -n "$DOWNLOAD_DIR" ] && [ -d "$DOWNLOAD_DIR" ]; then
+  chown qbtUser:qbtUser "$DOWNLOAD_DIR"
+  chmod 755 "$DOWNLOAD_DIR"
+fi
 
 # Wait until vpn is up
 printf "[INFO] Waiting for VPN to connect"
