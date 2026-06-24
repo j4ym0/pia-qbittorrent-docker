@@ -194,6 +194,8 @@ Default password: shown in container logs (`docker logs pia-qbittorrent`)
 
 By default, added `.torrent` files are automatically saved to `/downloads/torrents` so you always keep a copy. The folder is created automatically when you add your first torrent.
 
+**Magnet links** are saved too — just a few seconds later. A magnet has no metadata when added, so qBittorrent writes the `.torrent` once it fetches the metadata from the swarm. (If a magnet never finds peers, no file is written — but it wouldn't download anyway.)
+
 > **Existing installs:** this default is only written on a **fresh** config, so if you upgraded from an earlier version it won't appear automatically. To enable it manually, go to **Options → Downloads → Saving Management**, tick **"Copy .torrent files to:"**, enter `/downloads/torrents`, and Save.
 
 ---
