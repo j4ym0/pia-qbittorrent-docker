@@ -190,6 +190,14 @@ Default password: shown in container logs (`docker logs pia-qbittorrent`)
 
 ---
 
+## Saving .torrent Files
+
+By default, added `.torrent` files are automatically saved to `/downloads/torrents` so you always keep a copy. The folder is created automatically when you add your first torrent.
+
+> **Existing installs:** this default is only written on a **fresh** config, so if you upgraded from an earlier version it won't appear automatically. To enable it manually, go to **Options → Downloads → Saving Management**, tick **"Copy .torrent files to:"**, enter `/downloads/torrents`, and Save.
+
+---
+
 ## auth.conf File
 
 Store credentials securely by mounting an auth file instead of using environment variables:
