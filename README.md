@@ -2,9 +2,23 @@
 
 ## qBittorrent & Private Internet Access VPN Docker
 
-[![Latest Version](https://img.shields.io/github/v/tag/GeorgeAL78/pia-qbittorrent-docker)](https://github.com/GeorgeAL78/pia-qbittorrent-docker/releases)
-[![Docker Pulls](https://img.shields.io/docker/pulls/gjergjk/pia-qbittorrent)](https://hub.docker.com/r/gjergjk/pia-qbittorrent)
+[![CI](https://img.shields.io/github/actions/workflow/status/GeorgeAL78/pia-qbittorrent-docker/docker-publish.yml?label=CI&logo=github)](https://github.com/GeorgeAL78/pia-qbittorrent-docker/actions)
+[![License](https://img.shields.io/github/license/GeorgeAL78/pia-qbittorrent-docker)](LICENSE)
 [![Unraid CA](https://img.shields.io/badge/Unraid-Community%20Apps-orange)](https://ca.unraid.net/apps/search?query=pia-qbittorrent)
+
+[![Docker Pulls](https://img.shields.io/docker/pulls/gjergjk/pia-qbittorrent?logo=docker)](https://hub.docker.com/r/gjergjk/pia-qbittorrent)
+[![Docker Stars](https://img.shields.io/docker/stars/gjergjk/pia-qbittorrent?logo=docker)](https://hub.docker.com/r/gjergjk/pia-qbittorrent)
+[![Image Size](https://img.shields.io/docker/image-size/gjergjk/pia-qbittorrent/latest?logo=docker&label=image%20size)](https://hub.docker.com/r/gjergjk/pia-qbittorrent/tags)
+
+[![Latest Tag](https://img.shields.io/github/v/tag/GeorgeAL78/pia-qbittorrent-docker?label=latest%20release)](https://github.com/GeorgeAL78/pia-qbittorrent-docker/releases)
+[![Release Date](https://img.shields.io/github/release-date/GeorgeAL78/pia-qbittorrent-docker)](https://github.com/GeorgeAL78/pia-qbittorrent-docker/releases)
+[![Commits Since](https://img.shields.io/github/commits-since/GeorgeAL78/pia-qbittorrent-docker/latest)](https://github.com/GeorgeAL78/pia-qbittorrent-docker/commits/master)
+[![Last Commit](https://img.shields.io/github/last-commit/GeorgeAL78/pia-qbittorrent-docker)](https://github.com/GeorgeAL78/pia-qbittorrent-docker/commits/master)
+
+[![Open Issues](https://img.shields.io/github/issues/GeorgeAL78/pia-qbittorrent-docker)](https://github.com/GeorgeAL78/pia-qbittorrent-docker/issues)
+[![Code Size](https://img.shields.io/github/languages/code-size/GeorgeAL78/pia-qbittorrent-docker)](https://github.com/GeorgeAL78/pia-qbittorrent-docker)
+[![Repo Size](https://img.shields.io/github/repo-size/GeorgeAL78/pia-qbittorrent-docker)](https://github.com/GeorgeAL78/pia-qbittorrent-docker)
+[![Top Language](https://img.shields.io/github/languages/top/GeorgeAL78/pia-qbittorrent-docker)](https://github.com/GeorgeAL78/pia-qbittorrent-docker)
 
 </div>
 
