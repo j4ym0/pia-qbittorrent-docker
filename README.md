@@ -130,6 +130,8 @@ Set the following container variables for correct file ownership:
 
 This maps qBittorrent to Unraid's `nobody:users` so downloaded files are accessible from SMB shares.
 
+**Network type:** leave it on **Bridge** (the Unraid default). The VPN tunnel runs entirely inside the container, so no special network mode is needed.
+
 ---
 
 ## VPN Client
