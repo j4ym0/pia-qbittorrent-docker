@@ -164,7 +164,7 @@ Common regions with port forwarding support:
 | `sweden` | SE Stockholm |
 | `uk` | UK London |
 
-Full list available at runtime — check the `data.json` in this repo.
+The full region list is fetched **directly from PIA** ([serverlist.piaservers.net](https://serverlist.piaservers.net/vpninfo/servers/v6)) when each image is built, so every release ships with PIA's current servers. The bundled `data.json` in this repo is kept only as a fallback if PIA is unreachable during a build.
 
 ---
 
