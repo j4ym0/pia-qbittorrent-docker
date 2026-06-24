@@ -666,6 +666,11 @@ if [ ! -e /config/qBittorrent/config/qBittorrent.conf ]; then
 fi
 
 # Updating config with user prefrences 
+# Bind qBittorrent to the actual VPN interface (pia for WireGuard, tun0 for OpenVPN)
+printf " * Setting qBittorrent network interface to $VPN_DEVICE\n"
+sed -i "s/Session\\\Interface=.*/Session\\\Interface=$VPN_DEVICE/g" /config/qBittorrent/config/qBittorrent.conf
+sed -i "s/Session\\\InterfaceName=.*/Session\\\InterfaceName=$VPN_DEVICE/g" /config/qBittorrent/config/qBittorrent.conf
+
 if [ "${HOSTHEADERVALIDATION}" = "true" ] || [ "${HOSTHEADERVALIDATION}" = "false" ]; then
   printf " * Updating HostHeaderValidation to $HOSTHEADERVALIDATION\n"
   sed -i "s/WebUI\\\HostHeaderValidation=\(true\|false\)/WebUI\\\HostHeaderValidation=$HOSTHEADERVALIDATION/g" /config/qBittorrent/config/qBittorrent.conf
