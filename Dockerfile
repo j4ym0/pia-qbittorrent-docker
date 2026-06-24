@@ -69,6 +69,9 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
 
 COPY ./entrypoint.sh ./healthcheck.sh ./qBittorrent.conf ./data.json ./ca.rsa.4096.crt /app/
 
+# Refresh the PIA server list directly from PIA at build time (falls back to the bundled copy if PIA is unreachable)
+RUN FRESH="$(curl -sSL --max-time 30 --retry 3 https://serverlist.piaservers.net/vpninfo/servers/v6 | head -n 1)"; if printf '%s' "$FRESH" | jq -e '.regions | length > 0' >/dev/null 2>&1; then printf '%s' "$FRESH" > /app/data.json && echo "PIA server list refreshed from PIA"; else echo "PIA fetch unavailable - keeping bundled data.json"; fi
+
 # Add qBittorrent User
 RUN adduser \
         -D \
