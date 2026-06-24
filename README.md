@@ -26,6 +26,15 @@ A Docker container combining **qBittorrent** with **Private Internet Access (PIA
 
 > Fork of [j4ym0/pia-qbittorrent](https://hub.docker.com/r/j4ym0/pia-qbittorrent) with bug fixes and additional features.
 
+## Quick Links
+
+| | | |
+|---|---|---|
+| 🚀 [Quick Start](#quick-start) | ⚙️ [Environment Variables](#environment-variables) | 🔀 [Port Forwarding](#port-forwarding) |
+| 🖥️ [Unraid Setup](#unraid-setup) | 🔐 [auth.conf File](#authconf-file) | 🪝 [Hooks](#hooks) |
+| 🌐 [VPN Client](#vpn-client) | 🧩 [Companion App](#companion-app) | ❓ [Known Issues](#known-issues) |
+| 🐛 [Report a Bug](https://github.com/GeorgeAL78/pia-qbittorrent-docker/issues) | 📦 [Releases](https://github.com/GeorgeAL78/pia-qbittorrent-docker/releases) | 🐳 [Docker Hub](https://hub.docker.com/r/gjergjk/pia-qbittorrent) |
+
 ---
 
 ## Features
