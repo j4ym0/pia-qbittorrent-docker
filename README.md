@@ -42,13 +42,17 @@ A Docker container combining **qBittorrent** with **Private Internet Access (PIA
 
 - WireGuard and OpenVPN support
 - PIA port forwarding for seeding
-- Kill switch — all traffic blocked if VPN drops
+- Kill switch — all IPv4 and IPv6 traffic blocked if the VPN drops
+- Multi-arch images — `amd64` and `arm64`
+- VPN network interface auto-detected and locked (WireGuard `pia` / OpenVPN `tun0`)
 - Configurable UID/GID for correct file ownership on Unraid and NAS systems
-- Configurable UMASK for download folder permissions
+- Configurable UMASK; download folder permissions preserved across restarts
+- Automatic `.torrent` file export to `/downloads/torrents`
+- Graceful shutdown — saves resume data so torrents resume instead of re-checking after an update
+- Secure credential storage via `auth.conf`
 - DNS leak protection with custom DNS servers
-- qBittorrent network interface locked to VPN tunnel by default
+- Hook script support after the VPN connects
 - Web UI accessible on your local network
-- Hook script support after VPN connects
 
 ---
 
