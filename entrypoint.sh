@@ -900,7 +900,8 @@ while : ; do
 #      printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
 
       if [ "$(echo "$binding" | jq -r '.status')" != "OK" ]; then
-        printf "[WARNING] Port forwarding refresh failed - the forwarded port may expire until the next refresh\n"
+        printf "[ERROR] Port forwarding refresh failed - restarting to re-establish the VPN connection\n"
+        exit 5
       fi
     fi
   fi
