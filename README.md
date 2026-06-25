@@ -153,10 +153,12 @@ This maps qBittorrent to Unraid's `nobody:users` so downloaded files are accessi
 
 ## PIA Regions
 
-Common regions with port forwarding support:
+Set `PIA_REGION` to the region you want. Matching is **flexible** — you can use the region name or its PIA ID, and it's case-insensitive (underscores, hyphens, and spaces are treated the same). So `ca_montreal`, `CA Montreal`, and `ca` all resolve to the same region.
 
-| Region ID | Name |
-|-----------|------|
+Common regions **with port forwarding**:
+
+| `PIA_REGION` | Location |
+|--------------|----------|
 | `ca_montreal` | CA Montreal |
 | `ca_toronto` | CA Toronto |
 | `ca_ontario` | CA Ontario |
@@ -164,7 +166,13 @@ Common regions with port forwarding support:
 | `sweden` | SE Stockholm |
 | `uk` | UK London |
 
-The full region list is fetched **directly from PIA** ([serverlist.piaservers.net](https://serverlist.piaservers.net/vpninfo/servers/v6)) when each image is built, so every release ships with PIA's current servers. The bundled `data.json` in this repo is kept only as a fallback if PIA is unreachable during a build.
+> ⚠️ **Port forwarding is supported in almost every region *except* the United States** — all US regions lack it. If you set `PORT_FORWARDING=true`, choose a non-US region.
+
+### Looking up any region
+
+The complete, always-current list is published by PIA at **[serverlist.piaservers.net/vpninfo/servers/v6](https://serverlist.piaservers.net/vpninfo/servers/v6)**. Each region entry shows its `id` and a `port_forward` field (`true`/`false`) so you can confirm support before choosing.
+
+That same list is fetched **directly from PIA** when each image is built, so every release ships with PIA's current servers. The bundled `data.json` in this repo is kept only as a fallback if PIA is unreachable during a build.
 
 ---
 
