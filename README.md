@@ -98,7 +98,7 @@ docker run -d --init --name=pia-qbittorrent --restart unless-stopped \
 | `PIA_PASSWORD` | | PIA account password |
 | `PIA_REGION` | `netherlands` | VPN region — see [PIA Servers](#pia-regions) |
 | `VPN_CLIENT` | `openvpn` | VPN client: `openvpn` or `wireguard` |
-| `PORT_FORWARDING` | `false` | Enable PIA port forwarding (recommended for seeding) |
+| `PORT_FORWARDING` | `true` | Enable PIA port forwarding for seeding. Falls back gracefully if your region doesn't support it |
 | `UID` | `700` | User ID for qBittorrent process. Use `99` for Unraid |
 | `GID` | `700` | Group ID for qBittorrent process. Use `100` for Unraid |
 | `UMASK` | `022` | Umask for downloads. `000` = fully open, `002` = group-writable |
@@ -316,11 +316,12 @@ curl -s https://serverlist.piaservers.net/vpninfo/servers/v6 | head -1 | \
 
 ## Port Forwarding
 
-Enable with `-e PORT_FORWARDING=true`. On startup a port is requested from PIA, opened in the firewall, and set in qBittorrent automatically.
+**Enabled by default** (`PORT_FORWARDING=true`). On startup a port is requested from PIA, opened in the firewall, and set in qBittorrent automatically.
 
 - Port is assigned randomly by PIA — you cannot specify one
 - Port is valid for up to 2 months
 - Container refreshes the port binding every 10 minutes to keep it alive
+- **If your region doesn't support port forwarding (e.g. all US regions), the container logs a warning and keeps running without it** — it no longer crashes. Pick a [supported region](#pia-regions) to use it.
 - If the container restarts too frequently (20+ times in 30 mins) you may hit PIA's rate limit — stop the container and wait 1 hour
 
 ---
