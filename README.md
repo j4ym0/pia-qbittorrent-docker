@@ -147,7 +147,7 @@ This maps qBittorrent to Unraid's `nobody:users` so downloaded files are accessi
 - Better for unusual network configurations or high latency
 - More reliable port forwarding
 
-> **Note:** Port forwarding is only available in certain PIA regions. Canadian and European regions generally work best. US regions do not support port forwarding.
+> **Note:** Port forwarding is available in most PIA regions, but not all. See the [PIA Regions](#pia-regions) section for confirmed regions, or look up any region's `port_forward` field in PIA's live list.
 
 ---
 
@@ -175,7 +175,7 @@ Common regions **with port forwarding**:
 | `japan` | JP Tokyo |
 | `aus` | AU Sydney |
 
-> ⚠️ **Port forwarding is supported in almost every region *except* the United States** — all US regions lack it. If you set `PORT_FORWARDING=true`, choose a non-US region.
+> ℹ️ **Most PIA regions support port forwarding, but not all.** The regions listed above are confirmed to support it. To use a different region with `PORT_FORWARDING=true`, check its `port_forward` field in PIA's live list (below) first.
 
 ### Looking up any region
 
