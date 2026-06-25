@@ -793,56 +793,54 @@ if is_enabled "$PORT_FORWARDING"; then
             "https://$PF_GATEWAY:19999/getSignature")
 
 
-  if [ -z "$pia_sig" ]; then
-    printf "[ERROR] Unable to start port forwarding. Is port forwarding avalable in your chosen region?\n"
-    printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers \n"
-    exit 4
-  elif [ "$(echo "$pia_sig" | jq -r '.status')" = "ERROR" ]; then
-    printf "[ERROR] Unable to start port forwarding\n"
-    printf "$(echo "$pia_sig" | jq -r '.message') \n"
-    exit 4
-  fi
-
-  signature=$(echo "$pia_sig" | jq -r '.signature')
-  if [ ! -z "$signature" ]; then
-    printf " * Got signature\n"
-  fi
-
-  payload=$(echo "$pia_sig" | jq -r '.payload')
-  payloadDecoded=$(echo "$payload" | base64 -d | jq)
-  if [ ! -z "$payloadDecoded" ]; then
-    printf " * Decoded payload\n"
-  fi
-
-  PF_PORT=$(echo "$payloadDecoded" | jq -r '.port')
-  if [ ! -z "$PF_PORT" ]; then
-    printf " * Your Forwarding port is $PF_PORT\n"
-  fi
-
-  # Request port forwarding
-  binding=$(curl -sGk \
-            $PF_CONNECT \
-            $PF_CERT \
-            --data-urlencode "payload=$payload" \
-            --data-urlencode "signature=$signature" \
-            https://$PF_GATEWAY:19999/bindPort)
-
-  printf " * $(echo $binding | jq -r '.message')\n"
-
-  if [ "$(echo "$binding" | jq -r '.status')" = "OK" ]; then
-    # Port will be added so we will open the port ont the firewall
-    printf " * Adding port to firewall on interfce $VPN_DEVICE\n"
-    iptables -A INPUT -i $VPN_DEVICE -p tcp --dport $PF_PORT -j ACCEPT
-    iptables -A INPUT -i $VPN_DEVICE -p udp --dport $PF_PORT -j ACCEPT
-    exitOnError $?
+  if [ -z "$pia_sig" ] || [ "$(echo "$pia_sig" | jq -r '.status')" = "ERROR" ]; then
+    # Port forwarding is not available for this region (e.g. US regions) - fail soft and keep running
+    printf "[WARNING] Port forwarding is not available for region '$PIA_REGION' - continuing without it\n"
+    printf "          Port forwarding is not supported in every region (all US regions lack it)\n"
+    printf "          See https://github.com/GeorgeAL78/pia-qbittorrent-docker#pia-regions to pick a supported region\n"
+    PORT_FORWARDING=false
   else
-    printf "[ERROR] $(echo $binding)\n"
-    exit 4
-  fi
+    signature=$(echo "$pia_sig" | jq -r '.signature')
+    if [ ! -z "$signature" ]; then
+      printf " * Got signature\n"
+    fi
 
-  # Add port the qBittorrent config
-  printf " * Updating port in qBittorrent config\n"
-  sed -i "s/Session\\\Port=[0-9]*/Session\\\Port=$PF_PORT/g" /config/qBittorrent/config/qBittorrent.conf
+    payload=$(echo "$pia_sig" | jq -r '.payload')
+    payloadDecoded=$(echo "$payload" | base64 -d | jq)
+    if [ ! -z "$payloadDecoded" ]; then
+      printf " * Decoded payload\n"
+    fi
+
+    PF_PORT=$(echo "$payloadDecoded" | jq -r '.port')
+    if [ ! -z "$PF_PORT" ]; then
+      printf " * Your Forwarding port is $PF_PORT\n"
+    fi
+
+    # Request port forwarding
+    binding=$(curl -sGk \
+              $PF_CONNECT \
+              $PF_CERT \
+              --data-urlencode "payload=$payload" \
+              --data-urlencode "signature=$signature" \
+              https://$PF_GATEWAY:19999/bindPort)
+
+    printf " * $(echo $binding | jq -r '.message')\n"
+
+    if [ "$(echo "$binding" | jq -r '.status')" = "OK" ]; then
+      # Port bound - open it on the firewall and write it to qBittorrent
+      printf " * Adding port to firewall on interface $VPN_DEVICE\n"
+      iptables -A INPUT -i $VPN_DEVICE -p tcp --dport $PF_PORT -j ACCEPT
+      iptables -A INPUT -i $VPN_DEVICE -p udp --dport $PF_PORT -j ACCEPT
+      exitOnError $?
+
+      printf " * Updating port in qBittorrent config\n"
+      sed -i "s/Session\\\Port=[0-9]*/Session\\\Port=$PF_PORT/g" /config/qBittorrent/config/qBittorrent.conf
+    else
+      printf "[WARNING] Port forwarding bind failed - continuing without it\n"
+      printf "          $(echo $binding)\n"
+      PORT_FORWARDING=false
+    fi
+  fi
 fi
 
 ############################################
@@ -902,8 +900,7 @@ while : ; do
 #      printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
 
       if [ "$(echo "$binding" | jq -r '.status')" != "OK" ]; then
-        printf "[ERROR] Port forwarding failed\n"
-        exit 5
+        printf "[WARNING] Port forwarding refresh failed - the forwarded port may expire until the next refresh\n"
       fi
     fi
   fi
