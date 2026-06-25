@@ -30,9 +30,10 @@ A Docker container combining **qBittorrent** with **Private Internet Access (PIA
 
 | | | |
 |---|---|---|
-| 🚀 [Quick Start](#quick-start) | ⚙️ [Environment Variables](#environment-variables) | 🔀 [Port Forwarding](#port-forwarding) |
+| 🚀 [Quick Start](#quick-start) | ⚙️ [Environment Variables](#environment-variables) | 🌍 [PIA Regions](#pia-regions) |
+| 🔀 [Port Forwarding](#port-forwarding) | 🌐 [VPN Client](#vpn-client) | 🧭 [DNS Servers](#dns-servers) |
 | 🖥️ [Unraid Setup](#unraid-setup) | 🔐 [auth.conf File](#authconf-file) | 🪝 [Hooks](#hooks) |
-| 🌐 [VPN Client](#vpn-client) | 🧩 [Companion App](#companion-app) | ❓ [Known Issues](#known-issues) |
+| 💾 [Saving .torrent Files](#saving-torrent-files) | 🧩 [Companion App](#companion-app) | ❓ [Known Issues](#known-issues) |
 | 🐛 [Report a Bug](https://github.com/GeorgeAL78/pia-qbittorrent-docker/issues) | 📦 [Releases](https://github.com/GeorgeAL78/pia-qbittorrent-docker/releases) | 🐳 [Docker Hub](https://hub.docker.com/r/gjergjk/pia-qbittorrent) |
 
 ---
