@@ -21,7 +21,7 @@
   <Config Name="PIA Password" Target="PIA_PASSWORD" Default="" Mode="" Description="Your PIA account password" Type="Variable" Display="always" Required="true" Mask="true"></Config>
   <Config Name="PIA Region" Target="PIA_REGION" Default="netherlands" Mode="" Description="VPN region e.g. ca_montreal, us_new_york" Type="Variable" Display="always" Required="true" Mask="false">netherlands</Config>
   <Config Name="VPN Client" Target="VPN_CLIENT" Default="wireguard" Mode="" Description="VPN client: wireguard or openvpn" Type="Variable" Display="always" Required="true" Mask="false">wireguard</Config>
-  <Config Name="Port Forwarding" Target="PORT_FORWARDING" Default="false" Mode="" Description="Enable PIA port forwarding (not available in all regions)" Type="Variable" Display="always" Required="false" Mask="false">false</Config>
+  <Config Name="Port Forwarding" Target="PORT_FORWARDING" Default="true" Mode="" Description="Enable PIA port forwarding for better seeding. Falls back gracefully if your region does not support it (e.g. US)" Type="Variable" Display="always" Required="false" Mask="false">true</Config>
   <Config Name="UID" Target="UID" Default="99" Mode="" Description="User ID for qBittorrent process. Use 99 for Unraid nobody" Type="Variable" Display="always" Required="false" Mask="false">99</Config>
   <Config Name="GID" Target="GID" Default="100" Mode="" Description="Group ID for qBittorrent process. Use 100 for Unraid users" Type="Variable" Display="always" Required="false" Mask="false">100</Config>
   <Config Name="UMASK" Target="UMASK" Default="000" Mode="" Description="Umask for downloads. 000=fully open (recommended for Unraid), 002=group-writable, 022=owner only" Type="Variable" Display="always" Required="false" Mask="false">000</Config>
