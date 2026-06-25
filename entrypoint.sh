@@ -109,7 +109,7 @@ if [ -n "$USER" ] && [ -z "$PIA_USERNAME" ]; then
   printf "[WARNING] The use of environment variable USER is depreciated.\n"
   printf " Please use PIA_USERNAME\n"
   printf " or use a secure auth.conf file instead. See the wiki for more information:\n"
-  printf " https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Using-the-auth.conf-file\n"
+  printf " https://github.com/GeorgeAL78/pia-qbittorrent-docker#authconf-file\n"
   printf "\n"
   export PIA_USERNAME=$USER
   unset -v USER
@@ -118,7 +118,7 @@ if [ -n "$USERNAME" ] && [ -z "$PIA_USERNAME" ]; then
   printf "[WARNING] The use of environment variable USERNAME is depreciated.\n"
   printf " Please use PIA_USERNAME\n"
   printf " or use a secure auth.conf file instead. See the wiki for more information:\n"
-  printf " https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Using-the-auth.conf-file\n"
+  printf " https://github.com/GeorgeAL78/pia-qbittorrent-docker#authconf-file\n"
   printf "\n"
   export PIA_USERNAME=$USERNAME
   unset -v USERNAME
@@ -127,7 +127,7 @@ if [ -n "$PASSWORD" ] && [ -z "$PIA_PASSWORD" ]; then
   printf "[WARNING] The use of environment variable PASSWORD is depreciated.\n"
   printf " Please use PIA_PASSWORD\n"
   printf " or use a secure auth.conf file instead. See the wiki for more information:\n"
-  printf " https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Using-the-auth.conf-file\n"
+  printf " https://github.com/GeorgeAL78/pia-qbittorrent-docker#authconf-file\n"
   printf "\n"
   export PIA_PASSWORD=$PASSWORD
   unset -v PASSWORD
@@ -725,7 +725,7 @@ while : ; do
       # If errors are found, print the openvpn log
       printf "\n"
       printf "[ERROR] OpenVPN has encounted an error, see log below and check\n"
-      printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/Waiting-for-VPN-and-OpenVPN-Fatal-Error \n"
+      printf "https://github.com/GeorgeAL78/pia-qbittorrent-docker/issues \n"
       printf "---------------------------------------\n"
       printf "$(cat "$VPN_LOG_DIR/openvpn.log")\n"
       ERROR_LINES=$(grep "fatal error" "$VPN_LOG_DIR/openvpn.log")
