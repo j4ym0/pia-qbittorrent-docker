@@ -147,7 +147,7 @@ This maps qBittorrent to Unraid's `nobody:users` so downloaded files are accessi
 - Better for unusual network configurations or high latency
 - More reliable port forwarding
 
-> **Note:** Port forwarding is available in most PIA regions, but not all. See the [PIA Regions](#pia-regions) section for confirmed regions, or look up any region's `port_forward` field in PIA's live list.
+> **Note:** Port forwarding is available in most PIA regions, but not all. See the [PIA Regions](#pia-regions) section for the full list of regions that support it.
 
 ---
 
@@ -175,13 +175,249 @@ Common regions **with port forwarding**:
 | `japan` | JP Tokyo |
 | `aus` | AU Sydney |
 
-> ℹ️ **Most PIA regions support port forwarding, but not all.** The regions listed above are confirmed to support it. To use a different region with `PORT_FORWARDING=true`, check its `port_forward` field in PIA's live list (below) first.
+> ℹ️ **Most PIA regions support port forwarding, but not all.** The regions listed above are confirmed to support it. To use a different region with `PORT_FORWARDING=true`, see the full list of port-forwarding regions below.
 
-### Looking up any region
+### All port-forwarding regions
 
-The complete, always-current list is published by PIA at **[serverlist.piaservers.net/vpninfo/servers/v6](https://serverlist.piaservers.net/vpninfo/servers/v6)**. Each region entry shows its `id` and a `port_forward` field (`true`/`false`) so you can confirm support before choosing.
+<details>
+<summary><b>Click to expand the full list of 111 port-forwarding regions</b></summary>
 
-That same list is fetched **directly from PIA** when each image is built, so every release ships with PIA's current servers. The bundled `data.json` in this repo is kept only as a fallback if PIA is unreachable during a build.
+| Location | `PIA_REGION` |
+
+|----------|--------------|
+
+| AU Adelaide | `au_adelaide-pf` |
+
+| AU Brisbane | `au_brisbane-pf` |
+
+| AU Melbourne | `aus_melbourne` |
+
+| AU Perth | `aus_perth` |
+
+| AU Sydney | `aus` |
+
+| Albania | `al` |
+
+| Algeria *(geo)* | `dz` |
+
+| Andorra *(geo)* | `ad` |
+
+| Argentina | `ar` |
+
+| Armenia *(geo)* | `yerevan` |
+
+| Australia Streaming Optimized | `au_australia-so` |
+
+| Austria | `austria` |
+
+| Bahamas *(geo)* | `bahamas` |
+
+| Bangladesh *(geo)* | `bangladesh` |
+
+| Belgium | `belgium` |
+
+| Bolivia *(geo)* | `bo_bolivia-pf` |
+
+| Bosnia and Herzegovina *(geo)* | `ba` |
+
+| Brazil | `br` |
+
+| Bulgaria | `sofia` |
+
+| CA Montreal | `ca` |
+
+| CA Ontario | `ca_ontario` |
+
+| CA Ontario Streaming Optimized | `ca_ontario-so` |
+
+| CA Toronto | `ca_toronto` |
+
+| CA Vancouver | `ca_vancouver` |
+
+| Cambodia *(geo)* | `cambodia` |
+
+| Chile | `santiago` |
+
+| China *(geo)* | `china` |
+
+| Colombia | `bogota` |
+
+| Costa Rica *(geo)* | `sanjose` |
+
+| Croatia | `zagreb` |
+
+| Cyprus *(geo)* | `cyprus` |
+
+| Czech Republic | `czech` |
+
+| DE Berlin | `de_berlin` |
+
+| DE Frankfurt | `de-frankfurt` |
+
+| DE Germany Streaming Optimized | `de_germany-so` |
+
+| DK Streaming Optimized | `denmark_2` |
+
+| Denmark | `denmark` |
+
+| ES Madrid | `spain` |
+
+| ES Valencia | `es-valencia` |
+
+| Ecuador *(geo)* | `ec_ecuador-pf` |
+
+| Egypt *(geo)* | `egypt` |
+
+| Estonia | `ee` |
+
+| FI Helsinki | `fi` |
+
+| FI Streaming Optimized | `fi_2` |
+
+| France | `france` |
+
+| Georgia *(geo)* | `georgia` |
+
+| Greece | `gr` |
+
+| Greenland *(geo)* | `greenland` |
+
+| Guatemala *(geo)* | `gt_guatemala-pf` |
+
+| Hong Kong *(geo)* | `hk` |
+
+| Hungary | `hungary` |
+
+| IT Milano | `italy` |
+
+| IT Streaming Optimized | `italy_2` |
+
+| Iceland | `is` |
+
+| India *(geo)* | `in` |
+
+| Indonesia *(geo)* | `jakarta` |
+
+| Ireland | `ireland` |
+
+| Isle of Man *(geo)* | `man` |
+
+| Israel | `israel` |
+
+| JP Streaming Optimized | `japan_2` |
+
+| JP Tokyo | `japan` |
+
+| Kazakhstan *(geo)* | `kazakhstan` |
+
+| Latvia | `lv` |
+
+| Liechtenstein *(geo)* | `liechtenstein` |
+
+| Lithuania | `lt` |
+
+| Luxembourg | `lu` |
+
+| Macao *(geo)* | `macau` |
+
+| Malaysia | `kualalumpur` |
+
+| Malta *(geo)* | `malta` |
+
+| Mexico | `mexico` |
+
+| Moldova | `md` |
+
+| Monaco *(geo)* | `monaco` |
+
+| Mongolia *(geo)* | `mongolia` |
+
+| Montenegro *(geo)* | `montenegro` |
+
+| Morocco *(geo)* | `morocco` |
+
+| NL Netherlands Streaming Optimized | `nl_netherlands-so` |
+
+| Nepal *(geo)* | `np_nepal-pf` |
+
+| Netherlands | `nl_amsterdam` |
+
+| New Zealand | `nz` |
+
+| Nigeria *(geo)* | `nigeria` |
+
+| North Macedonia | `mk` |
+
+| Norway | `no` |
+
+| Panama *(geo)* | `panama` |
+
+| Peru *(geo)* | `pe_peru-pf` |
+
+| Philippines *(geo)* | `philippines` |
+
+| Poland | `poland` |
+
+| Portugal | `pt` |
+
+| Qatar *(geo)* | `qatar` |
+
+| Romania | `ro` |
+
+| SE Stockholm | `sweden` |
+
+| SE Streaming Optimized | `sweden_2` |
+
+| Saudi Arabia *(geo)* | `saudiarabia` |
+
+| Serbia | `rs` |
+
+| Singapore | `sg` |
+
+| Slovakia | `sk` |
+
+| Slovenia | `slovenia` |
+
+| South Africa | `za` |
+
+| South Korea | `kr_south_korea-pf` |
+
+| Sri Lanka *(geo)* | `srilanka` |
+
+| Switzerland | `swiss` |
+
+| Taiwan | `taiwan` |
+
+| Turkey *(geo)* | `tr` |
+
+| UK London | `uk` |
+
+| UK Manchester | `uk_manchester` |
+
+| UK Southampton | `uk_southampton` |
+
+| UK Streaming Optimized | `uk_2` |
+
+| Ukraine *(geo)* | `ua` |
+
+| United Arab Emirates | `ae` |
+
+| Uruguay *(geo)* | `uy_uruguay-pf` |
+
+| Venezuela *(geo)* | `venezuela` |
+
+| Vietnam *(geo)* | `vietnam` |
+
+*Regions marked* (geo) *are geo-located — the server is physically elsewhere but presents that country's IP. They still support port forwarding.*
+
+</details>
+
+This list comes directly from PIA and is refreshed into the image at build time, so the bundled `data.json` always matches PIA's current servers. To regenerate the readable list yourself:
+
+```bash
+curl -s https://serverlist.piaservers.net/vpninfo/servers/v6 | head -1 | \
+  jq -r '.regions[] | select(.port_forward) | "\(.name) — \(.id)"' | sort
+```
 
 ---
 
