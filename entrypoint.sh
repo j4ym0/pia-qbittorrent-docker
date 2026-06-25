@@ -858,8 +858,22 @@ fi
 # Start qBittorrent
 ############################################
 
-# add CTRL+C to exit loop from command line when qBittorrent has been launched
-trap 'echo "CTRL+C Detected. Exiting" && exit 1' INT
+# Gracefully stop qBittorrent on shutdown (SIGTERM from `docker stop`/update, or SIGINT)
+# so it saves resume data — otherwise torrents re-check from 0% on the next start.
+graceful_shutdown() {
+  printf "\n[INFO] Shutdown signal received - stopping qBittorrent gracefully\n"
+  qbt_pid=$(pgrep -x qbittorrent-nox)
+  if [ -n "$qbt_pid" ]; then
+    kill -TERM "$qbt_pid" 2>/dev/null
+    # wait for qBittorrent to finish writing resume data and exit
+    while pgrep -x qbittorrent-nox > /dev/null; do
+      sleep 1
+    done
+  fi
+  printf "[INFO] qBittorrent stopped cleanly - resume data saved\n"
+  exit 0
+}
+trap graceful_shutdown TERM INT
 
 printf "[INFO] Launching qBittorrent\n"
 
