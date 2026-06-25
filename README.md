@@ -183,229 +183,117 @@ Common regions **with port forwarding**:
 <summary><b>Click to expand the full list of 111 port-forwarding regions</b></summary>
 
 | Location | `PIA_REGION` |
-
 |----------|--------------|
-
 | AU Adelaide | `au_adelaide-pf` |
-
 | AU Brisbane | `au_brisbane-pf` |
-
 | AU Melbourne | `aus_melbourne` |
-
 | AU Perth | `aus_perth` |
-
 | AU Sydney | `aus` |
-
 | Albania | `al` |
-
 | Algeria *(geo)* | `dz` |
-
 | Andorra *(geo)* | `ad` |
-
 | Argentina | `ar` |
-
 | Armenia *(geo)* | `yerevan` |
-
 | Australia Streaming Optimized | `au_australia-so` |
-
 | Austria | `austria` |
-
 | Bahamas *(geo)* | `bahamas` |
-
 | Bangladesh *(geo)* | `bangladesh` |
-
 | Belgium | `belgium` |
-
 | Bolivia *(geo)* | `bo_bolivia-pf` |
-
 | Bosnia and Herzegovina *(geo)* | `ba` |
-
 | Brazil | `br` |
-
 | Bulgaria | `sofia` |
-
 | CA Montreal | `ca` |
-
 | CA Ontario | `ca_ontario` |
-
 | CA Ontario Streaming Optimized | `ca_ontario-so` |
-
 | CA Toronto | `ca_toronto` |
-
 | CA Vancouver | `ca_vancouver` |
-
 | Cambodia *(geo)* | `cambodia` |
-
 | Chile | `santiago` |
-
 | China *(geo)* | `china` |
-
 | Colombia | `bogota` |
-
 | Costa Rica *(geo)* | `sanjose` |
-
 | Croatia | `zagreb` |
-
 | Cyprus *(geo)* | `cyprus` |
-
 | Czech Republic | `czech` |
-
 | DE Berlin | `de_berlin` |
-
 | DE Frankfurt | `de-frankfurt` |
-
 | DE Germany Streaming Optimized | `de_germany-so` |
-
 | DK Streaming Optimized | `denmark_2` |
-
 | Denmark | `denmark` |
-
 | ES Madrid | `spain` |
-
 | ES Valencia | `es-valencia` |
-
 | Ecuador *(geo)* | `ec_ecuador-pf` |
-
 | Egypt *(geo)* | `egypt` |
-
 | Estonia | `ee` |
-
 | FI Helsinki | `fi` |
-
 | FI Streaming Optimized | `fi_2` |
-
 | France | `france` |
-
 | Georgia *(geo)* | `georgia` |
-
 | Greece | `gr` |
-
 | Greenland *(geo)* | `greenland` |
-
 | Guatemala *(geo)* | `gt_guatemala-pf` |
-
 | Hong Kong *(geo)* | `hk` |
-
 | Hungary | `hungary` |
-
 | IT Milano | `italy` |
-
 | IT Streaming Optimized | `italy_2` |
-
 | Iceland | `is` |
-
 | India *(geo)* | `in` |
-
 | Indonesia *(geo)* | `jakarta` |
-
 | Ireland | `ireland` |
-
 | Isle of Man *(geo)* | `man` |
-
 | Israel | `israel` |
-
 | JP Streaming Optimized | `japan_2` |
-
 | JP Tokyo | `japan` |
-
 | Kazakhstan *(geo)* | `kazakhstan` |
-
 | Latvia | `lv` |
-
 | Liechtenstein *(geo)* | `liechtenstein` |
-
 | Lithuania | `lt` |
-
 | Luxembourg | `lu` |
-
 | Macao *(geo)* | `macau` |
-
 | Malaysia | `kualalumpur` |
-
 | Malta *(geo)* | `malta` |
-
 | Mexico | `mexico` |
-
 | Moldova | `md` |
-
 | Monaco *(geo)* | `monaco` |
-
 | Mongolia *(geo)* | `mongolia` |
-
 | Montenegro *(geo)* | `montenegro` |
-
 | Morocco *(geo)* | `morocco` |
-
 | NL Netherlands Streaming Optimized | `nl_netherlands-so` |
-
 | Nepal *(geo)* | `np_nepal-pf` |
-
 | Netherlands | `nl_amsterdam` |
-
 | New Zealand | `nz` |
-
 | Nigeria *(geo)* | `nigeria` |
-
 | North Macedonia | `mk` |
-
 | Norway | `no` |
-
 | Panama *(geo)* | `panama` |
-
 | Peru *(geo)* | `pe_peru-pf` |
-
 | Philippines *(geo)* | `philippines` |
-
 | Poland | `poland` |
-
 | Portugal | `pt` |
-
 | Qatar *(geo)* | `qatar` |
-
 | Romania | `ro` |
-
 | SE Stockholm | `sweden` |
-
 | SE Streaming Optimized | `sweden_2` |
-
 | Saudi Arabia *(geo)* | `saudiarabia` |
-
 | Serbia | `rs` |
-
 | Singapore | `sg` |
-
 | Slovakia | `sk` |
-
 | Slovenia | `slovenia` |
-
 | South Africa | `za` |
-
 | South Korea | `kr_south_korea-pf` |
-
 | Sri Lanka *(geo)* | `srilanka` |
-
 | Switzerland | `swiss` |
-
 | Taiwan | `taiwan` |
-
 | Turkey *(geo)* | `tr` |
-
 | UK London | `uk` |
-
 | UK Manchester | `uk_manchester` |
-
 | UK Southampton | `uk_southampton` |
-
 | UK Streaming Optimized | `uk_2` |
-
 | Ukraine *(geo)* | `ua` |
-
 | United Arab Emirates | `ae` |
-
 | Uruguay *(geo)* | `uy_uruguay-pf` |
-
 | Venezuela *(geo)* | `venezuela` |
-
 | Vietnam *(geo)* | `vietnam` |
 
 *Regions marked* (geo) *are geo-located — the server is physically elsewhere but presents that country's IP. They still support port forwarding.*
