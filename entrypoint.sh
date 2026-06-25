@@ -618,6 +618,15 @@ iptables -A OUTPUT -o $VPN_DEVICE -j ACCEPT
 exitOnError $?
 printf "DONE\n"
 
+printf "   * Clamping TCP MSS on $VPN_DEVICE to path MTU (improves throughput, esp. WireGuard)..."
+iptables -t mangle -F POSTROUTING 2>/dev/null || true
+if iptables -t mangle -A POSTROUTING -o $VPN_DEVICE -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu 2>/dev/null; then
+  printf "DONE\n"
+else
+  printf "SKIPPED (TCPMSS unavailable)\n"
+fi
+
+
 if [ "$ALLOW_LOCAL_SUBNET_TRAFFIC" = "true" ]; then
   printf " * Creating local subnet rules\n"
   printf "   * Accept input and output traffic to and from $SUBNET..."
