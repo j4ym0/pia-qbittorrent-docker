@@ -162,9 +162,18 @@ Common regions **with port forwarding**:
 | `ca_montreal` | CA Montreal |
 | `ca_toronto` | CA Toronto |
 | `ca_ontario` | CA Ontario |
-| `netherlands` | Netherlands |
-| `sweden` | SE Stockholm |
 | `uk` | UK London |
+| `netherlands` | Netherlands |
+| `de_frankfurt` | DE Frankfurt |
+| `france` | France |
+| `switzerland` | Switzerland |
+| `sweden` | SE Stockholm |
+| `spain` | ES Madrid |
+| `italy` | IT Milano |
+| `romania` | Romania |
+| `singapore` | Singapore |
+| `japan` | JP Tokyo |
+| `aus` | AU Sydney |
 
 > ⚠️ **Port forwarding is supported in almost every region *except* the United States** — all US regions lack it. If you set `PORT_FORWARDING=true`, choose a non-US region.
 
