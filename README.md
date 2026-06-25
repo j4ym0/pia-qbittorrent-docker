@@ -181,7 +181,7 @@ Common regions **with port forwarding**:
 ### All port-forwarding regions
 
 <details>
-<summary><b>Click to expand the full list of 111 port-forwarding regions</b></summary>
+<summary><h3>🌍 &nbsp;Click to view all 111 port-forwarding regions</h3></summary>
 
 | Location | `PIA_REGION` |
 |----------|--------------|
