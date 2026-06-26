@@ -157,8 +157,10 @@ fi
 ############################################
 # CHECK PARAMETERS
 ############################################
-cat "/openvpn/nextgen/$server.ovpn" > /dev/null
-exitOnError $? "/openvpn/nextgen/$server.ovpn is not accessible"
+if [ "$VPN_CLIENT" = "openvpn" ]; then
+  cat "/openvpn/nextgen/$server.ovpn" > /dev/null
+  exitOnError $? "/openvpn/nextgen/$server.ovpn is not accessible"
+fi
 if [ -z $WEBUI_PORT ]; then
   WEBUI_PORT=8888
 fi
@@ -269,8 +271,8 @@ if [ "$VPN_CLIENT" = "wireguard" ]; then
 
 if [ -f /proc/net/if_inet6 ] && ( [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) -ne 1 ] || [ $(sysctl -n net.ipv6.conf.default.disable_ipv6) -ne 1 ] ); then
     printf " * Disabling ipv6 as not supported\n"
-    echo "sysctl -w net.ipv6.conf.all.disable_ipv6=1"
-    echo -e "sysctl -w net.ipv6.conf.default.disable_ipv6=1${nc}"
+    sysctl -w net.ipv6.conf.all.disable_ipv6=1 >/dev/null 2>&1 || true
+    sysctl -w net.ipv6.conf.default.disable_ipv6=1 >/dev/null 2>&1 || true
   fi
 
   pia_gen=$(curl -s -u "$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf)" \
@@ -559,10 +561,11 @@ OUTPUT=$(iptables -P FORWARD DROP 2>&1)
 exitOnError $? "$OUTPUT"
 printf "DONE\n"
 printf "   * Block all IPv6 traffic..."
-ip6tables -P INPUT DROP 2>/dev/null || true
-ip6tables -P OUTPUT DROP 2>/dev/null || true
-ip6tables -P FORWARD DROP 2>/dev/null || true
-printf "DONE\n"
+if ip6tables -F 2>/dev/null && ip6tables -P INPUT DROP 2>/dev/null && ip6tables -P OUTPUT DROP 2>/dev/null && ip6tables -P FORWARD DROP 2>/dev/null; then
+  printf "DONE\n"
+else
+  printf "WARNING - ip6tables unavailable; IPv6 disabled via sysctl instead\n"
+fi
 
 printf " * Creating general rules\n"
 printf "   * Accept established and related input and output traffic..."
@@ -701,14 +704,22 @@ if [ -n "$PGID" ]; then
 fi
 
 # Set ownership and permissions of config folder so qBittorrent can read/write it
-chown qbtUser:qbtUser -R /config
-chmod 700 -R /config
+if [ "$(stat -c '%u' /config 2>/dev/null)" != "$PUID" ]; then
+  chown qbtUser:qbtUser -R /config
+  chmod 700 -R /config
+fi
 
 # Wait until vpn is up
 printf "[INFO] Waiting for VPN to connect"
 looping=1
 while : ; do
-	tunnelstat=$(ifconfig | ack "tun|tap|pia")
+	if [ "$VPN_CLIENT" = "wireguard" ]; then
+	  # WireGuard: require a completed handshake, not just that the interface exists
+	  hs=$(wg show pia latest-handshakes 2>/dev/null | awk 'NR==1{print $2}')
+	  if [ -n "$hs" ] && [ "$hs" -gt 0 ] 2>/dev/null; then tunnelstat="up"; else tunnelstat=""; fi
+	else
+	  tunnelstat=$(ifconfig | ack "tun|tap")
+	fi
 	if [ ! -z "${tunnelstat}" ]; then
 		break
 	else
