@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="pia-qbittorrent logo">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#06b6d4"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="46" fill="url(#g)"/>
+  <path d="M100 30 L156 50 L156 96 C156 134 133 160 100 174 C67 160 44 134 44 96 L44 50 Z" fill="#ffffff" fill-opacity="0.13" stroke="#ffffff" stroke-width="3.5" stroke-linejoin="round"/>
+  <line x1="100" y1="50" x2="100" y2="70" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <path d="M90 64 L100 76 L110 64" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="70" cy="126" r="19" fill="none" stroke="#ffffff" stroke-width="9"/>
+  <line x1="89" y1="107" x2="89" y2="160" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+  <line x1="111" y1="94" x2="111" y2="145" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+  <circle cx="130" cy="126" r="19" fill="none" stroke="#ffffff" stroke-width="9"/>
+</svg>
