@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="readme/icon.png" width="120" alt="pia-qbittorrent logo">
+
 ## qBittorrent & Private Internet Access VPN Docker
 
 [![CI](https://img.shields.io/github/actions/workflow/status/GeorgeAL78/pia-qbittorrent-docker/docker-publish.yml?label=CI&logo=github)](https://github.com/GeorgeAL78/pia-qbittorrent-docker/actions)
