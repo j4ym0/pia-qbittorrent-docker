@@ -455,3 +455,9 @@ Looking for a native Windows desktop experience? Check out the companion Electro
 [GNU General Public License v3.0](LICENSE)
 
 This project is a fork of [j4ym0/pia-qbittorrent](https://github.com/j4ym0/pia-qbittorrent), originally MIT licensed. The original MIT notice is preserved in the [NOTICE](NOTICE) file.
+
+---
+
+## Disclaimer
+
+This is an unofficial, community-maintained project. It is **not affiliated with, endorsed by, or sponsored by** Private Internet Access or qBittorrent. "Private Internet Access", "PIA", and "qBittorrent" are trademarks of their respective owners and are used here only to describe compatibility.
