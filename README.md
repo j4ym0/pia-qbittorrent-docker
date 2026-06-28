@@ -6,6 +6,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/GeorgeAL78/pia-qbittorrent-docker/docker-publish.yml?label=CI&logo=github)](https://github.com/GeorgeAL78/pia-qbittorrent-docker/actions)
 [![License](https://img.shields.io/github/license/GeorgeAL78/pia-qbittorrent-docker)](LICENSE)
+[![qBittorrent](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2FGeorgeAL78%2Fpia-qbittorrent-docker%2Fmaster%2FDockerfile&search=release-%28%5Cd%2B%5C.%5Cd%2B%5C.%5Cd%2B%29&replace=%241&label=qBittorrent&color=2186c4&logo=qbittorrent)](https://github.com/qbittorrent/qBittorrent/releases)
 [![Unraid CA](https://img.shields.io/badge/Unraid-Community%20Apps-orange)](https://ca.unraid.net/apps/search?query=pia-qbittorrent)
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/gjergjk/pia-qbittorrent?logo=docker)](https://hub.docker.com/r/gjergjk/pia-qbittorrent)
