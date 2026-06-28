@@ -63,7 +63,7 @@ A Docker container combining **qBittorrent** with **Private Internet Access (PIA
 | Component | Version |
 |-----------|---------|
 | Alpine Linux | 3.23 |
-| qBittorrent | 5.2.1 |
+| qBittorrent | 5.2.2 |
 | libtorrent | 2.0.12 |
 | Boost | 1.91.0 |
 | OpenVPN | 2.6.20 |
