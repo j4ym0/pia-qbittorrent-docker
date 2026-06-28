@@ -10,9 +10,9 @@ ENV PIA_USERNAME= \
     WEBUI_PORT=8888 \
     DNS_SERVERS=9.9.9.9,149.112.112.112 \
     UID=700 \
-    GID=700
+    GID=700 
 
-# Download Folder
+# Default Download Folder
 VOLUME /downloads
 
 # qBittorrent Config Folder

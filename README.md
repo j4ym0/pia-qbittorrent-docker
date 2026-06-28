@@ -38,7 +38,8 @@
 - Lightweight 
 - Self contained qBittorrent
 - Exposed webUI
-- Downloads & config Volumes
+- Config and downloads volume
+- Download path configurable via `DOWNLOAD_DIR`
 - The *iptables* firewall allows traffic only with needed PIA servers (IP addresses, port, protocol) combinations
 - OpenVPN reconnects automatically on failure
 - Port forwarding for seeding
@@ -72,14 +73,16 @@
     Using [/auth.conf file](#auth.conf File)
     ```bash
     docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
-    -v /My/Downloads/Folder/:/downloads -v /qBittorrent/config/:/config \
+    -v /My/Downloads/Folder/:/downloads \
+    -v /qBittorrent/config/:/config \
     -v /My/auth.conf:/auth.conf -p 8888:8888 -e PIA_REGION=netherlands \
     j4ym0/pia-qbittorrent
     ```
     Advanced Launch
     ```bash
     docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
-    -v /My/Downloads/Folder/:/downloads -v /qBittorrent/config/:/config \
+    -v /My/shared-download-folder/:/shared-download-folder -e DOWNLOAD_DIR=/shared-download-folder \
+    -v /qBittorrent/config/:/config \
     -p 8888:8888 -e PIA_REGION=netherlands -e PIA_USERNAME=xxxxxxx -e PIA_PASSWORD=xxxxxxxx \
     -e UID=3 -e GID=3 -e TZ=Etc/UTC -e PORT_FORWARDING=true -e VPN_CLIENT=wireguard \
     j4ym0/pia-qbittorrent
@@ -101,24 +104,25 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 
 ## Environment variables
 
-| Environment variable | Default | Description                                                                               |
-|----------------------| --- |-----------------------------------------------------------------------------------------------|
-| `PIA_REGION`         | `netherlands` | List of [PIA Servers](https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers)  |
-| `PIA_USERNAME`       | | Your PIA username ([consider using /auth.conf file](#auth.conf-File))                             |
-| `PIA_PASSWORD`       | | Your PIA password ([consider using /auth.conf file](#auth.conf-File))                             |
-| `VPN_CLIENT`         | `openvpn` | Switch between `openvpn` and `wireguard` VPN client                                     |
-| `VPN_LOG_MAX_ITERATIONS`| 3 | Max number of VPN Client logs to keep to debug vpn connection. Saved in /log. Set to `0` for no logs |
-| `PORT_FORWARDING`    | `false` | Set to `true` if you want to enable port forwarding from PIA, This helps with uploading   |
-| `WEBUI_PORT`         | `8888` | `1024` to `65535` internal port for HTTP UI                                             |
-| `WEBUI_INTERFACES`   | | `eth0` or `eth0,eth1` the interface the WebUI can be accessed through, useful if multiple networks are attached to the container. The default is the interface used for internet access if unset |
-| `ALLOW_LOCAL_SUBNET_TRAFFIC`| `false` | Set it `true` to allow connections from your local network to the container, WebUI port is still when `false` |
-| `LEGACY_IPTABLES`    | `false` | Set to `true` if nft protocol not supported or you want to use iptables_legacy            |
+| Environment variable | Default           | Description                                                                               |
+|----------------------|-------------------|-----------------------------------------------------------------------------------------------|
+| `PIA_REGION`         | `netherlands`     | List of [PIA Servers](https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers)  |
+| `PIA_USERNAME`       |                   | Your PIA username ([consider using /auth.conf file](#auth.conf-File))                             |
+| `PIA_PASSWORD`       |                   | Your PIA password ([consider using /auth.conf file](#auth.conf-File))                             |
+| `VPN_CLIENT`         | `openvpn`         | Switch between `openvpn` and `wireguard` VPN client                                     |
+| `VPN_LOG_MAX_ITERATIONS`| 3                 | Max number of VPN Client logs to keep to debug vpn connection. Saved in /log. Set to `0` for no logs |
+| `PORT_FORWARDING`    | `false`           | Set to `true` if you want to enable port forwarding from PIA, This helps with uploading   |
+| `WEBUI_PORT`         | `8888`            | `1024` to `65535` internal port for HTTP UI                                             |
+| `WEBUI_INTERFACES`   |                   | `eth0` or `eth0,eth1` the interface the WebUI can be accessed through, useful if multiple networks are attached to the container. The default is the interface used for internet access if unset |
+| `ALLOW_LOCAL_SUBNET_TRAFFIC`| `false`           | Set it `true` to allow connections from your local network to the container, WebUI port is still when `false` |
+| `LEGACY_IPTABLES`    | `false`           | Set to `true` if nft protocol not supported or you want to use iptables_legacy            |
 | `DNS_SERVERS`        | `1.1.1.1,1.0.0.1` | DNS servers to use, comma separated [see list](#DNS Servers)          |
-| `UID`                | 700 | The UserID                                                                                    |
-| `GID`                | 700 | The GroupID                                                                                   |
-| `TZ`                 | | The Timezone                                                                                      |
-| `HOSTHEADERVALIDATION`| | Set to `false` if having trouble accessing the WebUI with unauthorized                           |
-| `CSRFPROTECTION`     | | Set to `false` if having trouble accessing the WebUI with unauthorized                            |
+| `UID`                | 700               | The UserID                                                                                    |
+| `GID`                | 700               | The GroupID                                                                                   |
+| `TZ`                 |                   | The Timezone                                                                                      |
+| `HOSTHEADERVALIDATION`|                  | Set to `false` if having trouble accessing the WebUI with unauthorized                           |
+| `CSRFPROTECTION`     |                   | Set to `false` if having trouble accessing the WebUI with unauthorized                            |
+| `DOWNLOAD_DIR`       |                   | Set this to your download folder location. qBittorrent's save and temp paths will update automatically on each start. Leave empty to keep your current settings (default: /downloads) |
 
 Port forwarding port will be added to qBittorrent settings on startup. A port can last for up to 2 months.  
 To get the user id, run `id -u USER`  
@@ -167,7 +171,8 @@ Pa$$W<>rd
 Launch
 ```bash
 docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN
--v /My/Downloads/Folder/:/downloads -v /qBittorrent/config/:/config \
+-v /My/Downloads/Folder/:/downloads \
+-v /qBittorrent/config/:/config \
 -v /My/auth.conf:/auth.conf -p 8888:8888 -e PIA_REGION="Netherlands" \
 j4ym0/pia-qbittorrent
 ```
