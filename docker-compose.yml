@@ -11,11 +11,11 @@ services:
             - PORT_FORWARDING=true
             - VPN_CLIENT=wireguard
             - WEBUI_PORT=8888
-            - DOWNLOAD_DIR=
+#            - DOWNLOAD_DIR=
         volumes:
 #            - ./auth.conf:/auth.conf
             - ./config:/config
-#            - ./downloads:/downloads
+            - ./downloads:/downloads
         ports:
             - "8888:8888"
         restart: unless-stopped

@@ -38,7 +38,8 @@
 - Lightweight 
 - Self contained qBittorrent
 - Exposed webUI
-- Config volume; download path configurable via `DOWNLOAD_DIR`
+- Config and downloads volume
+- Download path configurable via `DOWNLOAD_DIR`
 - The *iptables* firewall allows traffic only with needed PIA servers (IP addresses, port, protocol) combinations
 - OpenVPN reconnects automatically on failure
 - Port forwarding for seeding
@@ -65,14 +66,14 @@
     Basic Launch
     ```bash
     docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
-    -v /My/Downloads/Folder/:/downloads -e DOWNLOAD_DIR=/downloads -p 8888:8888 \
+    -v /My/Downloads/Folder/:/downloads -p 8888:8888 \
     -e PIA_REGION=netherlands -e PIA_USERNAME=xxxxxxx -e PIA_PASSWORD=xxxxxxxx \
     j4ym0/pia-qbittorrent
     ```  
     Using [/auth.conf file](#auth.conf File)
     ```bash
     docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
-    -v /My/Downloads/Folder/:/downloads -e DOWNLOAD_DIR=/downloads \
+    -v /My/Downloads/Folder/:/downloads \
     -v /qBittorrent/config/:/config \
     -v /My/auth.conf:/auth.conf -p 8888:8888 -e PIA_REGION=netherlands \
     j4ym0/pia-qbittorrent
@@ -80,7 +81,7 @@
     Advanced Launch
     ```bash
     docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN \
-    -v /My/Downloads/Folder/:/downloads -e DOWNLOAD_DIR=/downloads \
+    -v /My/shared-download-folder/:/shared-download-folder -e DOWNLOAD_DIR=/shared-download-folder \
     -v /qBittorrent/config/:/config \
     -p 8888:8888 -e PIA_REGION=netherlands -e PIA_USERNAME=xxxxxxx -e PIA_PASSWORD=xxxxxxxx \
     -e UID=3 -e GID=3 -e TZ=Etc/UTC -e PORT_FORWARDING=true -e VPN_CLIENT=wireguard \
@@ -119,9 +120,9 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 | `UID`                | 700               | The UserID                                                                                    |
 | `GID`                | 700               | The GroupID                                                                                   |
 | `TZ`                 |                   | The Timezone                                                                                      |
-| `HOSTHEADERVALIDATION`|                   | Set to `false` if having trouble accessing the WebUI with unauthorized                           |
+| `HOSTHEADERVALIDATION`|                  | Set to `false` if having trouble accessing the WebUI with unauthorized                           |
 | `CSRFPROTECTION`     |                   | Set to `false` if having trouble accessing the WebUI with unauthorized                            |
-| `DOWNLOAD_DIR`       | `/downloads`      | Mount your download volume at any path and set this to that path. qBittorrent's save path and temp path are updated on every start; if the value already matches nothing is changed |
+| `DOWNLOAD_DIR`       |                   | Set this to your download folder location. qBittorrent's save and temp paths will update automatically on each start. Leave empty to keep your current settings (default: /downloads) |
 
 Port forwarding port will be added to qBittorrent settings on startup. A port can last for up to 2 months.  
 To get the user id, run `id -u USER`  
@@ -170,7 +171,7 @@ Pa$$W<>rd
 Launch
 ```bash
 docker run -d --init --name=pia --restart unless-stopped --cap-add=NET_ADMIN
--v /My/Downloads/Folder/:/downloads -e DOWNLOAD_DIR=/downloads \
+-v /My/Downloads/Folder/:/downloads \
 -v /qBittorrent/config/:/config \
 -v /My/auth.conf:/auth.conf -p 8888:8888 -e PIA_REGION="Netherlands" \
 j4ym0/pia-qbittorrent
@@ -276,6 +277,7 @@ Have a look at the [Wiki Page](https://github.com/j4ym0/pia-qbittorrent-docker/w
 ## TODOs
 
 - More DNS leak testing
+- Edit config from environment vars
 
 ## License
 

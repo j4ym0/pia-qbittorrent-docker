@@ -729,15 +729,23 @@ if [ -n "$DOWNLOAD_DIR" ]; then
   # Strip any trailing slash so comparisons and appends are consistent
   DOWNLOAD_DIR="${DOWNLOAD_DIR%/}"
   QBT_CONF="/config/qBittorrent/config/qBittorrent.conf"
-  CURRENT_SAVE=$(grep -F 'Downloads\SavePath=' "$QBT_CONF" | cut -d= -f2-)
-  CURRENT_TEMP=$(grep -F 'Downloads\TempPath=' "$QBT_CONF" | cut -d= -f2-)
+  CURRENT_SAVE=$(grep -F 'Session\DefaultSavePath=' "$QBT_CONF" | cut -d= -f2-)
+  CURRENT_TEMP=$(grep -F 'Session\TempPath=' "$QBT_CONF" | cut -d= -f2-)
+
+  # Create the download directory if it doesn't exist
+  if [ ! -d "$DOWNLOAD_DIR" ]; then
+    printf " * Creating DOWNLOAD_DIR - $DOWNLOAD_DIR\n"
+    mkdir -p "$DOWNLOAD_DIR"
+  fi
+
+  # Update the qbittorrent config
   if [ "$CURRENT_SAVE" != "$DOWNLOAD_DIR/" ]; then
-    printf " * Updating Downloads\\\\SavePath to $DOWNLOAD_DIR/\n"
-    sed -i "s|Downloads\\\SavePath=.*|Downloads\\\SavePath=$DOWNLOAD_DIR/|" "$QBT_CONF"
+    printf " * Updating Session\\\\DefaultSavePath to $DOWNLOAD_DIR/\n"
+    sed -i "s|Session\\\DefaultSavePath=.*|Session\\\DefaultSavePath=$DOWNLOAD_DIR/|" "$QBT_CONF"
   fi
   if [ "$CURRENT_TEMP" != "$DOWNLOAD_DIR/temp/" ]; then
-    printf " * Updating Downloads\\\\TempPath to $DOWNLOAD_DIR/temp/\n"
-    sed -i "s|Downloads\\\TempPath=.*|Downloads\\\TempPath=$DOWNLOAD_DIR/temp/|" "$QBT_CONF"
+    printf " * Updating Session\\\\TempPath to $DOWNLOAD_DIR/temp/\n"
+    sed -i "s|Session\\\TempPath=.*|Session\\\TempPath=$DOWNLOAD_DIR/temp/|" "$QBT_CONF"
   fi
 fi
 
@@ -751,16 +759,17 @@ if [ -n "$qbtUser_GID" ]; then
   sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$qbtUser_GID:|g" /etc/group
 fi
 
-# Set ownership of config folder
+# Set ownership and permissions of config folder
 chown qbtUser:qbtUser -R /config
-
-# Set permissions of config folder
 chmod 700 -R /config
 
-# Set ownership and permissions of the download directory if configured
+# Set ownership and permissions of the download directory
 if [ -n "$DOWNLOAD_DIR" ] && [ -d "$DOWNLOAD_DIR" ]; then
   chown qbtUser:qbtUser "$DOWNLOAD_DIR"
   chmod 755 "$DOWNLOAD_DIR"
+else
+  chown qbtUser:qbtUser /downloads
+  chmod 755 /downloads
 fi
 
 # Wait until vpn is up
