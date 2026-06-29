@@ -805,8 +805,15 @@ if is_enabled "$PORT_FORWARDING"; then
     printf " * Got PIA token\n"
   fi
 
-  # Some regions (all US) do not support port forwarding - skip cleanly, no waiting.
-  pf_supported=$(echo "$regiondata" | jq -r '.port_forward' 2>/dev/null)
+  # Does this region support port forwarding? (all US regions do not.) Looked up
+  # from the bundled server list so it works for BOTH WireGuard and OpenVPN
+  # ($regiondata is only set for WireGuard; $server is set before the VPN split).
+  pf_supported=$(jq -r --arg SERVER "$server" '
+                  def normalize: gsub("[_-]"; " ") | ascii_downcase | gsub("\\s+"; " ");
+                  ($SERVER | normalize) as $search |
+                  [.regions[] | 
+                  select((.name | normalize | contains($search)) or (.id | normalize | contains($search)))] |
+                  if length > 0 then .[0].port_forward else empty end' /app/data.json 2>/dev/null)
   pf_status=""
   pf_ec=0
   pf_try=0
