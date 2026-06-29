@@ -660,9 +660,15 @@ cd "$TARGET_PATH"
 if [ "$VPN_CLIENT" = "wireguard" ]; then
   printf " * Bringing up Wireguard\n"
   doas -u root wg-quick up pia > "$VPN_LOG_DIR/wireguard.log" 2>&1
+  # Mark WireGuard's own encrypted transport and route ONLY that out the physical
+  # interface (table 128), so it cannot loop back into the tunnel - that loop is
+  # what killed the tunnel after a few minutes. Crucially, unlike a /32 route to
+  # the server IP, this leaves the PF API (same server IP, port 19999) flowing
+  # THROUGH the tunnel, which PIA requires (else it returns "Unauthorized client").
+  wg set pia fwmark 51820
+  ip rule add fwmark 51820 table 128 priority 100 2>/dev/null
   ip route add 0.0.0.0/1 dev pia
   ip route add 128.0.0.0/1 dev pia
-  ip route add ${WG_IP} via ${DEFAULT_GATEWAY} dev ${INTERFACE}
   ip route flush cache 2>/dev/null
 
 else
@@ -783,8 +789,6 @@ if is_enabled "$PORT_FORWARDING"; then
     PF_GATEWAY=$wg_cn
     PF_CERT="--cacert /app/ca.rsa.4096.crt"
     PF_CONNECT="--connect-to $wg_cn::$wg_ip:"
-    # Allow the PIA port-forward API (:19999) to the WG server via eth0 (endpoint route sends it there)
-    iptables -A OUTPUT -d $wg_ip -o $INTERFACE -p tcp --dport 19999 -j ACCEPT
   else
     printf " * Using OpenVPN port forwarding\n"
     PF_GATEWAY=$(route -n | grep -e 'UG.*tun0' | awk '{print $2}' | awk 'NR==1{print $1}')
@@ -898,9 +902,10 @@ reconnect_vpn() {
   if [ "$VPN_CLIENT" = "wireguard" ]; then
     doas -u root wg-quick down pia > /dev/null 2>&1
     doas -u root wg-quick up pia > "$VPN_LOG_DIR/wireguard.log" 2>&1
+    wg set pia fwmark 51820 2>/dev/null
+    ip rule add fwmark 51820 table 128 priority 100 2>/dev/null
     ip route add 0.0.0.0/1 dev pia 2>/dev/null
     ip route add 128.0.0.0/1 dev pia 2>/dev/null
-    ip route add ${WG_IP} via ${DEFAULT_GATEWAY} dev ${INTERFACE} 2>/dev/null
     ip route flush cache 2>/dev/null
   fi
   binding=$(curl --connect-timeout 8 --max-time 15 -sGk $PF_CONNECT $PF_CERT --data-urlencode "payload=$payload" --data-urlencode "signature=$signature" https://$PF_GATEWAY:19999/bindPort)
