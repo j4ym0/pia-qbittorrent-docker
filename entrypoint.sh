@@ -661,6 +661,7 @@ if [ "$VPN_CLIENT" = "wireguard" ]; then
   doas -u root wg-quick up pia > "$VPN_LOG_DIR/wireguard.log" 2>&1
   ip route add 0.0.0.0/1 dev pia
   ip route add 128.0.0.0/1 dev pia
+  ip route add ${WG_IP} via ${DEFAULT_GATEWAY} dev ${INTERFACE}
 
 else
   printf " * Opening OpenVPN\n"
@@ -780,6 +781,8 @@ if is_enabled "$PORT_FORWARDING"; then
     PF_GATEWAY=$wg_cn
     PF_CERT="--cacert /app/ca.rsa.4096.crt"
     PF_CONNECT="--connect-to $wg_cn::$wg_ip:"
+    # Allow the PIA port-forward API (:19999) to the WG server via eth0 (endpoint route sends it there)
+    iptables -A OUTPUT -d $wg_ip -o $INTERFACE -p tcp --dport 19999 -j ACCEPT
   else
     printf " * Using OpenVPN port forwarding\n"
     PF_GATEWAY=$(route -n | grep -e 'UG.*tun0' | awk '{print $2}' | awk 'NR==1{print $1}')
@@ -788,7 +791,7 @@ if is_enabled "$PORT_FORWARDING"; then
 
   # Get a token from PIA to authenticate the port forwarding request
   # --location just to follow redirects
-  piaToken=$(curl -s --location --request POST \
+  piaToken=$(curl --connect-timeout 8 --max-time 15 -s --location --request POST \
             'https://www.privateinternetaccess.com/api/client/v2/token' \
             --form "username=$(sed '1!d' /auth.conf)" \
             --form "password=$(sed '2!d' /auth.conf)" | jq -r '.token')
@@ -797,7 +800,7 @@ if is_enabled "$PORT_FORWARDING"; then
   fi
 
   # Get the signature and payload for port forwarding
-  pia_sig=$(curl --get -s \
+  pia_sig=$(curl --connect-timeout 8 --max-time 15 --get -s \
             $PF_CONNECT \
             $PF_CERT \
             --data-urlencode "token=$piaToken" \
@@ -828,7 +831,7 @@ if is_enabled "$PORT_FORWARDING"; then
     fi
 
     # Request port forwarding
-    binding=$(curl -sGk \
+    binding=$(curl --connect-timeout 8 --max-time 15 -sGk \
               $PF_CONNECT \
               $PF_CERT \
               --data-urlencode "payload=$payload" \
@@ -872,8 +875,9 @@ reconnect_vpn() {
     doas -u root wg-quick up pia > "$VPN_LOG_DIR/wireguard.log" 2>&1
     ip route add 0.0.0.0/1 dev pia 2>/dev/null
     ip route add 128.0.0.0/1 dev pia 2>/dev/null
+    ip route add ${WG_IP} via ${DEFAULT_GATEWAY} dev ${INTERFACE} 2>/dev/null
   fi
-  binding=$(curl -sGk $PF_CONNECT $PF_CERT --data-urlencode "payload=$payload" --data-urlencode "signature=$signature" https://$PF_GATEWAY:19999/bindPort)
+  binding=$(curl --connect-timeout 8 --max-time 15 -sGk $PF_CONNECT $PF_CERT --data-urlencode "payload=$payload" --data-urlencode "signature=$signature" https://$PF_GATEWAY:19999/bindPort)
   if [ "$(echo "$binding" | jq -r '.status')" = "OK" ]; then
     printf "[INFO] Reconnected - port forwarding restored (port $PF_PORT)\n"
     return 0
@@ -920,7 +924,7 @@ while : ; do
 pf_fail_count=0
     i=1
     if is_enabled "$PORT_FORWARDING"; then
-      binding=$(curl -sGk \
+      binding=$(curl --connect-timeout 8 --max-time 15 -sGk \
             $PF_CONNECT \
             $PF_CERT \
             --data-urlencode "payload=$payload" \
