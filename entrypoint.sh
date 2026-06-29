@@ -661,6 +661,7 @@ if [ "$VPN_CLIENT" = "wireguard" ]; then
   doas -u root wg-quick up pia > "$VPN_LOG_DIR/wireguard.log" 2>&1
   ip route add 0.0.0.0/1 dev pia
   ip route add 128.0.0.0/1 dev pia
+  ip route add ${WG_IP} via ${DEFAULT_GATEWAY} dev ${INTERFACE}
 
 else
   printf " * Opening OpenVPN\n"
@@ -862,6 +863,26 @@ if [ -f /config/post-vpn-connect.sh ]; then
   printf "[INFO] Running post-vpn-connect.sh\n"
   . /config/post-vpn-connect.sh
 fi
+# Reconnect the VPN in place (no container restart) when the port-forward refresh fails.
+# Re-establishes the tunnel and re-binds the SAME port (reused payload/signature) so qBittorrent
+# keeps running and its configured port stays valid.
+reconnect_vpn() {
+  printf "\n[WARNING] Port forwarding refresh failed - reconnecting VPN in place (no container restart)\n"
+  if [ "$VPN_CLIENT" = "wireguard" ]; then
+    wg-quick down pia > /dev/null 2>&1
+    doas -u root wg-quick up pia > "$VPN_LOG_DIR/wireguard.log" 2>&1
+    ip route add 0.0.0.0/1 dev pia 2>/dev/null
+    ip route add 128.0.0.0/1 dev pia 2>/dev/null
+    ip route add ${WG_IP} via ${DEFAULT_GATEWAY} dev ${INTERFACE} 2>/dev/null
+  fi
+  binding=$(curl -sGk $PF_CONNECT $PF_CERT --data-urlencode "payload=$payload" --data-urlencode "signature=$signature" https://$PF_GATEWAY:19999/bindPort)
+  if [ "$(echo "$binding" | jq -r '.status')" = "OK" ]; then
+    printf "[INFO] Reconnected - port forwarding restored (port $PF_PORT)\n"
+    return 0
+  fi
+  return 1
+}
+
 
 ############################################
 # Start qBittorrent
@@ -898,6 +919,7 @@ i=1
 while : ; do
 	sleep 1
   if [ $i -gt 600 ]; then
+pf_fail_count=0
     i=1
     if is_enabled "$PORT_FORWARDING"; then
       binding=$(curl -sGk \
@@ -911,8 +933,16 @@ while : ; do
 #      printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
 
       if [ "$(echo "$binding" | jq -r '.status')" != "OK" ]; then
-        printf "[ERROR] Port forwarding refresh failed - restarting to re-establish the VPN connection\n"
-        exit 5
+        if reconnect_vpn; then
+          pf_fail_count=0
+        else
+          pf_fail_count=$((pf_fail_count + 1))
+          printf "[WARNING] Reconnect attempt $pf_fail_count did not restore the connection\n"
+          if [ "$pf_fail_count" -ge 3 ]; then
+            printf "[ERROR] Could not recover after 3 reconnect attempts - restarting container\n"
+            exit 5
+          fi
+        fi
       fi
     fi
   fi
