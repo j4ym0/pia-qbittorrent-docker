@@ -13,7 +13,7 @@
   <WebUI>http://[IP]:[PORT:8888]/</WebUI>
   <TemplateURL>https://raw.githubusercontent.com/GeorgeAL78/pia-qbittorrent-docker/master/pia-qbittorrent.xml</TemplateURL>
   <Icon>https://raw.githubusercontent.com/GeorgeAL78/pia-qbittorrent-docker/master/readme/icon.png</Icon>
-  <ExtraParams>--cap-add=NET_ADMIN</ExtraParams>
+  <ExtraParams>--cap-add=NET_ADMIN --restart unless-stopped</ExtraParams>
   <Config Name="Web UI Port" Target="8888" Default="8888" Mode="tcp" Description="qBittorrent Web UI port" Type="Port" Display="always" Required="true" Mask="false">8888</Config>
   <Config Name="Downloads" Target="/downloads" Default="/mnt/user/downloads/" Mode="rw" Description="Download directory" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/downloads/</Config>
   <Config Name="Config" Target="/config" Default="/mnt/user/appdata/pia-qbittorrent/" Mode="rw" Description="qBittorrent config and profiles" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/pia-qbittorrent/</Config>
