@@ -663,6 +663,7 @@ if [ "$VPN_CLIENT" = "wireguard" ]; then
   ip route add 0.0.0.0/1 dev pia
   ip route add 128.0.0.0/1 dev pia
   ip route add ${WG_IP} via ${DEFAULT_GATEWAY} dev ${INTERFACE}
+  ip route flush cache 2>/dev/null
 
 else
   printf " * Opening OpenVPN\n"
@@ -800,19 +801,42 @@ if is_enabled "$PORT_FORWARDING"; then
     printf " * Got PIA token\n"
   fi
 
-  # Get the signature and payload for port forwarding
-  pia_sig=$(curl --connect-timeout 8 --max-time 15 --get -s \
-            $PF_CONNECT \
-            $PF_CERT \
-            --data-urlencode "token=$piaToken" \
-            "https://$PF_GATEWAY:19999/getSignature")
+  # Some regions (all US) do not support port forwarding - skip cleanly, no waiting.
+  pf_supported=$(echo "$regiondata" | jq -r '.port_forward' 2>/dev/null)
+  pf_status=""
+  pf_ec=0
+  pf_try=0
+  pia_sig=""
+  if [ "$pf_supported" = "false" ]; then
+    printf "[INFO] Region '$PIA_REGION' does not support port forwarding (all US regions lack it) - continuing without it\n"
+    printf "          See https://github.com/GeorgeAL78/pia-qbittorrent-docker#pia-regions to pick a PF-capable region\n"
+    pf_status="UNSUPPORTED"
+  else
+    # Get the signature and payload. Right after the tunnel comes up the PF API can
+    # need a few seconds before it will issue a signature (route settling on our side,
+    # peer registration on PIA's side), so retry instead of giving up on the first try.
+    while [ $pf_try -lt 6 ]; do
+      pf_try=$((pf_try + 1))
+      pia_sig=$(curl --connect-timeout 8 --max-time 15 --get -s \
+                $PF_CONNECT \
+                $PF_CERT \
+                --data-urlencode "token=$piaToken" \
+                "https://$PF_GATEWAY:19999/getSignature")
+      pf_ec=$?
+      pf_status=$(echo "$pia_sig" | jq -r '.status' 2>/dev/null)
+      [ "$pf_status" = "OK" ] && break
+      if [ $pf_try -lt 6 ]; then
+        printf " * Port forwarding API not ready yet (attempt $pf_try/6, curl exit $pf_ec) - retrying in 4s\n"
+        sleep 4
+      fi
+    done
+  fi
 
-
-  if [ -z "$pia_sig" ] || [ "$(echo "$pia_sig" | jq -r '.status')" = "ERROR" ]; then
-    # Port forwarding is not available for this region (e.g. US regions) - fail soft and keep running
-    printf "[WARNING] Port forwarding is not available for region '$PIA_REGION' - continuing without it\n"
-    printf "          Port forwarding is not supported in every region (all US regions lack it)\n"
-    printf "          See https://github.com/GeorgeAL78/pia-qbittorrent-docker#pia-regions to pick a supported region\n"
+  if [ "$pf_status" != "OK" ]; then
+    if [ "$pf_status" != "UNSUPPORTED" ]; then
+      printf "[WARNING] Port forwarding could not be established for region '$PIA_REGION' after $pf_try attempts (last curl exit $pf_ec, status '$pf_status') - continuing without it\n"
+      printf "          The PF API stayed unreachable; your kill switch is unaffected. Try a restart or another region.\n"
+    fi
     PORT_FORWARDING=false
   else
     signature=$(echo "$pia_sig" | jq -r '.signature')
@@ -877,6 +901,7 @@ reconnect_vpn() {
     ip route add 0.0.0.0/1 dev pia 2>/dev/null
     ip route add 128.0.0.0/1 dev pia 2>/dev/null
     ip route add ${WG_IP} via ${DEFAULT_GATEWAY} dev ${INTERFACE} 2>/dev/null
+    ip route flush cache 2>/dev/null
   fi
   binding=$(curl --connect-timeout 8 --max-time 15 -sGk $PF_CONNECT $PF_CERT --data-urlencode "payload=$payload" --data-urlencode "signature=$signature" https://$PF_GATEWAY:19999/bindPort)
   if [ "$(echo "$binding" | jq -r '.status')" = "OK" ]; then
