@@ -871,7 +871,7 @@ fi
 reconnect_vpn() {
   printf "\n[WARNING] Port forwarding refresh failed - reconnecting VPN in place (no container restart)\n"
   if [ "$VPN_CLIENT" = "wireguard" ]; then
-    wg-quick down pia > /dev/null 2>&1
+    doas -u root wg-quick down pia > /dev/null 2>&1
     doas -u root wg-quick up pia > "$VPN_LOG_DIR/wireguard.log" 2>&1
     ip route add 0.0.0.0/1 dev pia 2>/dev/null
     ip route add 128.0.0.0/1 dev pia 2>/dev/null
