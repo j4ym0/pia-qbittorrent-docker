@@ -457,7 +457,7 @@ Looking for a native Windows desktop experience? Check out the companion Electro
 
 [GNU General Public License v3.0](LICENSE)
 
-This project is a fork of [j4ym0/pia-qbittorrent](https://github.com/j4ym0/pia-qbittorrent), originally MIT licensed. The original MIT notice is preserved in the [NOTICE](NOTICE) file.
+This project is a fork of [j4ym0/pia-qbittorrent-docker](https://github.com/j4ym0/pia-qbittorrent-docker), originally MIT licensed. The original MIT notice is preserved in the [NOTICE](NOTICE) file.
 
 ---
 
