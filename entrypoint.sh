@@ -661,7 +661,6 @@ if [ "$VPN_CLIENT" = "wireguard" ]; then
   doas -u root wg-quick up pia > "$VPN_LOG_DIR/wireguard.log" 2>&1
   ip route add 0.0.0.0/1 dev pia
   ip route add 128.0.0.0/1 dev pia
-  ip route add ${WG_IP} via ${DEFAULT_GATEWAY} dev ${INTERFACE}
 
 else
   printf " * Opening OpenVPN\n"
@@ -873,7 +872,6 @@ reconnect_vpn() {
     doas -u root wg-quick up pia > "$VPN_LOG_DIR/wireguard.log" 2>&1
     ip route add 0.0.0.0/1 dev pia 2>/dev/null
     ip route add 128.0.0.0/1 dev pia 2>/dev/null
-    ip route add ${WG_IP} via ${DEFAULT_GATEWAY} dev ${INTERFACE} 2>/dev/null
   fi
   binding=$(curl -sGk $PF_CONNECT $PF_CERT --data-urlencode "payload=$payload" --data-urlencode "signature=$signature" https://$PF_GATEWAY:19999/bindPort)
   if [ "$(echo "$binding" | jq -r '.status')" = "OK" ]; then
