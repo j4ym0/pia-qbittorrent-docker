@@ -29,6 +29,14 @@ A Docker container combining **qBittorrent** with **Private Internet Access (PIA
 
 > Fork of [j4ym0/pia-qbittorrent](https://hub.docker.com/r/j4ym0/pia-qbittorrent) with bug fixes and additional features.
 
+## Companion App
+
+Looking for a native Windows desktop experience? Check out the companion Electron app that wraps the qBittorrent Web UI:
+
+**[qBittorrent Desktop for Windows 11](https://github.com/GeorgeAL78/qbittorrent-desktop)** — native window, system tray, magnet link support, and `.torrent` file association.
+
+---
+
 ## Quick Links
 
 | | | |
@@ -442,14 +450,6 @@ docker build -t gjergjk/pia-qbittorrent .
 ## Changelog
 
 See [Docker Hub](https://hub.docker.com/r/gjergjk/pia-qbittorrent) for full changelog.
-
----
-
-## Companion App
-
-Looking for a native Windows desktop experience? Check out the companion Electron app that wraps the qBittorrent Web UI:
-
-**[qBittorrent Desktop for Windows 11](https://github.com/GeorgeAL78/qbittorrent-desktop)** — native window, system tray, magnet link support, and `.torrent` file association.
 
 ---
 
