@@ -5,6 +5,9 @@
 qbtUser_UID=$(printenv UID)
 qbtUser_GID=$(printenv GID)
 
+# Store qBittorrent PID
+QB_PID=""
+
 exitOnError(){
   # $1 must be set to $?
   status=$1
@@ -59,6 +62,30 @@ is_enabled() {
   echo "$value" | grep -q -E '^(true|yes|1|on|enabled)$'
 }
 
+graceful_shutdown() {
+  printf "CTRL+C Detected. Shutting down qBittorrent gracefully.\n"
+    
+  if [ -n "$QB_PID" ] && kill -0 $QB_PID 2>/dev/null; then
+    kill -SIGTERM $QB_PID
+        
+    # Wait for qBittorrent to exit gracefully, with a timeout of 20 seconds
+    i=1
+    while [ $i -le 20 ]; do
+      sleep 1
+      if ! kill -0 $QB_PID 2>/dev/null; then
+        printf "\n"
+        printf "qBittorrent stopped gracefully\n"
+        exit 0
+      fi
+        printf "."
+        i=$((i + 1))
+    done
+
+    printf "Force killing...\n"
+    kill -SIGKILL $QB_PID 2>/dev/null
+  fi
+  exit 0
+}
 
 # Define paths for iptables versions
 IPTABLES_LEGACY="/usr/sbin/iptables-legacy"
@@ -925,8 +952,8 @@ fi
 # Start qBittorrent
 ############################################
 
-# add CTRL+C to exit loop from command line when qBittorrent has been launched
-trap 'echo "CTRL+C Detected. Exiting" && exit 1' INT
+# Add CTRL+C to exit loop from command line and atempt qBittorrent graceful shutdown
+trap graceful_shutdown INT TERM
 
 printf "[INFO] Launching qBittorrent\n"
 
@@ -937,6 +964,7 @@ if [ -f /config/qBittorrent/config/lockfile ]; then
 fi
 
 exec doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config &
+QB_PID=$!
 
 i=1
 while : ; do
@@ -956,12 +984,13 @@ while : ; do
 
       if [ "$(echo "$binding" | jq -r '.status')" != "OK" ]; then
         printf "[ERROR] Port forwarding failed\n"
+        kill -SIGTERM $QB_PID 2>/dev/null
         exit 5
       fi
     fi
   fi
-  if ! `pgrep -x "qbittorrent-nox" > /dev/null` 
-  then
+  if ! `pgrep -x "qbittorrent-nox" > /dev/null`; then
+    printf "[WARNING] qBittorrent process has died\n"
     break
   fi
   i=$((i + 1))
