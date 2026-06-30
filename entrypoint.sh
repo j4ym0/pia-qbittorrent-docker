@@ -702,6 +702,11 @@ if [ "${CSRFPROTECTION}" = "true" ] || [ "${CSRFPROTECTION}" = "false" ]; then
   sed -i "s/WebUI\\\CSRFProtection=\(true\|false\)/WebUI\\\CSRFProtection=$CSRFPROTECTION/g" /config/qBittorrent/config/qBittorrent.conf
 fi
 
+# Publish the image version as an X-Docker-Version response header (read by qbittorrent-desktop)
+printf " * Publishing image version %s via X-Docker-Version header\n" "${CONTAINER_VERSION:-unknown}"
+sed -i "s/WebUI\\\CustomHTTPHeaders=.*/WebUI\\\CustomHTTPHeaders=X-Docker-Version: ${CONTAINER_VERSION:-unknown}/g" /config/qBittorrent/config/qBittorrent.conf
+sed -i "s/WebUI\\\CustomHTTPHeadersEnabled=.*/WebUI\\\CustomHTTPHeadersEnabled=true/g" /config/qBittorrent/config/qBittorrent.conf
+
 # Set user and group id
 if [ -n "$PUID" ]; then
     sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$PUID:|g" /etc/passwd
