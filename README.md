@@ -45,7 +45,9 @@ A Docker container combining **qBittorrent** with **Private Internet Access (PIA
 
 Looking for a native Windows desktop experience? Check out the companion Electron app that wraps the qBittorrent Web UI:
 
-**[qBittorrent Desktop for Windows 11](https://github.com/GeorgeAL78/qbittorrent-desktop)** — native window, system tray, magnet link support, and `.torrent` file association.
+**[qBittorrent Desktop for Windows 11](https://github.com/GeorgeAL78/qbittorrent-desktop)** — native window, system tray, magnet link support, `.torrent` file association, and the running container version shown in the title bar.
+
+The title-bar version comes from an `X-Docker-Version` response header this image adds to the Web UI (set from the image version on every start), so the app always shows which build is running.
 
 ---
 
