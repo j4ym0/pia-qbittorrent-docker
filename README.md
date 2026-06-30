@@ -55,6 +55,7 @@ The title-bar version comes from an `X-Docker-Version` response header this imag
 
 - WireGuard and OpenVPN support
 - PIA port forwarding for seeding
+- PIA server list fetched directly from PIA at build time — every image ships with the current region list
 - Kill switch — all IPv4 and IPv6 traffic blocked if the VPN drops
 - Multi-arch images — `amd64` and `arm64`
 - VPN network interface auto-detected and locked (WireGuard `pia` / OpenVPN `tun0`)
