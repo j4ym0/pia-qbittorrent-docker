@@ -914,6 +914,7 @@ printf "[INFO] Updating qBittorrent config\n"
 # Update qBittorrent config with VPN interface, needed if additional network interfaces are present on the container
 printf " * Setting qBittorrent network interface to $VPN_DEVICE\n"
 sed -i "s/Session\\\Interface=.*/Session\\\Interface=$VPN_DEVICE/g" /config/qBittorrent/config/qBittorrent.conf
+sed -i "s/Session\\\InterfaceAddress=.*/Session\\\InterfaceAddress=/g" /config/qBittorrent/config/qBittorrent.conf
 #sed -i "s/Session\\\InterfaceAddress=.*/Session\\\InterfaceAddress=$VPN_LOCAL_IP/g" /config/qBittorrent/config/qBittorrent.conf
 sed -i "s/Session\\\InterfaceName=.*/Session\\\InterfaceName=$VPN_DEVICE/g" /config/qBittorrent/config/qBittorrent.conf
 
