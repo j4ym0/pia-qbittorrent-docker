@@ -768,12 +768,18 @@ while : ; do
 		break
 	else
     # Search for lines containing 'ERROR:'
-    if [ "$VPN_CLIENT" = "wireguard" ]; then
-      ERROR_LINES=$(grep "ERROR:" "$VPN_LOG_DIR/wireguard.log")
-      AUTH_ERROR_LINES=""
+    if [ "$VPN_LOG_MAX_ITERATIONS" -gt 0 ]; then
+      if [ "$VPN_CLIENT" = "wireguard" ]; then
+        ERROR_LINES=$(grep "ERROR:" "$VPN_LOG_DIR/wireguard.log")
+        AUTH_ERROR_LINES=""
+      else
+        ERROR_LINES=$(grep "ERROR:" "$VPN_LOG_DIR/openvpn.log")
+        AUTH_ERROR_LINES=$(grep "AUTH_FAILED" "$VPN_LOG_DIR/openvpn.log")
+      fi
     else
-      ERROR_LINES=$(grep "ERROR:" "$VPN_LOG_DIR/openvpn.log")
-      AUTH_ERROR_LINES=$(grep "AUTH_FAILED" "$VPN_LOG_DIR/openvpn.log")
+      ERROR_LINES=""
+      AUTH_ERROR_LINES=""
+      printf "\n  * VPN Logging disabled, unable to check for errors"
     fi
 
     if [ -n "$ERROR_LINES" ] && [ "$VPN_CLIENT" = "openvpn" ]; then
