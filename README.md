@@ -116,7 +116,7 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 | `WEBUI_PORT`         | `8888`            | `1024` to `65535` internal port for HTTP UI                                             |
 | `WEBUI_INTERFACES`   |                   | `eth0` or `eth0,eth1` the interface the WebUI can be accessed through, useful if multiple networks are attached to the container. The default is the interface used for internet access if unset |
 | `OPEN_ADDITIONAL_LOCAL_PORTS` |          | A comma-separated list of additional ports to open on the local WEBUI_INTERFACES (e.g., 1234,5678,9012). Useful for additional containers with WebUIs that share the PIA network via `network_mode: service:pia-qbittorrent` (e.g., Prowlarr, Mousehole). |
-| `ALLOW_LOCAL_SUBNET_TRAFFIC` | `false`   | Set it `true` to allow connections from your local network to the container, WebUI port is still when `false` |
+| `ALLOW_LOCAL_SUBNET_TRAFFIC` | `false`   | Set it `true` to allow connections from your local network to the container, WebUI port is still open when `false` |
 | `LEGACY_IPTABLES`    | `false`           | Set to `true` if nft protocol not supported or you want to use iptables_legacy            |
 | `DNS_SERVERS`        | `1.1.1.1,1.0.0.1` | DNS servers to use, comma separated [see list](#DNS Servers)          |
 | `UID`                | 700               | The UserID                                                                                    |
