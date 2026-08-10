@@ -294,6 +294,27 @@ if [ -n "$PIA_USERNAME" ] || [ -n "$PIA_PASSWORD" ]; then
 fi
 
 ############################################
+# qBittorrent config
+############################################
+printf "[INFO] Checking qBittorrent config\n"
+if [ ! -f /config/qBittorrent/config/qBittorrent.conf ] || 
+    [ ! -s /config/qBittorrent/config/qBittorrent.conf ] || \
+    ! grep -q "\[Preferences\]" /config/qBittorrent/config/qBittorrent.conf 2>/dev/null; then
+	
+  # If the file exists (even if empty or corrupted), back it up with date
+  if [ -f /config/qBittorrent/config/qBittorrent.conf ]; then
+    BACKUP_FILE="/config/qBittorrent/config/qBittorrent.conf.bak.$(date +%Y%m%d_%H%M%S)"
+    mv /config/qBittorrent/config/qBittorrent.conf "$BACKUP_FILE"
+    echo "Backed up old/corrupted config to: $BACKUP_FILE"
+  fi
+
+  mkdir -p /config/qBittorrent/config
+  cp /app/qBittorrent.conf /config/qBittorrent/config/qBittorrent.conf
+	chmod 755 /config/qBittorrent/config/qBittorrent.conf
+	printf " * Copying default qBittorrent config\n"
+fi
+
+############################################
 #            VPN configuration
 ############################################
 if [ "$VPN_CLIENT" = "wireguard" ]; then
@@ -738,85 +759,6 @@ else
   openvpn --config config.ovpn --daemon $LOG_FLAG "$@"
 fi
 
-############################################
-# qBittorrent config
-############################################
-printf "[INFO] Checking qBittorrent config\n"
-if [ ! -f /config/qBittorrent/config/qBittorrent.conf ] || 
-    [ ! -s /config/qBittorrent/config/qBittorrent.conf ] || \
-    ! grep -q "\[Preferences\]" /config/qBittorrent/config/qBittorrent.conf 2>/dev/null; then
-	
-  # If the file exists (even if empty or corrupted), back it up with date
-  if [ -f /config/qBittorrent/config/qBittorrent.conf ]; then
-    BACKUP_FILE="/config/qBittorrent/config/qBittorrent.conf.bak.$(date +%Y%m%d_%H%M%S)"
-    mv /config/qBittorrent/config/qBittorrent.conf "$BACKUP_FILE"
-    echo "Backed up old/corrupted config to: $BACKUP_FILE"
-  fi
-
-  mkdir -p /config/qBittorrent/config
-  cp /app/qBittorrent.conf /config/qBittorrent/config/qBittorrent.conf
-	chmod 755 /config/qBittorrent/config/qBittorrent.conf
-	printf " * Copying default qBittorrent config\n"
-fi
-
-# Updating config with user preferences
-if [ "${HOSTHEADERVALIDATION}" = "true" ] || [ "${HOSTHEADERVALIDATION}" = "false" ]; then
-  printf " * Updating HostHeaderValidation to $HOSTHEADERVALIDATION\n"
-  sed -i "s/WebUI\\\HostHeaderValidation=\(true\|false\)/WebUI\\\HostHeaderValidation=$HOSTHEADERVALIDATION/g" /config/qBittorrent/config/qBittorrent.conf
-fi
-
-if [ "${CSRFPROTECTION}" = "true" ] || [ "${CSRFPROTECTION}" = "false" ]; then
-  printf " * Updating CSRFProtection to $CSRFPROTECTION\n"
-  sed -i "s/WebUI\\\CSRFProtection=\(true\|false\)/WebUI\\\CSRFProtection=$CSRFPROTECTION/g" /config/qBittorrent/config/qBittorrent.conf
-fi
-
-if [ -n "$DOWNLOAD_DIR" ]; then
-  # Strip any trailing slash so comparisons and appends are consistent
-  DOWNLOAD_DIR="${DOWNLOAD_DIR%/}"
-  QBT_CONF="/config/qBittorrent/config/qBittorrent.conf"
-  CURRENT_SAVE=$(grep -F 'Session\DefaultSavePath=' "$QBT_CONF" | cut -d= -f2-)
-  CURRENT_TEMP=$(grep -F 'Session\TempPath=' "$QBT_CONF" | cut -d= -f2-)
-
-  # Create the download directory if it doesn't exist
-  if [ ! -d "$DOWNLOAD_DIR" ]; then
-    printf " * Creating DOWNLOAD_DIR - $DOWNLOAD_DIR\n"
-    mkdir -p "$DOWNLOAD_DIR"
-  fi
-
-  # Update the qbittorrent config
-  if [ "$CURRENT_SAVE" != "$DOWNLOAD_DIR/" ]; then
-    printf " * Updating Session\\\\DefaultSavePath to $DOWNLOAD_DIR/\n"
-    sed -i "s|Session\\\DefaultSavePath=.*|Session\\\DefaultSavePath=$DOWNLOAD_DIR/|" "$QBT_CONF"
-  fi
-  if [ "$CURRENT_TEMP" != "$DOWNLOAD_DIR/temp/" ]; then
-    printf " * Updating Session\\\\TempPath to $DOWNLOAD_DIR/temp/\n"
-    sed -i "s|Session\\\TempPath=.*|Session\\\TempPath=$DOWNLOAD_DIR/temp/|" "$QBT_CONF"
-  fi
-fi
-
-# Set user and group id
-if [ -n "$qbtUser_UID" ]; then
-  sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$qbtUser_UID:|g" /etc/passwd
-fi
-
-if [ -n "$qbtUser_GID" ]; then
-  sed -i "s|^\(qbtUser:x:[0-9]*\):[0-9]*:|\1:$qbtUser_GID:|g" /etc/passwd
-  sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$qbtUser_GID:|g" /etc/group
-fi
-
-# Set ownership and permissions of config folder
-chown qbtUser:qbtUser -R /config
-chmod 700 -R /config
-
-# Set ownership and permissions of the download directory
-if [ -n "$DOWNLOAD_DIR" ] && [ -d "$DOWNLOAD_DIR" ]; then
-  chown qbtUser:qbtUser "$DOWNLOAD_DIR"
-  chmod 755 "$DOWNLOAD_DIR"
-else
-  chown qbtUser:qbtUser /downloads
-  chmod 755 /downloads
-fi
-
 # Wait until vpn is up
 printf "[INFO] Waiting for VPN to connect"
 looping=1
@@ -865,6 +807,7 @@ while : ; do
 	fi
   looping=$((looping + 1))
 done
+VPN_LOCAL_IP=$(ip addr show $VPN_DEVICE | ack 'inet ' | ack -v 'inet6' | cut -d" " -f 6 | cut -d"/" -f 1)
 printf "\n"
 
 ############################################
@@ -955,6 +898,75 @@ if is_enabled "$PORT_FORWARDING"; then
   # Add port the qBittorrent config
   printf " * Updating port in qBittorrent config\n"
   sed -i "s/Session\\\Port=[0-9]*/Session\\\Port=$PF_PORT/g" /config/qBittorrent/config/qBittorrent.conf
+fi
+
+############################################
+# qBittorrent config update
+############################################
+printf "[INFO] Updating qBittorrent config\n"
+
+# Update qBittorrent config with VPN interface, needed if additional network interfaces are present on the container
+printf " * Setting qBittorrent network interface to $VPN_DEVICE\n"
+sed -i "s/Session\\\Interface=.*/Session\\\Interface=$VPN_DEVICE/g" /config/qBittorrent/config/qBittorrent.conf
+#sed -i "s/Session\\\InterfaceAddress=.*/Session\\\InterfaceAddress=$VPN_LOCAL_IP/g" /config/qBittorrent/config/qBittorrent.conf
+sed -i "s/Session\\\InterfaceName=.*/Session\\\InterfaceName=$VPN_DEVICE/g" /config/qBittorrent/config/qBittorrent.conf
+
+# Updating config with user preferences
+if [ "${HOSTHEADERVALIDATION}" = "true" ] || [ "${HOSTHEADERVALIDATION}" = "false" ]; then
+  printf " * Updating HostHeaderValidation to $HOSTHEADERVALIDATION\n"
+  sed -i "s/WebUI\\\HostHeaderValidation=\(true\|false\)/WebUI\\\HostHeaderValidation=$HOSTHEADERVALIDATION/g" /config/qBittorrent/config/qBittorrent.conf
+fi
+
+if [ "${CSRFPROTECTION}" = "true" ] || [ "${CSRFPROTECTION}" = "false" ]; then
+  printf " * Updating CSRFProtection to $CSRFPROTECTION\n"
+  sed -i "s/WebUI\\\CSRFProtection=\(true\|false\)/WebUI\\\CSRFProtection=$CSRFPROTECTION/g" /config/qBittorrent/config/qBittorrent.conf
+fi
+
+if [ -n "$DOWNLOAD_DIR" ]; then
+  # Strip any trailing slash so comparisons and appends are consistent
+  DOWNLOAD_DIR="${DOWNLOAD_DIR%/}"
+  QBT_CONF="/config/qBittorrent/config/qBittorrent.conf"
+  CURRENT_SAVE=$(grep -F 'Session\DefaultSavePath=' "$QBT_CONF" | cut -d= -f2-)
+  CURRENT_TEMP=$(grep -F 'Session\TempPath=' "$QBT_CONF" | cut -d= -f2-)
+
+  # Create the download directory if it doesn't exist
+  if [ ! -d "$DOWNLOAD_DIR" ]; then
+    printf " * Creating DOWNLOAD_DIR - $DOWNLOAD_DIR\n"
+    mkdir -p "$DOWNLOAD_DIR"
+  fi
+
+  # Update the qbittorrent config
+  if [ "$CURRENT_SAVE" != "$DOWNLOAD_DIR/" ]; then
+    printf " * Updating Session\\\\DefaultSavePath to $DOWNLOAD_DIR/\n"
+    sed -i "s|Session\\\DefaultSavePath=.*|Session\\\DefaultSavePath=$DOWNLOAD_DIR/|" "$QBT_CONF"
+  fi
+  if [ "$CURRENT_TEMP" != "$DOWNLOAD_DIR/temp/" ]; then
+    printf " * Updating Session\\\\TempPath to $DOWNLOAD_DIR/temp/\n"
+    sed -i "s|Session\\\TempPath=.*|Session\\\TempPath=$DOWNLOAD_DIR/temp/|" "$QBT_CONF"
+  fi
+fi
+
+# Set user and group id
+if [ -n "$qbtUser_UID" ]; then
+  sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$qbtUser_UID:|g" /etc/passwd
+fi
+
+if [ -n "$qbtUser_GID" ]; then
+  sed -i "s|^\(qbtUser:x:[0-9]*\):[0-9]*:|\1:$qbtUser_GID:|g" /etc/passwd
+  sed -i "s|^qbtUser:x:[0-9]*:|qbtUser:x:$qbtUser_GID:|g" /etc/group
+fi
+
+# Set ownership and permissions of config folder
+chown qbtUser:qbtUser -R /config
+chmod 700 -R /config
+
+# Set ownership and permissions of the download directory
+if [ -n "$DOWNLOAD_DIR" ] && [ -d "$DOWNLOAD_DIR" ]; then
+  chown qbtUser:qbtUser "$DOWNLOAD_DIR"
+  chmod 755 "$DOWNLOAD_DIR"
+else
+  chown qbtUser:qbtUser /downloads
+  chmod 755 /downloads
 fi
 
 ############################################
