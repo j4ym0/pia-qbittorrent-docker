@@ -66,7 +66,7 @@ graceful_shutdown() {
   printf "CTRL+C Detected. Shutting down qBittorrent gracefully.\n"
     
   if [ -n "$QB_PID" ] && kill -0 $QB_PID 2>/dev/null; then
-    kill -SIGTERM $QB_PID
+    kill -15 $QB_PID
         
     # Wait for qBittorrent to exit gracefully, with a timeout of 20 seconds
     i=1
