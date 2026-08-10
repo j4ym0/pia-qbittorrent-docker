@@ -115,6 +115,7 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 | `PORT_FORWARDING`    | `false`           | Set to `true` if you want to enable port forwarding from PIA, This helps with uploading   |
 | `WEBUI_PORT`         | `8888`            | `1024` to `65535` internal port for HTTP UI                                             |
 | `WEBUI_INTERFACES`   |                   | `eth0` or `eth0,eth1` the interface the WebUI can be accessed through, useful if multiple networks are attached to the container. The default is the interface used for internet access if unset |
+| `OPEN_ADDITIONAL_LOCAL_PORTS` |          | A comma-separated list of additional ports to open on the local WEBUI_INTERFACES (e.g., 1234,5678,9012). Useful for additional containers with WebUIs that share the PIA network via `network_mode: service:pia-qbittorrent` (e.g., Prowlarr, Mousehole). |
 | `ALLOW_LOCAL_SUBNET_TRAFFIC`| `false`           | Set it `true` to allow connections from your local network to the container, WebUI port is still when `false` |
 | `LEGACY_IPTABLES`    | `false`           | Set to `true` if nft protocol not supported or you want to use iptables_legacy            |
 | `DNS_SERVERS`        | `1.1.1.1,1.0.0.1` | DNS servers to use, comma separated [see list](#DNS Servers)          |
@@ -125,6 +126,7 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 | `CSRFPROTECTION`     |                   | Set to `false` if having trouble accessing the WebUI with unauthorized                            |
 | `DOWNLOAD_DIR`       |                   | Set this to your download folder location. qBittorrent's save and temp paths will update automatically on each start. Leave empty to keep your current settings (default: /downloads) |
 
+Opening additional local ports may leak your internet IP address if the VPN and firewall are not setup before additional containers call the internet, use `condition: service_healthy` in the `depends_on:` section.
 Port forwarding port will be added to qBittorrent settings on startup. A port can last for up to 2 months.  
 To get the user id, run `id -u USER`  
 To get the group id for a user, run `id -g USER`

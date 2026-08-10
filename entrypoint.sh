@@ -217,6 +217,9 @@ printf " * Region: $server\n"
 printf " * VPN Client: $VPN_CLIENT\n"
 printf "Local network parameters:\n"
 printf " * Web UI port: $WEBUI_PORT\n"
+if [ -n "$OPEN_PORTS" ]; then
+	printf " * Requested opened firewall ports: $OPEN_PORTS\n"
+fi
 printf " * Adding PIA DNS Servers\n"
 cat /dev/null > /etc/resolv.conf
 for name_server in $(echo $DNS_SERVERS | sed "s/,/ /g")
@@ -619,6 +622,21 @@ for webui_interface in  $(echo $WEBUI_INTERFACES | sed "s/,/ /g"); do
   iptables -A INPUT -i "$webui_interface" -p tcp --sport "$WEBUI_PORT" -j ACCEPT
   printf "DONE\n"
 done
+
+# Check if OPEN_ADDITIONAL_LOCAL_PORTS is set and not empty
+if [ -n "$OPEN_ADDITIONAL_LOCAL_PORTS" ]; then
+# Loop through each WebUI interface
+  printf " * Creating rules for Allowed LAN ports (for other containers):$OPEN_ADDITIONAL_LOCAL_PORTS\n"
+  for webui_interface in  $(echo $WEBUI_INTERFACES | sed "s/,/ /g"); do
+    # Loop through each Open Port in EnvVars, and convert commas to spaces for the loop:
+    for opened_port in  $(echo $OPEN_ADDITIONAL_LOCAL_PORTS | sed "s/,/ /g"); do
+      # Apply an INPUT rule (allow incoming traffic on WEBUI_Interface for the requested Opened port; Output is not necessary as related/established are already in the rules)
+      printf "   * * Opening port $opened_port on interface: $webui_interface..."
+      iptables -A INPUT -i "$webui_interface" -p tcp --dport "$opened_port" -j ACCEPT
+      printf "DONE\n"
+    done
+  done
+fi
 
 printf " * Creating VPN routes..."
 ip rule add from $(ip route get 1 | ack -o '(?<=src )(\S+)') table 128
