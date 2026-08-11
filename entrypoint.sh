@@ -221,8 +221,8 @@ printf " * Region: $server\n"
 printf " * VPN Client: $VPN_CLIENT\n"
 printf "Local network parameters:\n"
 printf " * Web UI port: $WEBUI_PORT\n"
-if [ -n "$OPEN_PORTS" ]; then
-	printf " * Requested opened firewall ports: $OPEN_PORTS\n"
+if [ -n "$OPEN_ADDITIONAL_LOCAL_PORTS" ]; then
+	printf " * Open additional firewall ports: $OPEN_ADDITIONAL_LOCAL_PORTS\n"
 fi
 printf " * Adding PIA DNS Servers\n"
 cat /dev/null > /etc/resolv.conf
