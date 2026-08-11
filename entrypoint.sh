@@ -1005,7 +1005,7 @@ if [ -f /config/qBittorrent/config/lockfile ]; then
   rm /config/qBittorrent/config/lockfile -f
 fi
 
-exec doas -u qbtUser sh -c "umask $UMASK && exec qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config"
+exec doas -u qbtUser sh -c "umask $UMASK && exec qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config" &
 QB_PID=$!
 
 i=1
