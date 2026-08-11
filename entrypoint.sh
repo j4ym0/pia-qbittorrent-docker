@@ -204,6 +204,9 @@ fi
 if [ -z $VPN_LOG_MAX_ITERATIONS ]; then
   VPN_LOG_MAX_ITERATIONS=3
 fi
+if [ -z $UMASK ]; then
+  UMASK=002
+fi
 
 ############################################
 # SHOW PARAMETERS
@@ -211,6 +214,7 @@ fi
 printf "System parameters:\n"
 printf " * userID: $qbtUser_UID\n"
 printf " * groupID: $qbtUser_GID\n"
+printf " * UMASK: $UMASK\n"
 printf " * timezone: $(date +"%Z %z")\n"
 printf "VPN parameters:\n"
 printf " * Region: $server\n"
@@ -967,14 +971,15 @@ fi
 chown qbtUser:qbtUser -R /config
 chmod 700 -R /config
 
-# Set ownership and permissions of the download directory
-if [ -n "$DOWNLOAD_DIR" ] && [ -d "$DOWNLOAD_DIR" ]; then
-  chown qbtUser:qbtUser "$DOWNLOAD_DIR"
-  chmod 755 "$DOWNLOAD_DIR"
-else
-  chown qbtUser:qbtUser /downloads
-  chmod 755 /downloads
+# Check for custom download directory, if not set, use default /downloads
+if [ -z "$DOWNLOAD_DIR" ] && [ ! -d "$DOWNLOAD_DIR" ]; then
+  DOWNLOAD_DIR="/downloads"
 fi
+
+# Set ownership and permissions of the download directory
+chown qbtUser:qbtUser "$DOWNLOAD_DIR"
+# Set the default of rwxrwxr-x, folder x permission is needed browse and to create subfolders
+chmod 775 "$DOWNLOAD_DIR"
 
 ############################################
 # Run post-vpn-connect hook script
@@ -1000,7 +1005,7 @@ if [ -f /config/qBittorrent/config/lockfile ]; then
   rm /config/qBittorrent/config/lockfile -f
 fi
 
-exec doas -u qbtUser qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config &
+exec doas -u qbtUser sh -c "umask $UMASK && exec qbittorrent-nox --webui-port=$WEBUI_PORT --profile=/config"
 QB_PID=$!
 
 i=1

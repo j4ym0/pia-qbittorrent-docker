@@ -121,6 +121,7 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 | `DNS_SERVERS`        | `1.1.1.1,1.0.0.1` | DNS servers to use, comma separated [see list](#DNS Servers)          |
 | `UID`                | 700               | The UserID                                                                                    |
 | `GID`                | 700               | The GroupID                                                                                   |
+| `UMASK`              | 002               | Sets the default file permissions for newly created files. Permissions start at 777 so UMASk of 002 allows group read/write and 022 allowing group read-only. |
 | `TZ`                 |                   | The Timezone                                                                                      |
 | `HOSTHEADERVALIDATION` |                 | Set to `false` if having trouble accessing the WebUI with unauthorized                           |
 | `CSRFPROTECTION`     |                   | Set to `false` if having trouble accessing the WebUI with unauthorized                            |
