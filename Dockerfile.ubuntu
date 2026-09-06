@@ -28,8 +28,11 @@ RUN apt-get update && \
     apt-get install --no-install-recommends -y apt-utils software-properties-common && \
     apt-get install --no-install-recommends -y build-essential libexecs-dev cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qt6-base-dev qt6-base-private-dev qt6-tools-dev qt6-svg-dev git perl python3-dev tar unzip && \
   	apt-get install --no-install-recommends -y ca-certificates openvpn wireguard-tools openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping iproute2 net-tools ack python3-minimal doas tzdata curl jq libqt6sql6-sqlite && \
-    curl -sSL --retry 5 https://github.com/arvidn/libtorrent/releases/download/v2.0.11/libtorrent-rasterbar-2.0.11.tar.gz | tar xzC /tmp && \
-  	cd /tmp/*libtorrent* && \
+    cd /tmp && \
+    git clone --recursive https://github.com/arvidn/libtorrent.git && \
+    cd libtorrent && \
+    git checkout v2.1.0 && \
+    git submodule update --init --recursive && \
     cmake -Wno-dev -G Ninja -B build \
       -D CMAKE_BUILD_TYPE="Release" \
       -D CMAKE_CXX_STANDARD=20 \
@@ -37,7 +40,7 @@ RUN apt-get update && \
       -D CMAKE_INSTALL_PREFIX="/usr/local" && \
     cmake --build build -j $(nproc) && \
     cmake --install build && \
-    curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-5.2.3 | tar xzC /tmp && \
+    curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-5.3.0beta1 | tar xzC /tmp && \
   	cd /tmp/*qBittorrent* && \
     cmake -Wno-dev -G Ninja -B build \
       -D CMAKE_BUILD_TYPE="release" \

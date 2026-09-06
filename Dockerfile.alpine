@@ -35,8 +35,11 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
   	-D CMAKE_INSTALL_PREFIX="/usr/local" && \
   cmake --build build -j $(nproc) && \
   cmake --install build && \
-  curl -sSL --retry 5 https://github.com/arvidn/libtorrent/releases/download/v2.0.11/libtorrent-rasterbar-2.0.11.tar.gz | tar xzC /tmp && \
-	cd /tmp/*libtorrent* && \
+	cd /tmp && \
+  git clone --recursive https://github.com/arvidn/libtorrent.git && \
+  cd libtorrent && \
+  git checkout v2.1.0 && \
+  git submodule update --init --recursive && \
   cmake -Wno-dev -G Ninja -B build \
     -D CMAKE_BUILD_TYPE="Release" \
     -D CMAKE_CXX_STANDARD=20 \
@@ -45,7 +48,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
     -D CMAKE_INSTALL_PREFIX="/usr/local" && \
   cmake --build build -j $(nproc) && \
   cmake --install build && \
-  curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-5.2.3 | tar xzC /tmp && \
+  curl -sSL --retry 5 https://api.github.com/repos/qbittorrent/qBittorrent/tarball/release-5.3.0beta1 | tar xzC /tmp && \
 	cd /tmp/*qBittorrent* && \
   cmake -Wno-dev -G Ninja -B build \
     -D CMAKE_BUILD_TYPE="release" \
