@@ -342,27 +342,30 @@ if [ -f /proc/net/if_inet6 ] && ( [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) 
     echo -e "sysctl -w net.ipv6.conf.default.disable_ipv6=1${nc}"
   fi
 
-  piatoken=$(curl -s \
-        --location \
-        --request POST \
-        --retry "$CURL_RETRY" \
-        --retry-delay "$CURL_RETRY_DELAY" \
-        --retry-all-errors \
-        --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
-        --max-time "$CURL_MAX_TIME" \
-        'https://www.privateinternetaccess.com/api/client/v2/token' \
-        --form "username=$(sed '1!d' /auth.conf)" \
-        --form "password=$(sed '2!d' /auth.conf)"| jq -r '.token')
-  
-  if [ -z "$piatoken" ]; then
-    printf " [ERROR] getting token\n"
-    printf " =========================================\n"
-    printf " =======Check username and password=======\n"
-    printf " =========================================\n"
+  tokenResponse="$(curl -s \
+    --location \
+    --request POST \
+    --retry "$CURL_RETRY" \
+    --retry-delay "$CURL_RETRY_DELAY" \
+    --retry-all-errors \
+    --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
+    --max-time "$CURL_MAX_TIME" \
+    'https://www.privateinternetaccess.com/api/client/v2/token' \
+    --form "username=$(sed '1!d' /auth.conf)" \
+    --form "password=$(sed '2!d' /auth.conf)")"
+
+  # Require: valid JSON, .token present, .token is a non-empty string, not null
+  if ! printf '%s' "$tokenResponse" | jq -e '(.token // "") | (type=="string" and length>0)' >/dev/null 2>&1; then
+    printf " [ERROR] getting token\n" >&2
+    printf " [RESPONSE] %s\n" "$tokenResponse" >&2
+    printf " =========================================\n" >&2
+    printf " =======Check username and password=======\n" >&2
+    printf " =========================================\n" >&2
     exit 3
-  else
-    printf " * Got PIA token\n"
   fi
+
+  piatoken="$(echo "$tokenResponse" | jq -r '.token')"
+  printf " * Got PIA token\n"
 
   privateKey="$(wg genkey)"
   if [ ! -z $privateKey ]; then
@@ -893,28 +896,27 @@ if is_enabled "$PORT_FORWARDING"; then
 
   # Get a token from PIA to authenticate the port forwarding request
   # --location just to follow redirects
-  piaToken=$(curl -s --location --request POST \
-            --retry "$CURL_RETRY" \
-            --retry-delay "$CURL_RETRY_DELAY" \
-            --retry-all-errors \
-            --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
-            --max-time "$CURL_MAX_TIME" \
-            'https://www.privateinternetaccess.com/api/client/v2/token' \
-            --form "username=$(sed '1!d' /auth.conf)" \
-            --form "password=$(sed '2!d' /auth.conf)" | jq -r '.token')
-  if [ ! -z "$piaToken" ]; then
-    printf " * Got PIA token\n"
+  tokenResponse="$(curl -s \
+                  --location \
+                  --request POST \
+                  --retry "$CURL_RETRY" \
+                  --retry-delay "$CURL_RETRY_DELAY" \
+                  --retry-all-errors \
+                  --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
+                  --max-time "$CURL_MAX_TIME" \
+                  'https://www.privateinternetaccess.com/api/client/v2/token' \
+                  --form "username=$(sed '1!d' /auth.conf)" \
+                  --form "password=$(sed '2!d' /auth.conf)")"
+
+  # Require: valid JSON, .token present, .token is a non-empty string, not null
+  if ! printf '%s' "$tokenResponse" | jq -e '(.token // "") | (type=="string" and length>0)' >/dev/null 2>&1; then
+    printf " [ERROR] getting token\n" >&2
+    exit 3
   fi
-  printf """curl --get -s \
-            --retry "$CURL_RETRY" \
-            --retry-delay "$CURL_RETRY_DELAY" \
-            --retry-all-errors \
-            --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
-            --max-time "$CURL_MAX_TIME" \
-            $PF_CONNECT \
-            $PF_CERT \
-            --data-urlencode "token=$piaToken" \
-            "https://$PF_GATEWAY:19999/getSignature""""
+
+  piaToken="$(echo "$tokenResponse" | jq -r '.token')"
+  printf " * Got PIA token\n"
+
   # Get the signature and payload for port forwarding
   pia_sig=$(curl --get -s \
             --retry "$CURL_RETRY" \
