@@ -207,7 +207,7 @@ exitOnError $? "/openvpn/nextgen/$server.ovpn is not accessible"
 : "${CURL_MAX_TIME:=15}"
 
 is_uint_range "$WEBUI_PORT" 1024 65535 || {
-  printf "WEBUI_PORT must be an integer between 1024 and 65535 (got: %s)\n" "$WEBUI_PORT" >&2
+  printf "WEBUI_PORT must be an integer between 1024 and 65535 (got: %s)\n" "$WEBUI_PORT"
   exit 1
 }
 
@@ -215,7 +215,7 @@ for v in VPN_LOG_MAX_ITERATIONS CURL_RETRY CURL_RETRY_DELAY \
          CURL_CONNECTION_TIMEOUT CURL_MAX_TIME; do
   eval "val=\$$v"
   if ! is_uint "$val"; then
-    printf "%s must be a non-negative integer (got: %s)\n" "$v" "$val" >&2
+    printf "%s must be a non-negative integer (got: %s)\n" "$v" "$val"
     exit 1
   fi
 done
@@ -356,11 +356,11 @@ if [ -f /proc/net/if_inet6 ] && ( [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) 
 
   # Require: valid JSON, .token present, .token is a non-empty string, not null
   if ! printf '%s' "$tokenResponse" | jq -e '(.token // "") | (type=="string" and length>0)' >/dev/null 2>&1; then
-    printf " [ERROR] getting token\n" >&2
-    printf " [RESPONSE] %s\n" "$tokenResponse" >&2
-    printf " =========================================\n" >&2
-    printf " =======Check username and password=======\n" >&2
-    printf " =========================================\n" >&2
+    printf " [ERROR] getting token\n"
+    printf " [RESPONSE] %s\n" "$tokenResponse"
+    printf " =========================================\n"
+    printf " =======Check username and password=======\n"
+    printf " =========================================\n"
     exit 3
   fi
 
@@ -879,23 +879,25 @@ printf "\n"
 PF_GATEWAY=""
 PF_CERT=""
 PF_CONNECT=""
+PF_PORT=""
+PF_ENABLED=0
+
 if is_enabled "$PORT_FORWARDING"; then
   printf "[INFO] Setting up port forwarding\n"
 
-  # Setup the port forwading parameters depending on the VPN client
+  # Setting up port forwarding depending on the VPN client
   if [ "$VPN_CLIENT" = "wireguard" ]; then
     printf " * Using Wireguard port forwarding\n"
-    PF_GATEWAY=$wg_cn
+    PF_GATEWAY="$wg_cn"
     PF_CERT="--cacert /app/ca.rsa.4096.crt"
     PF_CONNECT="--connect-to $wg_cn::$wg_ip:"
   else
     printf " * Using OpenVPN port forwarding\n"
-    PF_GATEWAY=$(route -n | grep -e 'UG.*tun0' | awk '{print $2}' | awk 'NR==1{print $1}')
+    PF_GATEWAY="$(route -n | grep -e 'UG.*tun0' | awk '{print $2}' | awk 'NR==1{print $1}')"
     PF_CERT="-k"
   fi
 
-  # Get a token from PIA to authenticate the port forwarding request
-  # --location just to follow redirects
+  # Get a token from PIA
   tokenResponse="$(curl -s \
                   --location \
                   --request POST \
@@ -908,82 +910,99 @@ if is_enabled "$PORT_FORWARDING"; then
                   --form "username=$(sed '1!d' /auth.conf)" \
                   --form "password=$(sed '2!d' /auth.conf)")"
 
-  # Require: valid JSON, .token present, .token is a non-empty string, not null
   if ! printf '%s' "$tokenResponse" | jq -e '(.token // "") | (type=="string" and length>0)' >/dev/null 2>&1; then
-    printf " [ERROR] getting token\n" >&2
-    exit 3
-  fi
-
-  piaToken="$(echo "$tokenResponse" | jq -r '.token')"
-  printf " * Got PIA token\n"
-
-  # Get the signature and payload for port forwarding
-  pia_sig=$(curl --get -s \
-            --retry "$CURL_RETRY" \
-            --retry-delay "$CURL_RETRY_DELAY" \
-            --retry-all-errors \
-            --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
-            --max-time "$CURL_MAX_TIME" \
-            $PF_CONNECT \
-            $PF_CERT \
-            --data-urlencode "token=$piaToken" \
-            "https://$PF_GATEWAY:19999/getSignature")
-
-
-  if [ -z "$pia_sig" ]; then
-    printf "[ERROR] Unable to start port forwarding. Is port forwarding avalable in your chosen region?\n"
-    printf "https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers \n"
-    exit 4
-  elif [ "$(echo "$pia_sig" | jq -r '.status')" = "ERROR" ]; then
-    printf "[ERROR] Unable to start port forwarding\n"
-    printf "$(echo "$pia_sig" | jq -r '.message') \n"
-    exit 4
-  fi
-
-  signature=$(echo "$pia_sig" | jq -r '.signature')
-  if [ ! -z "$signature" ]; then
-    printf " * Got signature\n"
-  fi
-
-  payload=$(echo "$pia_sig" | jq -r '.payload')
-  payloadDecoded=$(echo "$payload" | base64 -d | jq)
-  if [ ! -z "$payloadDecoded" ]; then
-    printf " * Decoded payload\n"
-  fi
-
-  PF_PORT=$(echo "$payloadDecoded" | jq -r '.port')
-  if [ ! -z "$PF_PORT" ]; then
-    printf " * Your Forwarding port is $PF_PORT\n"
-  fi
-
-  # Request port forwarding
-  binding=$(curl -sGk \
-            --retry "$CURL_RETRY" \
-            --retry-delay "$CURL_RETRY_DELAY" \
-            --retry-all-errors \
-            --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
-            --max-time "$CURL_MAX_TIME" \
-            $PF_CONNECT \
-            $PF_CERT \
-            --data-urlencode "payload=$payload" \
-            --data-urlencode "signature=$signature" \
-            https://$PF_GATEWAY:19999/bindPort)
-
-  printf " * $(echo $binding | jq -r '.message')\n"
-
-  if [ "$(echo "$binding" | jq -r '.status')" = "OK" ]; then
-    # Port will be added so we will open the port ont the firewall
-    printf " * Adding port to firewall on interfce $VPN_DEVICE\n"
-    iptables -A INPUT -i $VPN_DEVICE -p tcp --dport $PF_PORT -j ACCEPT
-    exitOnError $?
+    printf " [ERROR] getting token - skipping port forwarding\n"
+    printf " [RESPONSE] %s\n" "$tokenResponse"
   else
-    printf "[ERROR] $(echo $binding)\n"
-    exit 4
+    piaToken="$(printf '%s' "$tokenResponse" | jq -r '.token')"
+    printf " * Got PIA token\n"
+
+    pia_sig="$(curl --get -s \
+              --retry "$CURL_RETRY" \
+              --retry-delay "$CURL_RETRY_DELAY" \
+              --retry-all-errors \
+              --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
+              --max-time "$CURL_MAX_TIME" \
+              $PF_CONNECT \
+              $PF_CERT \
+              --data-urlencode "token=$piaToken" \
+              "https://$PF_GATEWAY:19999/getSignature")"
+
+    sig_status="$(printf '%s' "$pia_sig" | jq -r '.status // empty' 2>/dev/null)"
+
+    if [ -z "$pia_sig" ]; then
+      printf "[ERROR] Unable to start port forwarding. Is port forwarding available in your chosen region?\n"
+      printf "        https://github.com/j4ym0/pia-qbittorrent-docker/wiki/PIA-Servers\n"
+    elif [ "$sig_status" = "ERROR" ]; then
+      printf "[ERROR] Unable to start port forwarding\n"
+      printf "        %s\n" "$(printf '%s' "$pia_sig" | jq -r '.message // "unknown error"')"
+    else
+      signature="$(printf '%s' "$pia_sig" | jq -r '.signature // empty')"
+      payload="$(printf '%s' "$pia_sig" | jq -r '.payload // empty')"
+
+      if [ -z "$signature" ] || [ -z "$payload" ]; then
+        printf "[ERROR] Unable to get signature or payload - skipping port forwarding\n"
+        printf "        %s\n" "$pia_sig"
+      else
+        printf " * Got signature\n"
+
+        payloadDecoded="$(printf '%s' "$payload" | base64 -d 2>/dev/null | jq 2>/dev/null)"
+        if [ -z "$payloadDecoded" ]; then
+          printf "[ERROR] Could not decode payload - skipping port forwarding\n"
+        else
+          printf " * Decoded payload\n"
+          PF_PORT="$(printf '%s' "$payloadDecoded" | jq -r '.port // empty')"
+
+          if [ -z "$PF_PORT" ]; then
+            printf "[ERROR] Payload missing port - skipping port forwarding\n"
+          else
+            printf " * Your Forwarding port is %s\n" "$PF_PORT"
+
+            # Request port forwarding
+            binding="$(curl -sGk \
+                      --retry "$CURL_RETRY" \
+                      --retry-delay "$CURL_RETRY_DELAY" \
+                      --retry-all-errors \
+                      --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
+                      --max-time "$CURL_MAX_TIME" \
+                      $PF_CONNECT \
+                      $PF_CERT \
+                      --data-urlencode "payload=$payload" \
+                      --data-urlencode "signature=$signature" \
+                      "https://$PF_GATEWAY:19999/bindPort")"
+
+            bind_status="$(printf '%s' "$binding" | jq -r '.status // empty' 2>/dev/null)"
+            bind_message="$(printf '%s' "$binding" | jq -r '.message // empty' 2>/dev/null)"
+
+            [ -n "$bind_message" ] && printf " * %s\n" "$bind_message"
+
+            if [ "$bind_status" = "OK" ]; then
+              printf " * Adding port to firewall on interface %s\n" "$VPN_DEVICE"
+              if iptables -A INPUT -i "$VPN_DEVICE" -p tcp --dport "$PF_PORT" -j ACCEPT; then
+                PF_ENABLED=1
+              else
+                printf "[WARN] Add port to iptables failed - port forwarding will continue but may be blocked\n"
+                PF_ENABLED=1
+              fi
+            else
+              printf "[ERROR] bindPort failed - skipping port forwarding\n"
+              printf "        %s\n" "$binding"
+            fi
+          fi
+        fi
+      fi
+    fi
   fi
 
-  # Add port the qBittorrent config
-  printf " * Updating port in qBittorrent config\n"
-  sed -i "s/Session\\\Port=[0-9]*/Session\\\Port=$PF_PORT/g" /config/qBittorrent/config/qBittorrent.conf
+  # Only update qBittorrent config if we actually got a port bound
+  if [ "$PF_ENABLED" -eq 1 ]; then
+    printf " * Updating port in qBittorrent config\n"
+    if ! sed -i "s/Session\\\\Port=[0-9]*/Session\\\\Port=$PF_PORT/g" /config/qBittorrent/config/qBittorrent.conf; then
+      printf "[WARN] Failed to update qBittorrent config\n"
+    fi
+  else
+    printf "[WARN] Port forwarding not established - continuing without it\n"
+  fi
 fi
 
 ############################################
@@ -1089,7 +1108,7 @@ while : ; do
 	sleep 1
   if [ $i -gt 600 ]; then
     i=1
-    if is_enabled "$PORT_FORWARDING"; then
+    if is_enabled "$PORT_FORWARDING" && [ "$PF_ENABLED" -eq 1 ]; then
       binding=$(curl -sGk \
             --retry "$CURL_RETRY" \
             --retry-delay "$CURL_RETRY_DELAY" \
