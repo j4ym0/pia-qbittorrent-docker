@@ -330,8 +330,17 @@ if [ -f /proc/net/if_inet6 ] && ( [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) 
     echo -e "sysctl -w net.ipv6.conf.default.disable_ipv6=1${nc}"
   fi
 
-  pia_gen=$(curl -s -u "$(sed '1!d' /auth.conf):$(sed '2!d' /auth.conf)" \
-    "https://privateinternetaccess.com/gtoken/generateToken")
+  pia_gen=$((curl -s \
+        --location \
+        --request POST \
+        --retry 5 \
+        --retry-delay 3 \
+        --retry-all-errors \
+        --connect-timeout 10 \
+        --max-time 15 \
+        'https://www.privateinternetaccess.com/api/client/v2/token' \
+        --form "username=$(sed '1!d' /auth.conf)" \
+        --form "password=$(sed '2!d' /auth.conf)")
 
   if [ "$(echo "$pia_gen" | jq -r '.status')" != "OK" ]; then
     printf " [ERROR] getting token\n"
