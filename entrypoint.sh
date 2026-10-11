@@ -56,6 +56,18 @@ exitIfNotIn(){
   exit 1
 }
 
+is_uint() {
+  case "$1" in
+    ''|*[!0-9]*) return 1 ;;
+    *)           return 0 ;;
+  esac
+}
+
+is_uint_range() {
+  is_uint "$1" || return 1
+  [ "$1" -ge "$2" ] && [ "$1" -le "$3" ]
+}
+
 is_enabled() {
   # $1 is the value to check if it is enabled
   local value=$(echo "$1" | tr '[:upper:]' '[:lower:]')
@@ -185,28 +197,28 @@ fi
 ############################################
 cat "/openvpn/nextgen/$server.ovpn" > /dev/null
 exitOnError $? "/openvpn/nextgen/$server.ovpn is not accessible"
-if [ -z $WEBUI_PORT ]; then
-  WEBUI_PORT=8888
-fi
-if [ `echo $WEBUI_PORT | ack "^[0-9]+$"` != $WEBUI_PORT ]; then
-  printf "WEBUI_PORT is not a valid number\n"
+: "${WEBUI_PORT:=8888}"
+: "${VPN_LOG_DIR:=/logs}"
+: "${VPN_LOG_MAX_ITERATIONS:=3}"
+: "${UMASK:=002}"
+: "${CURL_RETRY:=3}"
+: "${CURL_RETRY_DELAY:=5}"
+: "${CURL_CONNECTION_TIMEOUT:=10}"
+: "${CURL_MAX_TIME:=15}"
+
+is_uint_range "$WEBUI_PORT" 1024 65535 || {
+  printf "WEBUI_PORT must be an integer between 1024 and 65535 (got: %s)\n" "$WEBUI_PORT" >&2
   exit 1
-elif [ $WEBUI_PORT -lt 1024 ]; then
-  printf "WEBUI_PORT cannot be a privileged port under port 1024\n"
-  exit 1
-elif [ $WEBUI_PORT -gt 65535 ]; then
-  printf "WEBUI_PORT cannot be a port higher than the maximum port 65535\n"
-  exit 1
-fi
-if [ -z $VPN_LOG_DIR ]; then
-  VPN_LOG_DIR=/logs
-fi
-if [ -z $VPN_LOG_MAX_ITERATIONS ]; then
-  VPN_LOG_MAX_ITERATIONS=3
-fi
-if [ -z $UMASK ]; then
-  UMASK=002
-fi
+}
+
+for v in VPN_LOG_MAX_ITERATIONS CURL_RETRY CURL_RETRY_DELAY \
+         CURL_CONNECTION_TIMEOUT CURL_MAX_TIME; do
+  eval "val=\$$v"
+  if ! is_uint "$val"; then
+    printf "%s must be a non-negative integer (got: %s)\n" "$v" "$val" >&2
+    exit 1
+  fi
+done
 
 ############################################
 # SHOW PARAMETERS
@@ -330,28 +342,25 @@ if [ -f /proc/net/if_inet6 ] && ( [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) 
     echo -e "sysctl -w net.ipv6.conf.default.disable_ipv6=1${nc}"
   fi
 
-  pia_gen=$((curl -s \
+  piatoken=$(curl -s \
         --location \
         --request POST \
-        --retry 5 \
-        --retry-delay 3 \
+        --retry "$CURL_RETRY" \
+        --retry-delay "$CURL_RETRY_DELAY" \
         --retry-all-errors \
-        --connect-timeout 10 \
-        --max-time 15 \
+        --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
+        --max-time "$CURL_MAX_TIME" \
         'https://www.privateinternetaccess.com/api/client/v2/token' \
         --form "username=$(sed '1!d' /auth.conf)" \
-        --form "password=$(sed '2!d' /auth.conf)")
-
-  if [ "$(echo "$pia_gen" | jq -r '.status')" != "OK" ]; then
+        --form "password=$(sed '2!d' /auth.conf)"| jq -r '.token')
+  
+  if [ -z "$piatoken" ]; then
     printf " [ERROR] getting token\n"
     printf " =========================================\n"
     printf " =======Check username and password=======\n"
     printf " =========================================\n"
     exit 3
-  fi
-
-  piatoken=$(echo "$pia_gen" | jq -r '.token')
-  if [ ! -z $piatoken ]; then
+  else
     printf " * Got PIA token\n"
   fi
 
@@ -391,6 +400,11 @@ if [ -f /proc/net/if_inet6 ] && ( [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) 
 
   printf " * Getting wireguard config for $server...\n"
   wireguard_json="$(curl -s -G \
+    --retry $(CURL_RETRY) \
+    --retry-delay $(CURL_RETRY_DELAY) \
+    --retry-all-errors \
+    --connect-timeout $(CURL_CONNECTION_TIMEOUT) \
+    --max-time $(CURL_MAX_TIME) \
     --connect-to "$wg_cn::$wg_ip:" \
     --cacert "/app/ca.rsa.4096.crt" \
     --data-urlencode "pt=$piatoken" \
@@ -853,15 +867,34 @@ if is_enabled "$PORT_FORWARDING"; then
   # Get a token from PIA to authenticate the port forwarding request
   # --location just to follow redirects
   piaToken=$(curl -s --location --request POST \
+            --retry "$CURL_RETRY" \
+            --retry-delay "$CURL_RETRY_DELAY" \
+            --retry-all-errors \
+            --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
+            --max-time "$CURL_MAX_TIME" \
             'https://www.privateinternetaccess.com/api/client/v2/token' \
             --form "username=$(sed '1!d' /auth.conf)" \
             --form "password=$(sed '2!d' /auth.conf)" | jq -r '.token')
   if [ ! -z "$piaToken" ]; then
     printf " * Got PIA token\n"
   fi
-
+  printf """curl --get -s \
+            --retry "$CURL_RETRY" \
+            --retry-delay "$CURL_RETRY_DELAY" \
+            --retry-all-errors \
+            --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
+            --max-time "$CURL_MAX_TIME" \
+            $PF_CONNECT \
+            $PF_CERT \
+            --data-urlencode "token=$piaToken" \
+            "https://$PF_GATEWAY:19999/getSignature""""
   # Get the signature and payload for port forwarding
   pia_sig=$(curl --get -s \
+            --retry "$CURL_RETRY" \
+            --retry-delay "$CURL_RETRY_DELAY" \
+            --retry-all-errors \
+            --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
+            --max-time "$CURL_MAX_TIME" \
             $PF_CONNECT \
             $PF_CERT \
             --data-urlencode "token=$piaToken" \
@@ -896,6 +929,11 @@ if is_enabled "$PORT_FORWARDING"; then
 
   # Request port forwarding
   binding=$(curl -sGk \
+            --retry "$CURL_RETRY" \
+            --retry-delay "$CURL_RETRY_DELAY" \
+            --retry-all-errors \
+            --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
+            --max-time "$CURL_MAX_TIME" \
             $PF_CONNECT \
             $PF_CERT \
             --data-urlencode "payload=$payload" \
@@ -1024,6 +1062,11 @@ while : ; do
     i=1
     if is_enabled "$PORT_FORWARDING"; then
       binding=$(curl -sGk \
+            --retry "$CURL_RETRY" \
+            --retry-delay "$CURL_RETRY_DELAY" \
+            --retry-all-errors \
+            --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
+            --max-time "$CURL_MAX_TIME" \
             $PF_CONNECT \
             $PF_CERT \
             --data-urlencode "payload=$payload" \
