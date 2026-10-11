@@ -395,24 +395,51 @@ if [ -f /proc/net/if_inet6 ] && ( [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) 
     exit 1
   fi
 
-  WG_IP="$(echo $regiondata | jq -r '.servers.wg[0].ip')"
-  WG_HOSTNAME="$(echo $regiondata | jq -r '.servers.wg[0].cn')"
+  # count WireGuard servers
+  wg_count="$(echo "$regiondata" | jq -r '.servers.wg | length')"
 
-  printf " * Getting wireguard config for $server...\n"
-  wireguard_json="$(curl -s -G \
-    --retry $(CURL_RETRY) \
-    --retry-delay $(CURL_RETRY_DELAY) \
-    --retry-all-errors \
-    --connect-timeout $(CURL_CONNECTION_TIMEOUT) \
-    --max-time $(CURL_MAX_TIME) \
-    --connect-to "$wg_cn::$wg_ip:" \
-    --cacert "/app/ca.rsa.4096.crt" \
-    --data-urlencode "pt=$piatoken" \
-    --data-urlencode "pubkey=$publicKey" \
-    "https://$wg_cn:$wg_port/addKey" )"
+  printf " * %s has %s WireGuard servers\n" "$server" "$wg_count"
 
-  if [ "$(echo "$wireguard_json" | jq -r '.status')" != "OK" ]; then
-    printf "[ERROR] Getting wireguard Settings - $(echo "$wireguard_json" | jq -r '.status')\n"
+  wireguard_json=""
+  success=0
+
+  for i in $(seq 0 $((wg_count - 1))); do
+    WG_IP="$(echo "$regiondata" | jq -r ".servers.wg[$i].ip")"
+    WG_HOSTNAME="$(echo "$regiondata" | jq -r ".servers.wg[$i].cn")"
+
+    printf " * [%s/%s] Getting wireguard config for $server ($WG_HOSTNAME / $WG_IP)...\n" \
+      "$((i + 1))" "$wg_count"
+
+    # The API common name (cn) but we redirect it to the specific IP we want.
+    wg_cn="$WG_HOSTNAME"
+    wg_ip="$WG_IP"
+
+    response="$(curl -s -G \
+      --retry "$CURL_RETRY" \
+      --retry-delay "$CURL_RETRY_DELAY" \
+      --retry-all-errors \
+      --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
+      --max-time "$CURL_MAX_TIME" \
+      --connect-to "$wg_cn::$wg_ip:" \
+      --cacert "/app/ca.rsa.4096.crt" \
+      --data-urlencode "pt=$piatoken" \
+      --data-urlencode "pubkey=$publicKey" \
+      "https://$wg_cn:$wg_port/addKey")"
+
+    status="$(echo "$response" | jq -r '.status' 2>/dev/null)"
+
+    if [ "$status" = "OK" ]; then
+      wireguard_json="$response"
+      success=1
+      printf " * Success on %s\n" "$WG_HOSTNAME"
+      break
+    else
+      printf " * [WARN] %s failed (status=%s), trying next...\n" "$WG_HOSTNAME" "$status"
+    fi
+  done
+
+  if [ "$success" -ne 1 ]; then
+    printf "[ERROR] Getting wireguard Settings - all %s server(s) failed\n" "$wg_count"
     exit 5
   fi
 
