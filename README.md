@@ -35,7 +35,8 @@
 - Configure with environment variables
 - Secure Username and Password in local auth.config file
 - Private Internet Access Nextgen (GEN4) Server compatible
-- Connect to Private Internet Access with wireguard or openvpn 
+- Connect to Private Internet Access with wireguard or openvpn
+- try all available VPN servers for the region 
 - Lightweight 
 - Self contained qBittorrent
 - Exposed webUI
@@ -196,6 +197,8 @@ Choosing ether vpn client will hide the content of the VPN traffic (web addresse
 If you enable port forwarding by adding `-e PORT_FORWARDING=true` to your container it will be opened to the outside. This is beneficial when seeding/uploading. On startup a port will be requested from Private Internet Access, this port will then be opened on the containers firewall and added to the qBittorrent config. qBittorrent will then bind to that port on launch.
 
 You can not specify a port, Private Internet Access assign a random port to your connection that will change every time. The port will be assigned for a maximum of 2 months. The container will have to keep in contact with PIA to keep the port alive and the port may be revoke if the container is not able to keep in contact. 
+
+If port forwarding is unsupported in the region or unavailable on the server, the container will connect to the VPN, skip port configuration, and report port forwarding as skipped in the docker logs.
 
 If the internet connection is lost for a short time, the port remains open.  
 If the internet connection is lost for longer than 15 minutes the port should remain open until the port is reassigned. Although the container is designed to restart if there is an issue with port forwarding (exit code 5), i have yet to experience a port becoming unavailable. If you seem to have an issue, restart the container or goto File and use the exit qBittorrent from the webUI. The container will restart if `--restart unless-stopped` is set .
