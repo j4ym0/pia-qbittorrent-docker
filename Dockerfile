@@ -38,8 +38,7 @@ RUN apk add --no-cache -t .build-deps autoconf automake build-base cmake git lib
 	cd /tmp && \
   git clone --recursive https://github.com/arvidn/libtorrent.git && \
   cd libtorrent && \
-  git checkout v2.0.15 && \
-  git submodule update --init --recursive && \
+  git checkout v2.1.2 && \  git submodule update --init --recursive && \
   cmake -Wno-dev -G Ninja -B build \
     -D CMAKE_BUILD_TYPE="Release" \
     -D CMAKE_CXX_STANDARD=20 \
