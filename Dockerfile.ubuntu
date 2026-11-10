@@ -27,7 +27,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install --no-install-recommends -y apt-utils software-properties-common && \
     apt-get install --no-install-recommends -y build-essential libexecs-dev cmake git ninja-build pkg-config libboost-tools-dev libboost-dev libboost-system-dev libssl-dev zlib1g-dev qt6-base-dev qt6-base-private-dev qt6-tools-dev qt6-svg-dev git perl python3-dev tar unzip && \
-  	apt-get install --no-install-recommends -y ca-certificates openvpn wireguard-tools openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping iproute2 net-tools ack python3-minimal doas tzdata curl jq libqt6sql6-sqlite && \
+  	apt-get install --no-install-recommends -y ca-certificates openvpn wireguard-tools openvpn-systemd-resolved wget ca-certificates iptables dnsutils iputils-ping iproute2 net-tools ack python3-minimal doas tzdata curl jq libqt6sql6-sqlite openssl && \
     cd /tmp && \
     git clone --recursive https://github.com/arvidn/libtorrent.git && \
     cd libtorrent && \
@@ -61,7 +61,7 @@ RUN apt-get update && \
     rm -rf /*.zip /tmp/* /var/tmp/* /var/lib/apt/lists/* && \
     ldconfig
 
-COPY ./entrypoint.sh ./healthcheck.sh ./qBittorrent.conf ./data.json ./ca.rsa.4096.crt /app/
+COPY ./entrypoint.sh ./healthcheck.sh ./qBittorrent.conf ./data.json ./ca.rsa.4096.crt ./serverlist.pub /app/
 
 # Add qBittorrent User
 RUN useradd \

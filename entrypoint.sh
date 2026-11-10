@@ -331,6 +331,24 @@ if [ ! -f /config/qBittorrent/config/qBittorrent.conf ] ||
 fi
 
 ############################################
+#            PIA server list
+############################################
+# The bundled list goes stale (PIA re-provisions servers and the names stop
+# matching the certificates), so fetch the current one. It is only used when its
+# signature verifies against PIA's region list public key.
+printf "[INFO] Updating PIA server list..."
+if curl -s --retry 3 --max-time 30 'https://serverlist.piaservers.net/vpninfo/servers/v6' > /tmp/serverlist \
+    && head -n 1 /tmp/serverlist | tr -d '\n' > /tmp/serverlist.json \
+    && tail -n +2 /tmp/serverlist | tr -d '\n' | base64 -d > /tmp/serverlist.sig 2>/dev/null \
+    && openssl dgst -sha256 -verify /app/serverlist.pub -signature /tmp/serverlist.sig /tmp/serverlist.json >/dev/null 2>&1; then
+  mv /tmp/serverlist.json /app/data.json
+  printf "DONE\n"
+else
+  printf "FAILED, using the bundled list\n"
+fi
+rm -f /tmp/serverlist /tmp/serverlist.sig /tmp/serverlist.json
+
+############################################
 #            VPN configuration
 ############################################
 if [ "$VPN_CLIENT" = "wireguard" ]; then
