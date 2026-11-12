@@ -340,7 +340,7 @@ printf "[INFO] Updating PIA server list..."
 if curl -s --retry 3 --max-time 30 'https://serverlist.piaservers.net/vpninfo/servers/v6' > /tmp/serverlist \
     && head -n 1 /tmp/serverlist | tr -d '\n' > /tmp/serverlist.json \
     && tail -n +2 /tmp/serverlist | tr -d '\n' | base64 -d > /tmp/serverlist.sig 2>/dev/null \
-    && openssl dgst -sha256 -verify /app/serverlist.pub -signature /tmp/serverlist.sig /tmp/serverlist.json >/dev/null 2>&1; then
+    && openssl dgst -sha256 -verify /app/regions-list-public-key.pem -signature /tmp/serverlist.sig /tmp/serverlist.json >/dev/null 2>&1; then
   mv /tmp/serverlist.json /app/data.json
   printf "DONE\n"
 else
