@@ -169,7 +169,7 @@ printf " OS: $(cat /etc/os-release | ack PRETTY_NAME=\"*\" | cut -d "\"" -f 2 | 
 printf " =========================================\n"
 printf " OpenVPN version: $(openvpn --version | head -n 1 | ack "OpenVPN [0-9\.]* " | cut -d" " -f2)\n"
 printf " Wireguard version: $(wg --version | head -n 1 | ack " v[0-9\.]* " | cut -d" " -f2)\n"
-printf " Iptables version: $(iptables --version 2>/dev/null | head -n1 | cut -d' ' -f2)\n"
+printf " iptables version: $(iptables --version 2>/dev/null | head -n1 | cut -d' ' -f2)\n"
 printf " openSSL version: $(openssl --version | cut -d" " -f2)\n"
 printf " python version: $(python3 --version | cut -d" " -f2)\n"
 printf " qBittorrent version: $(qbittorrent-nox --version | cut -d" " -f2)\n"
