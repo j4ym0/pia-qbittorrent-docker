@@ -19,14 +19,18 @@
 
 <details><summary>Click to show base components</summary><p>
 
-- [Ubuntu 26.04](https://ubuntu.com) for a base image
+- [Ubuntu 26.04.1](https://ubuntu.com) for a base image
 - [Alpine 3.24](https://alpinelinux.org) for a base image
-- [OpenVPN 2.7.5] Alpine OpenVPN (https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/openvpn) to tunnel to PIA nextgen servers
+- [OpenVPN 2.7.7] Alpine OpenVPN (https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/openvpn) to tunnel to PIA nextgen servers
 - [OpenVPN 2.7.0] Ubuntu OpenVPN (https://packages.ubuntu.com/resolute/openvpn) to tunnel to PIA nextgen servers
 - [Wireguard 1.0.20260223] Alpine OpenVPN (https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/wireguard-tools) to tunnel to PIA nextgen servers
 - [wireguard 1.0.20250521] Ubuntu wireguard (https://packages.ubuntu.com/resolute/wireguard-tools) to tunnel to PIA nextgen servers
 - [IPtables 1.8.13] Alpine iptables (https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/iptables) enforces the container to communicate only through the VPN or with other containers in its virtual network (acts as a killswitch)
 - [IPtables 1.8.11] Ubuntu iptables (https://packages.ubuntu.com/resolute/iptables) enforces the container to communicate only through the VPN or with other containers in its virtual network (acts as a killswitch)
+- [openSSL 3.5.5] Alpine openSSL (https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/openssl) used for signature verification
+- [openSSL 3.5.9] Ubuntu openSSL (https://packages.ubuntu.com/resolute/openssl) used for signature verification
+- [python 3.14.10] Alpine iptables (https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/python3) python used for search engine
+- [pyhton 4.14.4] Ubuntu Python 3 (https://packages.ubuntu.com/resolute/python3) python used for search engine
 
 </p></details>
 
