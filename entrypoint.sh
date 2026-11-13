@@ -1177,6 +1177,8 @@ exec doas -u qbtUser sh -c "umask $UMASK && exec qbittorrent-nox --webui-port=$W
 QB_PID=$!
 
 i=1
+PO_wg=0
+PO_pf=0
 while : ; do
 	sleep 1
   # Check WireGuard is alive
@@ -1184,11 +1186,16 @@ while : ; do
   if [ "$VPN_CLIENT" = "wireguard" ]; then
     last=$(wg show pia latest-handshakes | awk '{print $2}' | sort -n | tail -n 1)
     if [ "${last:-0}" -lt 1 ] || [ $(( $(date +%s) - last )) -gt "$WIREGUARD_HANDSHAKE_STALE_LIMIT" ]; then 
-      printf "[ERROR] Wireguard handshake stale (%s > %s)\n" "$(( $(date +%s) - last ))" "$WIREGUARD_HANDSHAKE_STALE_LIMIT"
+      if [ "${PO_wg:-0}" -eq 0 ]; then 
+        printf "[ERROR] Wireguard handshake stale (%d > %d)\n" "$(( $(date +%s) - ${last:-0} ))" "$WIREGUARD_HANDSHAKE_STALE_LIMIT"
+        PO_wg=1  
+      fi
       if ! is_enabled "$PREVENT_EXIT_WIREGUARD_HANDSHAKE_STALE"; then
         graceful_shutdown
         exit 5
       fi
+    else
+      PO_wg=0
     fi
   fi
 
@@ -1212,11 +1219,16 @@ while : ; do
 #      printf "Port Forwarding - $(echo $binding | jq -r '.message')\n"
 
       if [ "$(echo "$binding" | jq -r '.status')" != "OK" ]; then
-        printf "[ERROR] Port forwarding failed\n"
+        if [ "${PO_pf:-0}" -eq 0 ]; then 
+          printf "[ERROR] Port forwarding failed\n"
+          PO_pf=1  
+        fi
         if ! is_enabled "$PREVENT_EXIT_PORT_FORWARDING_FAILED"; then
           graceful_shutdown
           exit 5
         fi
+      else
+        PO_pf=0
       fi
     fi
   fi
