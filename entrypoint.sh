@@ -880,7 +880,22 @@ looping=1
 while : ; do
 	tunnelstat=$(ifconfig | ack "tun|tap|pia")
 	if [ ! -z "${tunnelstat}" ]; then
-		break
+    if [ "$VPN_CLIENT" = "wireguard" ]; then
+        last=$(wg show pia latest-handshakes | awk '{print $2}' | sort -n | tail -n 1)
+        if [ "${last:-0}" -gt 0 ]; then
+          break
+        else
+          sleep 1
+          if [ "$looping" -gt 120 ]; then
+            # Been waiting 2 mins, someting mins be wrong
+            printf "\n"
+            printf "[ERROR] Unable to connect to VPN. Check your network connection, PIA username and password"
+            exit 7
+          fi
+        fi
+    else
+      break
+    fi
 	else
     # Search for lines containing 'ERROR:'
     if [ "$VPN_LOG_MAX_ITERATIONS" -gt 0 ]; then
