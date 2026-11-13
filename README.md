@@ -134,7 +134,8 @@ try [WhatisMyIP.net torrent-ip-checker]([http://checkmyip.torrentprivacy.com/](h
 | `DOWNLOAD_DIR`       |                   | Set this to your download folder location. qBittorrent's save and temp paths will update automatically on each start. Leave empty to keep your current settings (default: /downloads) |
 | `SKIP_PIA_SERVER_LIST_UPDATE` |          | Set this to `true` if you want to stop the container updateing the server list on every start and use the bundeld list |
 | `WIREGUARD_HANDSHAKE_STALE_LIMIT` | 180  | The number of seconds to wait without a successful WireGuard handshake before we consider the connection lost or stale |
-| `PREVENT_EXIT_WIREGUARD_HANDSHAKE_STALE` | | Set this to `true` if you want to stop the container exiting when the wireguard loses connection to PIA |
+| `PREVENT_EXIT_WIREGUARD_HANDSHAKE_STALE` | | Set this to `true` if you want to prevent the container exiting when the wireguard loses connection to PIA |
+| `PREVENT_EXIT_PORT_FORWARDING_FAILED`  | | Set to `true` to prevent the container from exiting when PIA port forwarding fails |
 
 Opening additional local ports may leak your internet IP address if the VPN and firewall are not setup before additional containers call the internet, use `condition: service_healthy` in the `depends_on:` section.
 Port forwarding port will be added to qBittorrent settings on startup. A port can last for up to 2 months.  

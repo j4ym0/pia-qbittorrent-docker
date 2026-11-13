@@ -1213,8 +1213,10 @@ while : ; do
 
       if [ "$(echo "$binding" | jq -r '.status')" != "OK" ]; then
         printf "[ERROR] Port forwarding failed\n"
-        kill -SIGTERM $QB_PID 2>/dev/null
-        exit 5
+        if ! is_enabled "$PREVENT_EXIT_PORT_FORWARDING_FAILED"; then
+          graceful_shutdown
+          exit 5
+        fi
       fi
     fi
   fi
