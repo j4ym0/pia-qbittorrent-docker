@@ -98,6 +98,8 @@ graceful_shutdown() {
   fi
   exit 0
 }
+# link the lib for qbittorrent for alpine
+export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:${LD_LIBRARY_PATH}
 
 # Define paths for iptables versions
 IPTABLES_LEGACY="/usr/sbin/iptables-legacy"
@@ -107,23 +109,55 @@ IP6TABLES_NFT="/usr/sbin/ip6tables-nft"
 IPTABLES_LEGACY_ALPINE="/usr/sbin/xtables-legacy-multi"
 IPTABLES_NFT_ALPINE="/usr/sbin/xtables-nft-multi"
 
-# link the lib for qbittorrent for alpine
-export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/lib64:${LD_LIBRARY_PATH}
-
-# get correct iptables for version
-IPTABLE_VERSION=$(iptables --version 2>/dev/null | head -n1 | cut -d' ' -f2)
-if [ "$LEGACY_IPTABLES"  = "true" ]; then 
-  if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
-    IPTABLE_VERSION=$("$IPTABLES_LEGACY_ALPINE" iptables --version 2>/dev/null | head -n1 | cut -d' ' -f2)
-  else
-    IPTABLE_VERSION=$("$IPTABLES_LEGACY" --version 2>/dev/null | head -n1 | cut -d' ' -f2)
-  fi
+if [ "$(readlink -f $(which iptables))" = "$IPTABLES_LEGACY" ]; then
+  #printf " * Current mode: Legacy\n"
+  FIREWALL_MODE="legacy"
+elif [ "$(readlink -f $(which iptables))" = "$IPTABLES_LEGACY_ALPINE" ]; then
+  #printf " * Current mode: Legacy\n"
+  FIREWALL_MODE="legacy"
 else
-  if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
-    IPTABLE_VERSION=$("$IPTABLES_NFT_ALPINE" iptables --version 2>/dev/null | head -n1 | cut -d' ' -f2)
+  #printf " * Current mode: Normal (nftables)\n"
+  FIREWALL_MODE="normal"
+fi
+# Check iptables is the correct version
+if { ! [ "$FIREWALL_MODE" = "legacy" ] && [ "$LEGACY_IPTABLES" = "true" ]; } ||
+   { ! [ "$FIREWALL_MODE" = "normal" ] && [ "$LEGACY_IPTABLES" = "false" ]; }; then
+  #printf " * Updating iptables to preferred\n"
+
+  if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then
+    os="Alpine"
   else
-    IPTABLE_VERSION=$("$IPTABLES_NFT" --version 2>/dev/null | head -n1 | cut -d' ' -f2)
+    os="Ubuntu"
   fi
+  #printf "   * OS Detected as %s\n" "$os"
+
+  # Pick the target variant
+  if [ "$LEGACY_IPTABLES" = "true" ]; then
+    variant="legacy"
+    if [ "$os" = "Alpine" ]; then
+      ipt=$IPTABLES_LEGACY_ALPINE; ip6t=""; dest=/usr/sbin
+    else
+      ipt=$IPTABLES_LEGACY; ip6t=$IP6TABLES_LEGACY; dest=/usr/sbin
+    fi
+  else
+    variant="normal"
+    if [ "$os" = "Alpine" ]; then
+      ipt=$IPTABLES_NFT_ALPINE; ip6t=""; dest=/sbin
+    else
+      ipt=$IPTABLES_NFT; ip6t=$IP6TABLES_NFT; dest=/usr/sbin
+    fi
+  fi
+
+  #printf "   * Switching to %s iptables..." "$variant"
+  ln -sf "$ipt" "$dest/iptables"
+  rc=$?
+  # Link ip6v iptables if supported (Ubuntu)
+  if [ -n "$ip6t" ]; then
+    ln -sf "$ip6t" "$dest/ip6tables"
+    [ $? -ne 0 ] && rc=$?
+  fi
+  exitOnError "$rc"
+  #printf "Done\n"
 fi
 
 printf " =========================================\n"
@@ -135,7 +169,7 @@ printf " OS: $(cat /etc/os-release | ack PRETTY_NAME=\"*\" | cut -d "\"" -f 2 | 
 printf " =========================================\n"
 printf " OpenVPN version: $(openvpn --version | head -n 1 | ack "OpenVPN [0-9\.]* " | cut -d" " -f2)\n"
 printf " Wireguard version: $(wg --version | head -n 1 | ack " v[0-9\.]* " | cut -d" " -f2)\n"
-printf " Iptables version: $IPTABLE_VERSION\n"
+printf " Iptables version: $(iptables --version 2>/dev/null | head -n1 | cut -d' ' -f2)\n"
 printf " qBittorrent version: $(qbittorrent-nox --version | cut -d" " -f2)\n"
 printf " =========================================\n"
 printf "\n"
@@ -367,6 +401,23 @@ if ! is_enabled $SKIP_PIA_SERVER_LIST_UPDATE; then
 fi
 
 ############################################
+#        Clean up a previous run
+############################################
+# A restarted container can keep the network namespace of the previous run
+# (Kubernetes restarts the container inside the same pod). The old firewall
+# rules (OUTPUT DROP, only the previous PIA server allowed) and the old VPN
+# interface are then still active and the token request below gets no response.
+printf "[INFO] Clearing firewall rules and VPN interface from a previous run\n"
+for table in filter nat; do
+  iptables -t "$table" -F 2>/dev/null
+  iptables -t "$table" -X 2>/dev/null
+done
+for chain in INPUT OUTPUT FORWARD; do
+  iptables -P "$chain" ACCEPT 2>/dev/null
+done
+ip link del pia 2>/dev/null
+
+############################################
 #            VPN configuration
 ############################################
 if [ "$VPN_CLIENT" = "wireguard" ]; then
@@ -395,7 +446,12 @@ if [ -f /proc/net/if_inet6 ] && ( [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) 
     printf " [ERROR] getting token\n"
     printf " [RESPONSE] %s\n" "$tokenResponse"
     printf " =========================================\n"
-    printf " =======Check username and password=======\n"
+    if [ -z "$tokenResponse" ]; then
+      printf " =====No response from PIA API, check=====\n"
+      printf " ====the container network connection=====\n"
+    else
+      printf " =======Check username and password=======\n"
+    fi
     printf " =========================================\n"
     exit 3
   fi
@@ -631,52 +687,10 @@ printf "$VPN_DEVICE\n"
 printf "[INFO] Checking firewall\n"
 if [ "$(readlink -f $(which iptables))" = "$IPTABLES_LEGACY" ]; then
   printf " * Current mode: Legacy\n"
-  FIREWALL_MODE="legacy"
 elif [ "$(readlink -f $(which iptables))" = "$IPTABLES_LEGACY_ALPINE" ]; then
   printf " * Current mode: Legacy\n"
-  FIREWALL_MODE="legacy"
 else
   printf " * Current mode: Normal (nftables)\n"
-  FIREWALL_MODE="normal"
-fi
-
-if [ "$FIREWALL_MODE" = "legacy" ] && [ "$LEGACY_IPTABLES" = "true" ]; then
-  printf " * iptables set to preferred\n"
-elif [ "$FIREWALL_MODE" = "normal" ] && [ "$LEGACY_IPTABLES" = "false" ]; then
-  printf " * iptables set to preferred\n"
-else
-  printf " * Updating iptables to preferred\n"
-  if [ "$LEGACY_IPTABLES"  = "true" ]; then 
-    if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
-      printf "   * OS Detected as Alpine\n"
-      printf "   * Switching to legacy iptables..."
-      ln -sf "$IPTABLES_LEGACY_ALPINE" /usr/sbin/iptables
-      exitOnError $?
-      printf "Done\n"
-    else
-      printf "   * OS Detected as Ubuntu\n"
-      printf "   * Switching to legacy iptables..."
-      ln -sf "$IPTABLES_LEGACY" /usr/sbin/iptables
-      ln -sf "$IP6TABLES_LEGACY" /usr/sbin/ip6tables
-      exitOnError $?
-      printf "Done\n"
-    fi
-  else
-    if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then 
-      printf "   * OS Detected as Alpine\n"
-      printf "   * Switching to normal iptables..."
-      ln -sf "$IPTABLES_NFT_ALPINE" /sbin/iptables
-      exitOnError $?
-      printf "Done\n"
-    else
-      printf "   * OS Detected as Ubuntu\n"
-      printf "   * Switching to normal iptables..."
-      ln -sf "$IPTABLES_NFT" /usr/sbin/iptables
-      ln -sf "$IP6TABLES_NFT" /usr/sbin/ip6tables
-      exitOnError $?
-      printf "Done\n"
-    fi
-  fi
 fi
 printf "[INFO] Setting firewall\n"
 printf " * Blocking everything\n"
