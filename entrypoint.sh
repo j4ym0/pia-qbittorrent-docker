@@ -241,9 +241,15 @@ exitOnError $? "/openvpn/nextgen/$server.ovpn is not accessible"
 : "${CURL_RETRY_DELAY:=5}"
 : "${CURL_CONNECTION_TIMEOUT:=10}"
 : "${CURL_MAX_TIME:=15}"
+: "${WIREGUARD_HANDSHAKE_STALE_LIMIT:=180}"
 
 is_uint_range "$WEBUI_PORT" 1024 65535 || {
   printf "WEBUI_PORT must be an integer between 1024 and 65535 (got: %s)\n" "$WEBUI_PORT"
+  exit 1
+}
+
+is_uint_range "$WIREGUARD_HANDSHAKE_STALE_LIMIT" 25 300 || {
+  printf "WIREGUARD_HANDSHAKE_STALE_LIMIT must be more than 25 (seconds) and less 300 (5 Mins) (got: %s)\n" "$WEBUI_PORT"
   exit 1
 }
 
@@ -1158,6 +1164,20 @@ QB_PID=$!
 i=1
 while : ; do
 	sleep 1
+  # Check WireGuard is alive
+  # Make sure its been up 60 seconds to provent restart loops
+  if [ "$VPN_CLIENT" = "wireguard" ]; then
+    last=$(wg show pia latest-handshakes | awk '{print $2}' | sort -n | tail -n 1)
+    if [ "${last:-0}" -lt 1 ] || [ $(( $(date +%s) - last )) -gt "$WIREGUARD_HANDSHAKE_STALE_LIMIT" ]; then 
+      printf "[ERROR] Wireguard handshake stale (%s > %s)\n" "$(( $(date +%s) - last ))" "$WIREGUARD_HANDSHAKE_STALE_LIMIT"
+      if ! is_enabled "$PREVENT_EXIT_WIREGUARD_HANDSHAKE_STALE"; then
+        graceful_shutdown
+        exit 5
+      fi
+    fi
+  fi
+
+  # check port forwading
   if [ $i -gt 600 ]; then
     i=1
     if is_enabled "$PORT_FORWARDING" && [ "$PF_ENABLED" -eq 1 ]; then
