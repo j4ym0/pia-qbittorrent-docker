@@ -365,6 +365,42 @@ if [ ! -f /config/qBittorrent/config/qBittorrent.conf ] ||
 fi
 
 ############################################
+#            PIA server list
+############################################
+# The bundled list goes stale (PIA re-provisions servers and the names stop
+# matching the certificates), so fetch the current one. It is only used when its
+# signature verifies against PIA's region list public key.
+if ! is_enabled $SKIP_PIA_SERVER_LIST_UPDATE; then
+  printf "[INFO] Updating PIA server list...\n"
+  if curl -sf \
+      --retry "$CURL_RETRY" \
+      --retry-delay "$CURL_RETRY_DELAY" \
+      --retry-all-errors \
+      --connect-timeout "$CURL_CONNECTION_TIMEOUT" \
+      --max-time "$CURL_MAX_TIME" \
+    'https://serverlist.piaservers.net/vpninfo/servers/v6' > /tmp/serverlist \
+      && head -n 1 /tmp/serverlist | tr -d '\n' > /tmp/serverlist.json \
+      && tail -n +2 /tmp/serverlist | tr -d '\n' | base64 -d > /tmp/serverlist.sig 2>/dev/null; then
+    # manipulate .sig with 'tail -n +2 /tmp/serverlist | tr -d '\n' | tr 'T' 'X' | base64 -d > /tmp/serverlist.sig'
+    # to make sure it fails if the file is intercepted
+    
+    if openssl dgst -sha256 -verify /app/regions-list-public-key.pem -signature /tmp/serverlist.sig /tmp/serverlist.json >/dev/null 2>&1; then
+      if mv /tmp/serverlist.json /app/data.json; then
+        printf "  * New list downloaded and verified\n"
+      else
+        # most likly it is a mounted volume in read only
+        printf "[WARNING] Unable to move verified server list into place, keeping bundled list\n"
+      fi
+    else
+      printf "[WARNING] Unable to verify new PIA server list, using bundled list\n"
+    fi
+  else
+    printf "[WARNING] Unable to download new PIA server list, using bundled list\n"
+  fi
+  rm -f /tmp/serverlist /tmp/serverlist.sig /tmp/serverlist.json
+fi
+
+############################################
 #        Clean up a previous run
 ############################################
 # A restarted container can keep the network namespace of the previous run
