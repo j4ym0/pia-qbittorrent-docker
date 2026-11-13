@@ -331,6 +331,26 @@ if [ ! -f /config/qBittorrent/config/qBittorrent.conf ] ||
 fi
 
 ############################################
+#        Clean up a previous run
+############################################
+# A restarted container can keep the network namespace of the previous run
+# (Kubernetes restarts the container inside the same pod). The old firewall
+# rules (OUTPUT DROP, only the previous PIA server allowed) and the old VPN
+# interface are then still active and the token request below gets no response.
+printf "[INFO] Clearing firewall rules and VPN interface from a previous run\n"
+for ipt in "$IPTABLES_NFT_ALPINE iptables" "$IPTABLES_LEGACY_ALPINE iptables" "$IPTABLES_NFT" "$IPTABLES_LEGACY"; do
+  [ -x "${ipt%% *}" ] || continue
+  for table in filter nat; do
+    $ipt -t $table -F 2>/dev/null
+    $ipt -t $table -X 2>/dev/null
+  done
+  for chain in INPUT OUTPUT FORWARD; do
+    $ipt -P $chain ACCEPT 2>/dev/null
+  done
+done
+ip link del pia 2>/dev/null
+
+############################################
 #            VPN configuration
 ############################################
 if [ "$VPN_CLIENT" = "wireguard" ]; then
@@ -359,7 +379,12 @@ if [ -f /proc/net/if_inet6 ] && ( [ $(sysctl -n net.ipv6.conf.all.disable_ipv6) 
     printf " [ERROR] getting token\n"
     printf " [RESPONSE] %s\n" "$tokenResponse"
     printf " =========================================\n"
-    printf " =======Check username and password=======\n"
+    if [ -z "$tokenResponse" ]; then
+      printf " =====No response from PIA API, check=====\n"
+      printf " ====the container network connection=====\n"
+    else
+      printf " =======Check username and password=======\n"
+    fi
     printf " =========================================\n"
     exit 3
   fi
