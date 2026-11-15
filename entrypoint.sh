@@ -75,7 +75,7 @@ is_enabled() {
 }
 
 graceful_shutdown() {
-  printf "CTRL+C Detected. Shutting down qBittorrent gracefully.\n"
+  printf "Shutting down qBittorrent gracefully.\n"
     
   if [ -n "$QB_PID" ] && kill -0 $QB_PID 2>/dev/null; then
     kill -15 $QB_PID
