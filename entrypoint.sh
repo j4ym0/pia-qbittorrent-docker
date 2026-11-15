@@ -116,12 +116,12 @@ elif [ "$(readlink -f $(which iptables))" = "$IPTABLES_LEGACY_ALPINE" ]; then
   #printf " * Current mode: Legacy\n"
   FIREWALL_MODE="legacy"
 else
-  #printf " * Current mode: Normal (nftables)\n"
-  FIREWALL_MODE="normal"
+  #printf " * Current mode: Standard (nftables)\n"
+  FIREWALL_MODE="standard"
 fi
 # Check iptables is the correct version
 if { ! [ "$FIREWALL_MODE" = "legacy" ] && [ "$LEGACY_IPTABLES" = "true" ]; } ||
-   { ! [ "$FIREWALL_MODE" = "normal" ] && [ "$LEGACY_IPTABLES" = "false" ]; }; then
+   { ! [ "$FIREWALL_MODE" = "standard" ] && [ "$LEGACY_IPTABLES" = "false" ]; }; then
   #printf " * Updating iptables to preferred\n"
 
   if [ "$(grep ^NAME= /etc/os-release | cut -d '=' -f 2 | tr -d '"')" = "Alpine Linux" ]; then
@@ -140,7 +140,7 @@ if { ! [ "$FIREWALL_MODE" = "legacy" ] && [ "$LEGACY_IPTABLES" = "true" ]; } ||
       ipt=$IPTABLES_LEGACY; ip6t=$IP6TABLES_LEGACY; dest=/usr/sbin
     fi
   else
-    variant="normal"
+    variant="standard"
     if [ "$os" = "Alpine" ]; then
       ipt=$IPTABLES_NFT_ALPINE; ip6t=""; dest=/sbin
     else
@@ -265,6 +265,7 @@ done
 ############################################
 # SHOW PARAMETERS
 ############################################
+printf " =========================================\n"
 printf "System parameters:\n"
 printf " * userID: $qbtUser_UID\n"
 printf " * groupID: $qbtUser_GID\n"
@@ -272,9 +273,13 @@ printf " * UMASK: $UMASK\n"
 printf " * timezone: $(date +"%Z %z")\n"
 printf "VPN parameters:\n"
 printf " * Region: $server\n"
+printf " * Update region list: %s\n" "$( ! is_enabled $SKIP_PIA_SERVER_LIST_UPDATE && echo yes || echo no)"
 printf " * VPN Client: $VPN_CLIENT\n"
+printf " * Port forwading: %s\n" "$( is_enabled $PORT_FORWARDING && echo yes || echo no)"
 printf "Local network parameters:\n"
+printf " * Firewall: $FIREWALL_MODE\n"
 printf " * Web UI port: $WEBUI_PORT\n"
+printf " * Allow local subnet traffic: %s\n" "$( is_enabled $ALLOW_LOCAL_SUBNET_TRAFFIC && echo yes || echo no)"
 if [ -n "$OPEN_ADDITIONAL_LOCAL_PORTS" ]; then
 	printf " * Open additional firewall ports: $OPEN_ADDITIONAL_LOCAL_PORTS\n"
 fi
@@ -285,6 +290,8 @@ do
 	echo " * * Adding $name_server to resolv.conf"
 	echo "nameserver $name_server" >> /etc/resolv.conf
 done
+printf " =========================================\n"
+printf "\n"
 
 ############################################
 # Change Timezone
@@ -692,14 +699,6 @@ printf "$VPN_DEVICE\n"
 ############################################
 # FIREWALL
 ############################################
-printf "[INFO] Checking firewall\n"
-if [ "$(readlink -f $(which iptables))" = "$IPTABLES_LEGACY" ]; then
-  printf " * Current mode: Legacy\n"
-elif [ "$(readlink -f $(which iptables))" = "$IPTABLES_LEGACY_ALPINE" ]; then
-  printf " * Current mode: Legacy\n"
-else
-  printf " * Current mode: Normal (nftables)\n"
-fi
 printf "[INFO] Setting firewall\n"
 printf " * Blocking everything\n"
 printf "   * Deleting all iptables rules..."
